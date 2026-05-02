@@ -1,0 +1,15 @@
+export { OverviewPanel } from "./OverviewPanel";
+export { CategoriesPanel } from "./CategoriesPanel";
+export { NotificationsPanel } from "./NotificationsPanel";
+export { OrdersPanel } from "./OrdersPanel";
+export { ProductsPanel } from "./ProductsPanel";
+export { CmsPanel } from "./CmsPanel";
+export { HomePanel } from "./HomePanel";
+export { SettingsPanel } from "./SettingsPanel";
+export { DiscountsPanel } from "./DiscountsPanel";
+export { PaymentsPanel } from "./PaymentsPanel";
+export { ReviewsPanel } from "./ReviewsPanel";
+export { ReturnsPanel } from "./ReturnsPanel";
+export { StockPanel } from "./StockPanel";
+export { ShippingPanel } from "./ShippingPanel";
+export { CustomersPanel } from "./CustomersPanel";

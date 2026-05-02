@@ -17,7 +17,7 @@ type VariantDraft = {
   active: boolean;
 };
 
-const STEPS = ["Temel bilgiler", "Fiyat ve stok", "Görseller", "Varyantlar", "Yayınlama"] as const;
+const STEPS = ["Temel bilgiler", "Fiyat ve stok", "Görseller", "Varyantlar", "SEO", "Yayınlama"] as const;
 
 export type ProductFormWizardProps = {
   token: string;
@@ -54,6 +54,8 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
   const [variantStock, setVariantStock] = useState("0");
   const [variantTrack, setVariantTrack] = useState(true);
   const [variantActive, setVariantActive] = useState(true);
+
+  const [seoKeywords, setSeoKeywords] = useState("");
 
   const [isPublished, setIsPublished] = useState(true);
 
@@ -164,7 +166,7 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
 
   const goNext = () => {
     if (!validateStep(step)) return;
-    setStep((x) => Math.min(5, x + 1));
+    setStep((x) => Math.min(6, x + 1));
   };
 
   const goPrev = () => setStep((x) => Math.max(1, x - 1));
@@ -250,6 +252,7 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
       setImagePreviews([]);
       setFirstImageAlt("");
       setVariants([]);
+      setSeoKeywords("");
       onFinished();
     } catch (e) {
       onError(e instanceof Error ? e.message : "Ürün kaydedilirken bir hata oluştu.");
@@ -496,6 +499,32 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
 
       {step === 5 ? (
         <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Arama motorları ürün adınızı, kısa açıklamayı ve adres (slug) bilgisini kullanır. Aşağıya ek anahtar
+            kelimeler yazabilirsiniz; şu an yalnızca kayıt tutmak içindir — API genişletmesi sonrası siteye
+            yansıtılabilir.
+          </p>
+          <Field
+            label="Ek anahtar kelimeler (isteğe bağlı)"
+            hint="Virgülle ayırın. Örn. el yapımı, hediye, doğal ahşap"
+          >
+            <input
+              className="input-soft"
+              value={seoKeywords}
+              onChange={(e) => setSeoKeywords(e.target.value)}
+              placeholder="Şimdilik not amaçlı — backend alanı hazır olunca bağlanacak"
+            />
+          </Field>
+          <p className="rounded-xl bg-amber-50 px-4 py-3 text-xs text-amber-950">
+            <strong>TODO (backend):</strong> Ürün modeline <code className="font-mono">metaTitle</code> /{" "}
+            <code className="font-mono">metaDescription</code> alanları eklendiğinde bu adım otomatik kayda
+            bağlanacak.
+          </p>
+        </div>
+      ) : null}
+
+      {step === 6 ? (
+        <div className="space-y-4">
           <label className="flex items-center gap-2 text-sm text-slate-800">
             <input type="checkbox" checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
             Ürün yayında olsun (işaretli değilse taslak olarak kaydedilir)
@@ -516,7 +545,7 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
           ) : null}
         </div>
         <div className="flex gap-2">
-          {step < 5 ? (
+          {step < 6 ? (
             <button type="button" onClick={goNext} className="btn-primary" disabled={submitting}>
               İleri
             </button>

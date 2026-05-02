@@ -121,12 +121,14 @@ export function OrderDetailPanel({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4"
-      role="dialog"
-      aria-modal
-    >
-      <div className="flex max-h-[95vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
+    <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/50 p-0 backdrop-blur-sm" role="dialog" aria-modal>
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default"
+        aria-label="Kapat"
+        onClick={onClose}
+      />
+      <div className="relative z-10 flex h-full w-full max-w-lg flex-col overflow-hidden border-l border-slate-200 bg-white shadow-2xl sm:max-w-xl">
         <header className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Sipariş</p>

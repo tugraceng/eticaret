@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminFetch } from "./api";
 import { formatAdminCaughtError } from "./admin-api-error";
 
@@ -47,6 +47,36 @@ export function StockMovementsPanel({ token }: { token: string }) {
   const [delta, setDelta] = useState("");
   const [note, setNote] = useState("");
   const [adjustBusy, setAdjustBusy] = useState(false);
+
+  const [filterProductId, setFilterProductId] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [dirFilter, setDirFilter] = useState<"all" | "in" | "out">("all");
+
+  const filteredMovements = useMemo(() => {
+    let list = movements;
+    const q = filterProductId.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (m) =>
+          m.productId.toLowerCase().includes(q) ||
+          (m.product?.name?.toLowerCase().includes(q) ?? false) ||
+          (m.product?.slug?.toLowerCase().includes(q) ?? false),
+      );
+    }
+    if (dateFrom) {
+      const t = new Date(dateFrom).getTime();
+      list = list.filter((m) => new Date(m.createdAt).getTime() >= t);
+    }
+    if (dateTo) {
+      const t = new Date(dateTo);
+      t.setHours(23, 59, 59, 999);
+      list = list.filter((m) => new Date(m.createdAt).getTime() <= t.getTime());
+    }
+    if (dirFilter === "in") list = list.filter((m) => m.delta > 0);
+    if (dirFilter === "out") list = list.filter((m) => m.delta < 0);
+    return list;
+  }, [movements, filterProductId, dateFrom, dateTo, dirFilter]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -115,11 +145,42 @@ export function StockMovementsPanel({ token }: { token: string }) {
         <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-4 py-3">
             <h3 className="text-sm font-semibold text-slate-700">Son hareketler</h3>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <input
+                className="input-soft min-w-[140px] flex-1 text-xs"
+                placeholder="Ürün ara (ad / ID / slug)"
+                value={filterProductId}
+                onChange={(e) => setFilterProductId(e.target.value)}
+              />
+              <input
+                type="date"
+                className="input-soft w-[140px] text-xs"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+              />
+              <input
+                type="date"
+                className="input-soft w-[140px] text-xs"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+              />
+              <select
+                className="input-soft w-36 text-xs"
+                value={dirFilter}
+                onChange={(e) => setDirFilter(e.target.value as "all" | "in" | "out")}
+              >
+                <option value="all">Tüm hareketler</option>
+                <option value="in">Yalnız giriş (+)</option>
+                <option value="out">Yalnız çıkış (−)</option>
+              </select>
+            </div>
           </div>
           {loading ? (
             <p className="p-6 text-center text-sm text-slate-500">Yükleniyor…</p>
           ) : movements.length === 0 ? (
             <p className="p-6 text-center text-sm text-slate-500">Kayıt yok.</p>
+          ) : filteredMovements.length === 0 ? (
+            <p className="p-6 text-center text-sm text-slate-500">Filtreye uygun kayıt yok.</p>
           ) : (
             <div className="max-h-[480px] overflow-auto">
               <table className="w-full text-left text-sm">
@@ -133,7 +194,7 @@ export function StockMovementsPanel({ token }: { token: string }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {movements.map((m) => (
+                  {filteredMovements.map((m) => (
                     <tr key={m.id} className="hover:bg-slate-50/50">
                       <td className="px-3 py-2 text-xs text-slate-500">
                         {new Date(m.createdAt).toLocaleString("tr-TR")}
