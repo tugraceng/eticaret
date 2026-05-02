@@ -1,14 +1,32 @@
 "use client";
 
-import { Dispatch, Fragment, SetStateAction, useEffect, useRef, useState } from "react";
-import { adminUploadFile } from "./api";
+import { apiUrl } from "@/lib/api";
+import { Fragment, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { ProductFormWizard } from "./components/forms/ProductFormWizard";
+import { slugifyTr } from "./utils/slug";
 import { formatAdminCaughtError } from "./admin-api-error";
+import { adminUploadFile } from "./api";
 import { AdminCard, Field, Icon, StatusBadge } from "./ui";
 
 const PATCHABLE_ORDER_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
 type PatchableOrderStatus = (typeof PATCHABLE_ORDER_STATUSES)[number];
 
-type CategoryRow = { id: string; name: string; slug: string; _count?: { products: number } };
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Beklemede",
+  PAID: "Ödendi",
+  PROCESSING: "Hazırlanıyor",
+  SHIPPED: "Kargoya verildi",
+  DELIVERED: "Teslim edildi",
+  CANCELLED: "İptal edildi",
+};
+
+type CategoryRow = {
+  id: string;
+  name: string;
+  slug: string;
+  parentId?: string | null;
+  _count?: { products: number };
+};
 
 type NotificationRow = {
   id: string;
@@ -51,11 +69,16 @@ type ProductRow = {
   id: string;
   name: string;
   slug: string;
+  description?: string | null;
   priceCents: number;
+  compareAtCents?: number | null;
+  sku?: string | null;
+  trackStock?: boolean;
   stock: number;
   isPublished: boolean;
   categoryId?: string | null;
   category?: { id: string; name: string; slug: string } | null;
+  images?: Array<{ id: string; url: string; alt?: string | null; sortOrder: number }>;
   variants?: AdminProductVariant[];
 };
 
@@ -201,6 +224,7 @@ export function CategoriesPanel({
   setCatSlug,
   createCategory,
   deleteCategory,
+  updateCategory,
 }: {
   busy: boolean;
   categories: CategoryRow[];
@@ -210,22 +234,54 @@ export function CategoriesPanel({
   setCatSlug: Dispatch<SetStateAction<string>>;
   createCategory: () => Promise<void>;
   deleteCategory: (id: string, name: string) => Promise<void>;
+  updateCategory: (id: string, payload: { name: string; slug: string }) => Promise<void>;
 }) {
+  const newSlugTouched = useRef(false);
+  const [q, setQ] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editSlug, setEditSlug] = useState("");
+
+  useEffect(() => {
+    if (!catName && !catSlug) newSlugTouched.current = false;
+  }, [catName, catSlug]);
+
+  const filtered = useMemo(() => {
+    const t = q.trim().toLowerCase();
+    if (!t) return categories;
+    return categories.filter(
+      (c) => c.name.toLowerCase().includes(t) || c.slug.toLowerCase().includes(t),
+    );
+  }, [categories, q]);
+
+  const openEdit = (c: CategoryRow) => {
+    setEditId(c.id);
+    setEditName(c.name);
+    setEditSlug(c.slug);
+  };
+
   return (
     <div className="space-y-6">
-      <AdminCard title="Yeni kategori" description="Ürünleri gruplandırmak için kategori tanımlayın.">
+      <AdminCard title="Yeni kategori" description="Ad yazıldığında slug otomatik önerilir; isterseniz slug alanını kendiniz düzenleyin.">
         <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
           <input
             placeholder="Ad"
             className="input-soft"
             value={catName}
-            onChange={(e) => setCatName(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value;
+              setCatName(v);
+              if (!newSlugTouched.current) setCatSlug(slugifyTr(v));
+            }}
           />
           <input
             placeholder="slug-ornek"
-            className="input-soft"
+            className="input-soft font-mono text-sm"
             value={catSlug}
-            onChange={(e) => setCatSlug(e.target.value)}
+            onChange={(e) => {
+              newSlugTouched.current = true;
+              setCatSlug(e.target.value);
+            }}
           />
           <button
             type="button"
@@ -238,7 +294,18 @@ export function CategoriesPanel({
         </div>
       </AdminCard>
 
-      <AdminCard title="Kategoriler" description={`${categories.length} kayıt`}>
+      <AdminCard
+        title="Kategoriler"
+        description={`${categories.length} kayıt${q.trim() ? ` · ${filtered.length} eşleşme` : ""}`}
+        actions={
+          <input
+            placeholder="Ara…"
+            className="input-soft !py-2 !text-sm"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        }
+      >
         {categories.length === 0 ? (
           <p className="py-4 text-sm text-slate-500">Henüz kategori yok.</p>
         ) : (
@@ -248,17 +315,32 @@ export function CategoriesPanel({
                 <tr>
                   <th className="px-2 py-2">Ad</th>
                   <th className="px-2 py-2">Slug</th>
+                  <th className="px-2 py-2">Üst</th>
                   <th className="px-2 py-2">Ürün</th>
                   <th className="px-2 py-2 text-right">İşlem</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {categories.map((c) => (
+                {filtered.map((c) => (
                   <tr key={c.id} className="hover:bg-slate-50/50">
                     <td className="px-2 py-3 font-semibold text-slate-900">{c.name}</td>
                     <td className="px-2 py-3 font-mono text-xs text-slate-500">{c.slug}</td>
+                    <td className="px-2 py-3 text-xs text-slate-600">
+                      {c.parentId ? (
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5">Alt kategori</span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
                     <td className="px-2 py-3 text-slate-700">{c._count?.products ?? 0}</td>
                     <td className="px-2 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(c)}
+                        className="mr-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-50"
+                      >
+                        <Icon.Pencil /> Düzenle
+                      </button>
                       <button
                         type="button"
                         onClick={() => void deleteCategory(c.id, c.name)}
@@ -274,6 +356,42 @@ export function CategoriesPanel({
           </div>
         )}
       </AdminCard>
+
+      {editId ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-900">Kategori düzenle</h3>
+            <p className="mt-1 text-xs text-slate-500">Ad ve adres (slug) güncellenir.</p>
+            <div className="mt-4 space-y-3">
+              <Field label="Ad">
+                <input className="input-soft" value={editName} onChange={(e) => setEditName(e.target.value)} />
+              </Field>
+              <Field label="Slug">
+                <input
+                  className="input-soft font-mono text-sm"
+                  value={editSlug}
+                  onChange={(e) => setEditSlug(e.target.value)}
+                />
+              </Field>
+            </div>
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              <button type="button" className="btn-ghost" onClick={() => setEditId(null)}>
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={busy || !editName.trim() || !editSlug.trim()}
+                onClick={() =>
+                  void updateCategory(editId, { name: editName, slug: editSlug }).then(() => setEditId(null))
+                }
+              >
+                Kaydet
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -362,10 +480,35 @@ export function OrdersPanel({
   updateOrderStatus: (id: string, status: string) => Promise<void>;
   priceFmt: (cents: number, currency?: string) => string;
 }) {
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const visible = useMemo(() => {
+    if (statusFilter === "all") return orders;
+    return orders.filter((o) => o.status === statusFilter);
+  }, [orders, statusFilter]);
+
   return (
-    <AdminCard title="Siparişler" description={`${orders.length} kayıt`}>
+    <AdminCard
+      title="Siparişler"
+      description={`${orders.length} kayıt${statusFilter !== "all" ? ` · ${visible.length} gösteriliyor` : ""}`}
+      actions={
+        <select
+          className="input-soft !py-2 !text-xs"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">Tüm durumlar</option>
+          {Object.keys(ORDER_STATUS_LABELS).map((s) => (
+            <option key={s} value={s}>
+              {ORDER_STATUS_LABELS[s]}
+            </option>
+          ))}
+        </select>
+      }
+    >
       {orders.length === 0 ? (
         <p className="py-6 text-center text-sm text-slate-500">Henüz sipariş yok.</p>
+      ) : visible.length === 0 ? (
+        <p className="py-6 text-center text-sm text-slate-500">Bu duruma ait sipariş yok.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
@@ -380,7 +523,7 @@ export function OrdersPanel({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {orders.map((o) => {
+              {visible.map((o) => {
                 const allStatuses = ["PENDING", ...PATCHABLE_ORDER_STATUSES] as const;
                 const selected = orderStatusPick[o.id] ?? o.status;
                 const canSave =
@@ -410,14 +553,22 @@ export function OrdersPanel({
                           >
                             {allStatuses.map((s) => (
                               <option key={s} value={s} disabled={s === "PENDING" && o.status !== "PENDING"}>
-                                {s}
+                                {ORDER_STATUS_LABELS[s] ?? s}
                               </option>
                             ))}
                           </select>
                           <button
                             type="button"
                             disabled={busy || !canSave}
-                            onClick={() => void updateOrderStatus(o.id, selected)}
+                            onClick={() => {
+                              if (
+                                !window.confirm(
+                                  `Sipariş durumu "${ORDER_STATUS_LABELS[selected] ?? selected}" olarak kaydedilecek. Onaylıyor musunuz?`,
+                                )
+                              )
+                                return;
+                              void updateOrderStatus(o.id, selected);
+                            }}
                             className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
                           >
                             <Icon.Check /> Kaydet
@@ -493,30 +644,28 @@ export function OrdersPanel({
 }
 
 export function ProductsPanel({
+  token,
   busy,
   categories,
-  newName,
-  newSlug,
-  newPriceTry,
-  newStock,
-  newCategoryId,
-  setNewName,
-  setNewSlug,
-  setNewPriceTry,
-  setNewStock,
-  setNewCategoryId,
-  createProduct,
   editingProductId,
   editName,
   editSlug,
+  editDescription,
   editPriceTry,
+  editCompareAtTry,
+  editSku,
+  editTrackStock,
   editStock,
   editPublished,
   editCategoryId,
   imgAlt,
   setEditName,
   setEditSlug,
+  setEditDescription,
   setEditPriceTry,
+  setEditCompareAtTry,
+  setEditSku,
+  setEditTrackStock,
   setEditStock,
   setEditPublished,
   setEditCategoryId,
@@ -527,6 +676,11 @@ export function ProductsPanel({
   products,
   openProductEdit,
   deleteProduct,
+  toggleProductPublish,
+  adjustProductStock,
+  onWizardSuccess,
+  onWizardError,
+  onProductsReload,
   priceFmt,
   newVariantLabel,
   setNewVariantLabel,
@@ -544,30 +698,28 @@ export function ProductsPanel({
   updateProductVariant,
   deleteProductVariant,
 }: {
+  token: string;
   busy: boolean;
   categories: CategoryRow[];
-  newName: string;
-  newSlug: string;
-  newPriceTry: string;
-  newStock: string;
-  newCategoryId: string;
-  setNewName: Dispatch<SetStateAction<string>>;
-  setNewSlug: Dispatch<SetStateAction<string>>;
-  setNewPriceTry: Dispatch<SetStateAction<string>>;
-  setNewStock: Dispatch<SetStateAction<string>>;
-  setNewCategoryId: Dispatch<SetStateAction<string>>;
-  createProduct: () => Promise<void>;
   editingProductId: string | null;
   editName: string;
   editSlug: string;
+  editDescription: string;
   editPriceTry: string;
+  editCompareAtTry: string;
+  editSku: string;
+  editTrackStock: boolean;
   editStock: string;
   editPublished: boolean;
   editCategoryId: string;
   imgAlt: string;
   setEditName: Dispatch<SetStateAction<string>>;
   setEditSlug: Dispatch<SetStateAction<string>>;
+  setEditDescription: Dispatch<SetStateAction<string>>;
   setEditPriceTry: Dispatch<SetStateAction<string>>;
+  setEditCompareAtTry: Dispatch<SetStateAction<string>>;
+  setEditSku: Dispatch<SetStateAction<string>>;
+  setEditTrackStock: Dispatch<SetStateAction<boolean>>;
   setEditStock: Dispatch<SetStateAction<string>>;
   setEditPublished: Dispatch<SetStateAction<boolean>>;
   setEditCategoryId: Dispatch<SetStateAction<string>>;
@@ -578,6 +730,11 @@ export function ProductsPanel({
   products: ProductRow[];
   openProductEdit: (product: ProductRow) => void;
   deleteProduct: (id: string, name: string) => Promise<void>;
+  toggleProductPublish: (id: string, next: boolean) => Promise<void>;
+  adjustProductStock: (productId: string, delta: number, note?: string) => Promise<void>;
+  onWizardSuccess: (message: string) => void;
+  onWizardError: (message: string) => void;
+  onProductsReload: () => void;
   priceFmt: (cents: number, currency?: string) => string;
   newVariantLabel: string;
   setNewVariantLabel: Dispatch<SetStateAction<string>>;
@@ -609,58 +766,53 @@ export function ProductsPanel({
   const productImgFileRef = useRef<HTMLInputElement>(null);
   const editingProduct = editingProductId ? products.find((p) => p.id === editingProductId) : null;
   const variantBasePriceCents = editingProduct?.priceCents ?? 0;
+
+  const [productQ, setProductQ] = useState("");
+  const [catFilter, setCatFilter] = useState("");
+  const [stockFilter, setStockFilter] = useState<"all" | "in" | "low" | "out">("all");
+  const [pubFilter, setPubFilter] = useState<"all" | "published" | "draft">("all");
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+  const [lowTh, setLowTh] = useState(5);
+  const [stockModal, setStockModal] = useState<{ id: string; name: string } | null>(null);
+  const [stockDelta, setStockDelta] = useState("");
+  const [stockReason, setStockReason] = useState("");
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const r = await fetch(apiUrl("/settings"));
+        if (!r.ok) return;
+        const j = (await r.json()) as { lowStockThreshold?: number };
+        if (typeof j.lowStockThreshold === "number") setLowTh(j.lowStockThreshold);
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    let list = products;
+    const q = productQ.trim().toLowerCase();
+    if (q) list = list.filter((p) => p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q));
+    if (catFilter) list = list.filter((p) => p.categoryId === catFilter);
+    if (pubFilter === "published") list = list.filter((p) => p.isPublished);
+    if (pubFilter === "draft") list = list.filter((p) => !p.isPublished);
+    if (stockFilter === "in") list = list.filter((p) => !p.trackStock || p.stock > 0);
+    if (stockFilter === "out") list = list.filter((p) => p.trackStock && p.stock <= 0);
+    if (stockFilter === "low")
+      list = list.filter((p) => p.trackStock && p.stock > 0 && p.stock <= lowTh);
+    return list;
+  }, [products, productQ, catFilter, pubFilter, stockFilter, lowTh]);
+
   return (
     <div className="space-y-6">
-      <AdminCard title="Yeni ürün" description="Ürün bilgilerini girin ve yayına alın.">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <Field label="Ad">
-            <input
-              placeholder="Ürün adı"
-              className="input-soft"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-          </Field>
-          <Field label="Slug">
-            <input
-              placeholder="slug-ornek"
-              className="input-soft"
-              value={newSlug}
-              onChange={(e) => setNewSlug(e.target.value)}
-            />
-          </Field>
-          <Field label="Fiyat (TRY)">
-            <input className="input-soft" value={newPriceTry} onChange={(e) => setNewPriceTry(e.target.value)} />
-          </Field>
-          <Field label="Stok">
-            <input className="input-soft" value={newStock} onChange={(e) => setNewStock(e.target.value)} />
-          </Field>
-          <Field label="Kategori">
-            <select
-              className="input-soft"
-              value={newCategoryId}
-              onChange={(e) => setNewCategoryId(e.target.value)}
-            >
-              <option value="">—</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        <div className="mt-4">
-          <button
-            type="button"
-            disabled={busy || !newName.trim() || !newSlug.trim()}
-            onClick={() => void createProduct()}
-            className="btn-primary disabled:opacity-50"
-          >
-            <Icon.Plus /> Ürün oluştur
-          </button>
-        </div>
-      </AdminCard>
+      <ProductFormWizard
+        token={token}
+        categories={categories}
+        onSuccess={onWizardSuccess}
+        onError={onWizardError}
+        onFinished={onProductsReload}
+      />
 
       {editingProductId && (
         <AdminCard
@@ -676,17 +828,44 @@ export function ProductsPanel({
               <input className="input-soft" value={editName} onChange={(e) => setEditName(e.target.value)} />
             </Field>
             <Field label="Slug">
-              <input className="input-soft" value={editSlug} onChange={(e) => setEditSlug(e.target.value)} />
+              <input className="input-soft font-mono text-sm" value={editSlug} onChange={(e) => setEditSlug(e.target.value)} />
             </Field>
-            <Field label="Fiyat">
+            <Field label="Satış fiyatı (TRY)">
               <input
                 className="input-soft"
                 value={editPriceTry}
                 onChange={(e) => setEditPriceTry(e.target.value)}
               />
             </Field>
+            <Field label="İndirim öncesi fiyat" hint="Boş bırakılabilir.">
+              <input
+                className="input-soft"
+                value={editCompareAtTry}
+                onChange={(e) => setEditCompareAtTry(e.target.value)}
+                placeholder="Örn. 299,00"
+              />
+            </Field>
             <Field label="Stok">
-              <input className="input-soft" value={editStock} onChange={(e) => setEditStock(e.target.value)} />
+              <input
+                className="input-soft"
+                type="number"
+                min={0}
+                value={editStock}
+                onChange={(e) => setEditStock(e.target.value.replace(/[^\d]/g, ""))}
+              />
+            </Field>
+            <Field label="SKU">
+              <input className="input-soft font-mono text-sm" value={editSku} onChange={(e) => setEditSku(e.target.value)} />
+            </Field>
+          </div>
+          <div className="mt-3">
+            <Field label="Açıklama">
+              <textarea
+                className="input-soft min-h-[88px] resize-y"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Ürün sayfasında görünen açıklama"
+              />
             </Field>
           </div>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -712,6 +891,15 @@ export function ProductsPanel({
                 className="h-4 w-4 rounded border-slate-300"
               />
               Yayında
+            </label>
+            <label className="mt-6 flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
+              <input
+                type="checkbox"
+                checked={editTrackStock}
+                onChange={(e) => setEditTrackStock(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300"
+              />
+              Stok takibi (satışta stok düşsün)
             </label>
           </div>
 
@@ -865,26 +1053,84 @@ export function ProductsPanel({
         </AdminCard>
       )}
 
-      <AdminCard title="Ürünler" description={`${products.length} kayıt`}>
+      <AdminCard
+        title="Ürün listesi"
+        description={`${products.length} ürün · ${filteredProducts.length} filtreye uyan`}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${viewMode === "table" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}
+              onClick={() => setViewMode("table")}
+            >
+              Tablo
+            </button>
+            <button
+              type="button"
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${viewMode === "cards" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}
+              onClick={() => setViewMode("cards")}
+            >
+              Kart
+            </button>
+          </div>
+        }
+      >
+        <div className="mb-4 flex flex-wrap gap-3">
+          <input
+            placeholder="Ürün veya slug ara…"
+            className="input-soft min-w-[200px] flex-1"
+            value={productQ}
+            onChange={(e) => setProductQ(e.target.value)}
+          />
+          <select className="input-soft w-full sm:w-44" value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
+            <option value="">Tüm kategoriler</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="input-soft w-full sm:w-40"
+            value={stockFilter}
+            onChange={(e) => setStockFilter(e.target.value as "all" | "in" | "low" | "out")}
+          >
+            <option value="all">Tüm stoklar</option>
+            <option value="in">Stokta var</option>
+            <option value="low">Stok az (≤{lowTh})</option>
+            <option value="out">Stok yok</option>
+          </select>
+          <select
+            className="input-soft w-full sm:w-40"
+            value={pubFilter}
+            onChange={(e) => setPubFilter(e.target.value as "all" | "published" | "draft")}
+          >
+            <option value="all">Tüm yayınlar</option>
+            <option value="published">Yayında</option>
+            <option value="draft">Taslak</option>
+          </select>
+        </div>
+
         {products.length === 0 ? (
           <p className="py-6 text-center text-sm text-slate-500">Henüz ürün yok.</p>
-        ) : (
+        ) : filteredProducts.length === 0 ? (
+          <p className="py-6 text-center text-sm text-slate-500">Filtreye uygun ürün yok.</p>
+        ) : viewMode === "table" ? (
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 <tr>
                   <th className="px-2 py-2">Varyant</th>
                   <th className="px-2 py-2">Ad</th>
-                  <th className="px-2 py-2">Slug</th>
                   <th className="px-2 py-2">Fiyat</th>
                   <th className="px-2 py-2">Stok</th>
                   <th className="px-2 py-2">Yayın</th>
                   <th className="px-2 py-2">Kategori</th>
-                  <th className="px-2 py-2 text-right">İşlem</th>
+                  <th className="px-2 py-2 text-right">Hızlı işlem</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {products.map((p) => (
+                {filteredProducts.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50/50">
                     <td className="px-2 py-3 text-xs text-slate-600">
                       {(p.variants?.length ?? 0) > 0 ? (
@@ -895,12 +1141,19 @@ export function ProductsPanel({
                         "—"
                       )}
                     </td>
-                    <td className="px-2 py-3 font-semibold text-slate-900">{p.name}</td>
-                    <td className="px-2 py-3 font-mono text-xs text-slate-500">{p.slug}</td>
-                    <td className="px-2 py-3">{priceFmt(p.priceCents)}</td>
+                    <td className="max-w-[200px] px-2 py-3">
+                      <p className="font-semibold text-slate-900">{p.name}</p>
+                      <p className="font-mono text-[11px] text-slate-400">{p.slug}</p>
+                    </td>
+                    <td className="px-2 py-3">
+                      <span className="font-medium">{priceFmt(p.priceCents)}</span>
+                      {typeof p.compareAtCents === "number" ? (
+                        <span className="ml-1 text-xs text-rose-600 line-through">{priceFmt(p.compareAtCents)}</span>
+                      ) : null}
+                    </td>
                     <td className="px-2 py-3">
                       <span
-                        className={`inline-flex h-2 w-2 rounded-full ${p.stock > 0 ? "bg-emerald-500" : "bg-rose-500"}`}
+                        className={`inline-flex h-2 w-2 rounded-full ${p.trackStock === false || p.stock > 0 ? "bg-emerald-500" : "bg-rose-500"}`}
                         aria-hidden
                       />
                       <span className="ml-2">{p.stock}</span>
@@ -916,28 +1169,157 @@ export function ProductsPanel({
                     </td>
                     <td className="px-2 py-3 text-xs text-slate-600">{p.category?.name ?? "—"}</td>
                     <td className="px-2 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => openProductEdit(p)}
-                        className="mr-1 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-50"
-                      >
-                        <Icon.Pencil /> Düzenle
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void deleteProduct(p.id, p.name)}
-                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
-                      >
-                        <Icon.Trash /> Sil
-                      </button>
+                      <div className="flex flex-wrap justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openProductEdit(p)}
+                          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-sky-800 hover:bg-sky-50"
+                        >
+                          Düzenle
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void toggleProductPublish(p.id, !p.isPublished)}
+                          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-indigo-800 hover:bg-indigo-50"
+                        >
+                          {p.isPublished ? "Kaldır" : "Yayınla"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            openProductEdit(p);
+                            window.setTimeout(() => productImgFileRef.current?.click(), 100);
+                          }}
+                          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-amber-800 hover:bg-amber-50"
+                        >
+                          Görsel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStockModal({ id: p.id, name: p.name })}
+                          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-50"
+                        >
+                          Stok
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void deleteProduct(p.id, p.name)}
+                          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-rose-700 hover:bg-rose-50"
+                        >
+                          Sil
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {filteredProducts.map((p) => (
+              <div
+                key={p.id}
+                className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+              >
+                <div className="relative aspect-[4/3] bg-slate-100">
+                  {p.images?.[0]?.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.images[0].url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="grid h-full place-items-center text-3xl text-slate-300">📦</div>
+                  )}
+                  <span
+                    className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      p.isPublished ? "bg-emerald-600 text-white" : "bg-slate-700 text-white"
+                    }`}
+                  >
+                    {p.isPublished ? "Yayında" : "Taslak"}
+                  </span>
+                </div>
+                <div className="flex flex-1 flex-col p-4">
+                  <p className="line-clamp-2 font-semibold text-slate-900">{p.name}</p>
+                  <p className="mt-1 text-lg font-bold text-slate-900">{priceFmt(p.priceCents)}</p>
+                  <p className="text-xs text-slate-500">Stok: {p.stock}</p>
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    <button type="button" className="btn-ghost !py-1 !px-2 text-xs" onClick={() => openProductEdit(p)}>
+                      Düzenle
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-ghost !py-1 !px-2 text-xs"
+                      onClick={() => void toggleProductPublish(p.id, !p.isPublished)}
+                    >
+                      {p.isPublished ? "Kaldır" : "Yayınla"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-ghost !py-1 !px-2 text-xs"
+                      onClick={() => setStockModal({ id: p.id, name: p.name })}
+                    >
+                      Stok
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </AdminCard>
+
+      {stockModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-900">Stok güncelle</h3>
+            <p className="mt-1 text-sm text-slate-600">{stockModal.name}</p>
+            <div className="mt-4 space-y-3">
+              <Field label="Miktar (+ ekler, − düşürür)" hint="Örn. +10 veya -2">
+                <input
+                  className="input-soft font-mono"
+                  value={stockDelta}
+                  onChange={(e) => setStockDelta(e.target.value)}
+                  placeholder="+5"
+                />
+              </Field>
+              <Field label="Açıklama şablonu">
+                <select
+                  className="input-soft"
+                  value={stockReason}
+                  onChange={(e) => setStockReason(e.target.value)}
+                >
+                  <option value="">Seçin (isteğe bağlı)</option>
+                  <option value="Yeni ürün girişi">Yeni ürün girişi</option>
+                  <option value="Hasarlı ürün">Hasarlı ürün</option>
+                  <option value="Manuel düzeltme">Manuel düzeltme</option>
+                  <option value="İade">İade</option>
+                </select>
+              </Field>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" className="btn-ghost" onClick={() => setStockModal(null)}>
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={busy}
+                onClick={() => {
+                  const d = parseInt(stockDelta.trim(), 10);
+                  if (!Number.isFinite(d) || d === 0) return;
+                  const note = stockReason ? `${stockReason}` : undefined;
+                  void adjustProductStock(stockModal.id, d, note).then(() => {
+                    setStockModal(null);
+                    setStockDelta("");
+                    setStockReason("");
+                  });
+                }}
+              >
+                Uygula
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

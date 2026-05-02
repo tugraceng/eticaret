@@ -40,6 +40,23 @@ class CreateProductDto {
   @Min(0)
   priceCents!: number;
 
+  /** İndirim öncesi / karşılaştırma fiyatı (kuruş) */
+  @IsOptional()
+  @Allow()
+  @ValidateIf((_, v) => v != null)
+  @IsInt()
+  @Min(0)
+  compareAtCents?: number | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== undefined)
+  @IsString()
+  sku?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  trackStock?: boolean;
+
   @IsOptional()
   @IsInt()
   @Min(0)
@@ -159,6 +176,22 @@ class UpdateProductDto {
   @IsInt()
   @Min(0)
   priceCents?: number;
+
+  @IsOptional()
+  @Allow()
+  @ValidateIf((_, v) => v != null)
+  @IsInt()
+  @Min(0)
+  compareAtCents?: number | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== undefined)
+  @IsString()
+  sku?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  trackStock?: boolean;
 
   @IsOptional()
   @IsInt()

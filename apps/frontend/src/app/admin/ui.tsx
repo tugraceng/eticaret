@@ -107,6 +107,15 @@ export function StatCard({
   );
 }
 
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Beklemede",
+  PAID: "Ödendi",
+  PROCESSING: "Hazırlanıyor",
+  SHIPPED: "Kargoya verildi",
+  DELIVERED: "Teslim edildi",
+  CANCELLED: "İptal edildi",
+};
+
 export function StatusBadge({ status }: { status: string }) {
   const cls =
     {
@@ -117,11 +126,12 @@ export function StatusBadge({ status }: { status: string }) {
       DELIVERED: "bg-emerald-100 text-emerald-800",
       CANCELLED: "bg-rose-100 text-rose-800",
     }[status] ?? "bg-slate-100 text-slate-700";
+  const label = ORDER_STATUS_LABELS[status] ?? status;
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${cls}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}
     >
-      {status}
+      {label}
     </span>
   );
 }

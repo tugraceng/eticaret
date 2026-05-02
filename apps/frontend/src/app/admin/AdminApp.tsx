@@ -16,6 +16,8 @@ import { SettingsEditor } from "./SettingsEditor";
 import { ShippingRatesEditor } from "./ShippingRatesEditor";
 import { StockMovementsPanel } from "./StockMovementsPanel";
 import { AdminTabGuide } from "./AdminTabGuide";
+import { AdminQuickActions } from "./components/AdminQuickActions";
+import { formatCentsAsTryInput, parseTryToCentsOptional } from "./utils/money";
 import { AdminCard, Icon, StatCard, StatusBadge, Toast } from "./ui";
 import type { Tab } from "./tabs";
 
@@ -28,11 +30,16 @@ type ProductRow = {
   id: string;
   name: string;
   slug: string;
+  description?: string | null;
   priceCents: number;
+  compareAtCents?: number | null;
+  sku?: string | null;
+  trackStock?: boolean;
   stock: number;
   isPublished: boolean;
   categoryId?: string | null;
   category?: { id: string; name: string; slug: string } | null;
+  images?: Array<{ id: string; url: string; alt?: string | null; sortOrder: number }>;
   variants?: Array<{
     id: string;
     label: string;
@@ -88,7 +95,13 @@ type BlogPostRow = {
   publishedAt: string | null;
 };
 
-type CategoryRow = { id: string; name: string; slug: string; _count?: { products: number } };
+type CategoryRow = {
+  id: string;
+  name: string;
+  slug: string;
+  parentId?: string | null;
+  _count?: { products: number };
+};
 
 type NotificationRow = {
   id: string;
@@ -168,11 +181,12 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   const [editPublished, setEditPublished] = useState(true);
   const [editCategoryId, setEditCategoryId] = useState("");
 
-  const [newName, setNewName] = useState("");
-  const [newSlug, setNewSlug] = useState("");
-  const [newPriceTry, setNewPriceTry] = useState("99.99");
-  const [newStock, setNewStock] = useState("10");
-  const [newCategoryId, setNewCategoryId] = useState("");
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  const [editDescription, setEditDescription] = useState("");
+  const [editCompareAtTry, setEditCompareAtTry] = useState("");
+  const [editSku, setEditSku] = useState("");
+  const [editTrackStock, setEditTrackStock] = useState(true);
 
   const [imgAlt, setImgAlt] = useState("");
 
@@ -195,6 +209,12 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   useEffect(() => {
     setTab(initialTab);
   }, [initialTab]);
+
+  useEffect(() => {
+    if (!successToast) return;
+    const t = window.setTimeout(() => setSuccessToast(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [successToast]);
 
   const logout = useCallback(() => {
     setToken(null);
@@ -345,36 +365,28 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     loadCounters,
   ]);
 
-  const createProduct = useCallback(async () => {
-    if (!token) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const priceCents = Math.round(parseFloat(newPriceTry.replace(",", ".")) * 100);
-      if (!Number.isFinite(priceCents) || priceCents < 0) throw new Error("Geçerli fiyat girin");
-      await adminFetch("/products", token, {
-        method: "POST",
-        body: JSON.stringify({
-          name: newName,
-          slug: newSlug,
-          priceCents,
-          stock: parseInt(newStock, 10) || 0,
-          isPublished: true,
-          ...(newCategoryId ? { categoryId: newCategoryId } : {}),
-        }),
-      });
-      setNewName("");
-      setNewSlug("");
-      setNewCategoryId("");
-      await loadProducts();
-    } catch (e) {
-      if (!(e instanceof AdminSessionTerminated)) {
-        setError(e instanceof Error ? e.message : String(e));
+  const toggleProductPublish = useCallback(
+    async (productId: string, next: boolean) => {
+      if (!token) return;
+      setBusy(true);
+      setError(null);
+      try {
+        await adminFetch(`/products/${productId}`, token, {
+          method: "PATCH",
+          body: JSON.stringify({ isPublished: next }),
+        });
+        await loadProducts();
+        setSuccessToast(next ? "Ürün yayına alındı." : "Ürün yayından kaldırıldı.");
+      } catch (e) {
+        if (!(e instanceof AdminSessionTerminated)) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+      } finally {
+        setBusy(false);
       }
-    } finally {
-      setBusy(false);
-    }
-  }, [token, newName, newSlug, newPriceTry, newStock, newCategoryId, loadProducts]);
+    },
+    [token, loadProducts],
+  );
 
   const createCategory = useCallback(async () => {
     if (!token) return;
@@ -400,7 +412,9 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   const deleteCategory = useCallback(
     async (id: string, name: string) => {
       if (!token) return;
-      if (!window.confirm(`Kategori "${name}" silinsin mi? (Ürünlerin kategorisi kaldırılır.)`))
+      if (!window.confirm(
+        `Kategori "${name}" silinsin mi?\n\nBu kategoriye bağlı ürünler varsa, ürünlerin kategorisi kaldırılır (ürünler silinmez).`,
+      ))
         return;
       setBusy(true);
       setError(null);
@@ -417,6 +431,56 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
       }
     },
     [token, loadCategories, loadProducts],
+  );
+
+  const updateCategory = useCallback(
+    async (id: string, payload: { name: string; slug: string }) => {
+      if (!token) return;
+      setBusy(true);
+      setError(null);
+      try {
+        await adminFetch(`/categories/${id}`, token, {
+          method: "PATCH",
+          body: JSON.stringify({
+            name: payload.name.trim(),
+            slug: payload.slug.trim().toLowerCase(),
+          }),
+        });
+        await loadCategories();
+        await loadProducts();
+        setSuccessToast("Kategori güncellendi.");
+      } catch (e) {
+        if (!(e instanceof AdminSessionTerminated)) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token, loadCategories, loadProducts],
+  );
+
+  const adjustProductStock = useCallback(
+    async (productId: string, delta: number, note?: string) => {
+      if (!token) return;
+      setBusy(true);
+      setError(null);
+      try {
+        await adminFetch(`/products/admin/${productId}/adjust-stock`, token, {
+          method: "POST",
+          body: JSON.stringify({ delta, note: note?.trim() || undefined }),
+        });
+        await loadProducts();
+        setSuccessToast("Stok güncellendi.");
+      } catch (e) {
+        if (!(e instanceof AdminSessionTerminated)) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token, loadProducts],
   );
 
   const addProductImageFromFile = useCallback(
@@ -657,7 +721,13 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     setEditingProductId(p.id);
     setEditName(p.name);
     setEditSlug(p.slug);
+    setEditDescription(p.description ?? "");
     setEditPriceTry((p.priceCents / 100).toFixed(2).replace(".", ","));
+    setEditCompareAtTry(
+      typeof p.compareAtCents === "number" ? formatCentsAsTryInput(p.compareAtCents) : "",
+    );
+    setEditSku(p.sku ?? "");
+    setEditTrackStock(p.trackStock ?? true);
     setEditStock(String(p.stock));
     setEditPublished(p.isPublished);
     setEditCategoryId(p.categoryId ?? "");
@@ -678,19 +748,28 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     try {
       const priceCents = Math.round(parseFloat(editPriceTry.replace(",", ".")) * 100);
       if (!Number.isFinite(priceCents) || priceCents < 0) throw new Error("Geçerli fiyat girin");
+      const compareParsed = parseTryToCentsOptional(editCompareAtTry);
+      if (!compareParsed.ok) throw new Error(compareParsed.message);
+      const st = parseInt(editStock, 10);
+      if (!Number.isFinite(st) || st < 0) throw new Error("Stok miktarı negatif olamaz.");
       await adminFetch(`/products/${editingProductId}`, token, {
         method: "PATCH",
         body: JSON.stringify({
           name: editName.trim(),
           slug: editSlug.trim(),
+          description: editDescription.trim() || null,
           priceCents,
-          stock: parseInt(editStock, 10) || 0,
+          compareAtCents: compareParsed.cents,
+          sku: editSku.trim() || null,
+          trackStock: editTrackStock,
+          stock: st,
           isPublished: editPublished,
           categoryId: editCategoryId || null,
         }),
       });
       setEditingProductId(null);
       await loadProducts();
+      setSuccessToast("Ürün güncellendi.");
     } catch (e) {
       if (!(e instanceof AdminSessionTerminated)) {
         setError(e instanceof Error ? e.message : String(e));
@@ -703,7 +782,11 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     editingProductId,
     editName,
     editSlug,
+    editDescription,
     editPriceTry,
+    editCompareAtTry,
+    editSku,
+    editTrackStock,
     editStock,
     editPublished,
     editCategoryId,
@@ -1092,7 +1175,8 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/80 backdrop-blur">
-          <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
+          <div className="space-y-3 px-4 py-3 sm:px-6">
+            <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
@@ -1133,10 +1217,17 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               <span className="hidden sm:inline">Çıkış</span>
             </button>
           </div>
+            <AdminQuickActions
+              onGoProducts={() => goTab("products")}
+              onGoCategories={() => goTab("categories")}
+              onGoOrders={() => goTab("orders")}
+            />
+          </div>
         </header>
 
         <main className="flex-1 space-y-6 overflow-auto p-4 sm:p-8">
           {error && <Toast kind="error">{error}</Toast>}
+          {successToast && <Toast kind="success">{successToast}</Toast>}
           <AdminTabGuide tab={tab} />
 
           {tab === "overview" ? (
@@ -1147,6 +1238,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               notifications={notifications}
               insights={insights}
               busy={busy}
+              counters={counters}
             />
           ) : null}
 
@@ -1176,6 +1268,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               setCatSlug={setCatSlug}
               createCategory={createCategory}
               deleteCategory={deleteCategory}
+              updateCategory={updateCategory}
             />
           ) : null}
 
@@ -1190,30 +1283,28 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
 
           {token && tab === "products" ? (
             <ProductsPanel
+              token={token}
               busy={busy}
               categories={categories}
-              newName={newName}
-              newSlug={newSlug}
-              newPriceTry={newPriceTry}
-              newStock={newStock}
-              newCategoryId={newCategoryId}
-              setNewName={setNewName}
-              setNewSlug={setNewSlug}
-              setNewPriceTry={setNewPriceTry}
-              setNewStock={setNewStock}
-              setNewCategoryId={setNewCategoryId}
-              createProduct={createProduct}
               editingProductId={editingProductId}
               editName={editName}
               editSlug={editSlug}
+              editDescription={editDescription}
               editPriceTry={editPriceTry}
+              editCompareAtTry={editCompareAtTry}
+              editSku={editSku}
+              editTrackStock={editTrackStock}
               editStock={editStock}
               editPublished={editPublished}
               editCategoryId={editCategoryId}
               imgAlt={imgAlt}
               setEditName={setEditName}
               setEditSlug={setEditSlug}
+              setEditDescription={setEditDescription}
               setEditPriceTry={setEditPriceTry}
+              setEditCompareAtTry={setEditCompareAtTry}
+              setEditSku={setEditSku}
+              setEditTrackStock={setEditTrackStock}
               setEditStock={setEditStock}
               setEditPublished={setEditPublished}
               setEditCategoryId={setEditCategoryId}
@@ -1224,6 +1315,11 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               products={products}
               openProductEdit={openProductEdit}
               deleteProduct={deleteProduct}
+              toggleProductPublish={toggleProductPublish}
+              adjustProductStock={adjustProductStock}
+              onWizardSuccess={setSuccessToast}
+              onWizardError={setError}
+              onProductsReload={() => void loadProducts()}
               priceFmt={priceFmt}
               newVariantLabel={newVariantLabel}
               setNewVariantLabel={setNewVariantLabel}
@@ -1322,6 +1418,7 @@ function OverviewTab({
   notifications,
   insights,
   busy,
+  counters,
 }: {
   analytics: AnalyticsRow[];
   products: ProductRow[];
@@ -1329,12 +1426,37 @@ function OverviewTab({
   notifications: NotificationRow[];
   insights: SalesInsights | null;
   busy: boolean;
+  counters: {
+    pendingReviews: number;
+    pendingReturns: number;
+    lowStock: number;
+    pendingOrders: number;
+  };
 }) {
   const revenue = orders.reduce((s, o) => s + (o.totalCents || 0), 0);
-  const pendingOrders = orders.filter((o) => o.status === "PENDING").length;
+  const pendingOrdersLocal = orders.filter((o) => o.status === "PENDING").length;
   const publishedProducts = products.filter((p) => p.isPublished).length;
+  const draftCount = products.length - publishedProducts;
   const unreadNotifs = notifications.filter((n) => !n.read).length;
-  const recent = [...orders].slice(0, 5);
+
+  const startOfToday = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const recent = useMemo(
+    () =>
+      [...orders]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5),
+    [orders],
+  );
+
+  const ordersToday = useMemo(
+    () => orders.filter((o) => new Date(o.createdAt) >= startOfToday).length,
+    [orders, startOfToday],
+  );
 
   const quickLinks = [
     { href: "/admin/categories", label: "Kategoriler", hint: "Ürün grupları", icon: Icon.Folder },
@@ -1369,37 +1491,122 @@ function OverviewTab({
         </div>
       </AdminCard>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {(counters.lowStock > 0 ||
+        counters.pendingReviews > 0 ||
+        counters.pendingReturns > 0 ||
+        counters.pendingOrders > 0 ||
+        unreadNotifs > 0) && (
+        <AdminCard
+          tone="warning"
+          title="Dikkat gerektiren konular"
+          description="Aşağıdaki başlıklara tıklayarak ilgili sayfaya gidebilirsiniz."
+        >
+          <ul className="space-y-2 text-sm text-amber-950">
+            {counters.pendingOrders > 0 ? (
+              <li>
+                <Link className="font-semibold underline-offset-2 hover:underline" href="/admin/orders">
+                  Ödeme / onay bekleyen sipariş: {counters.pendingOrders}
+                </Link>
+              </li>
+            ) : null}
+            {counters.lowStock > 0 ? (
+              <li>
+                <Link className="font-semibold underline-offset-2 hover:underline" href="/admin/stock">
+                  Düşük stok uyarısı (ürün): {counters.lowStock}
+                </Link>
+              </li>
+            ) : null}
+            {counters.pendingReviews > 0 ? (
+              <li>
+                <Link className="font-semibold underline-offset-2 hover:underline" href="/admin/reviews">
+                  Onay bekleyen yorum: {counters.pendingReviews}
+                </Link>
+              </li>
+            ) : null}
+            {counters.pendingReturns > 0 ? (
+              <li>
+                <Link className="font-semibold underline-offset-2 hover:underline" href="/admin/returns">
+                  Bekleyen iade talebi: {counters.pendingReturns}
+                </Link>
+              </li>
+            ) : null}
+            {unreadNotifs > 0 ? (
+              <li>
+                <Link className="font-semibold underline-offset-2 hover:underline" href="/admin/notifications">
+                  Okunmamış bildirim: {unreadNotifs}
+                </Link>
+              </li>
+            ) : null}
+          </ul>
+        </AdminCard>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard
-          label="Toplam ciro"
-          value={(revenue / 100).toLocaleString("tr-TR", {
-            style: "currency",
-            currency: orders[0]?.currency ?? "TRY",
-            maximumFractionDigits: 0,
-          })}
-          hint={`${orders.length} sipariş`}
+          label="Bugünkü sipariş"
+          value={ordersToday}
+          hint="Bu gece yarısından beri"
           icon={<Icon.Bag />}
           tone="emerald"
         />
         <StatCard
           label="Bekleyen sipariş"
-          value={pendingOrders}
-          hint="İşleme alınmayı bekliyor"
+          value={pendingOrdersLocal}
+          hint="Durum: beklemede"
           icon={<Icon.Bell />}
           tone="amber"
         />
         <StatCard
-          label="Yayında ürün"
-          value={publishedProducts}
-          hint={`${products.length - publishedProducts} taslak`}
+          label="Düşük stok"
+          value={counters.lowStock}
+          hint="Eşik altı ürün"
+          icon={<Icon.Layers />}
+          tone="rose"
+        />
+        <StatCard
+          label="Toplam ürün"
+          value={products.length}
+          hint={`${publishedProducts} yayında`}
           icon={<Icon.Box />}
           tone="sky"
+        />
+        <StatCard
+          label="Taslak ürün"
+          value={draftCount}
+          hint="Yayında değil"
+          icon={<Icon.Doc />}
+          tone="slate"
         />
         <StatCard
           label="Okunmamış bildirim"
           value={unreadNotifs}
           hint={`${notifications.length} toplam`}
           icon={<Icon.Bell />}
+          tone="violet"
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <StatCard
+          label="Toplam ciro (liste)"
+          value={(revenue / 100).toLocaleString("tr-TR", {
+            style: "currency",
+            currency: orders[0]?.currency ?? "TRY",
+            maximumFractionDigits: 0,
+          })}
+          hint={`${orders.length} sipariş kaydı`}
+          icon={<Icon.Bag />}
+          tone="emerald"
+        />
+        <StatCard
+          label="En çok satan (30 gün)"
+          value={insights?.bestsellers?.[0]?.name ?? "—"}
+          hint={
+            insights?.bestsellers?.[0]
+              ? `${insights.bestsellers[0].quantitySold} adet`
+              : "Özet veri yüklenince görünür"
+          }
+          icon={<Icon.Box />}
           tone="violet"
         />
       </div>

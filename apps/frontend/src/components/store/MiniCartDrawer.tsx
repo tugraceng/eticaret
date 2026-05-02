@@ -4,11 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import type { ProductCardData } from "@/components/site/ProductCard";
-import { Button } from "@/components/ui/atoms";
+import { Button, Modal } from "@/components/ui/atoms";
 import { useSiteSettingsQuery } from "@/hooks/useSiteSettingsQuery";
+import { showSiteToast } from "@/lib/site-toast";
 import { selectCartSubtotalCents, useCartStore } from "@/stores/cart-store";
 import { FreeShippingBar } from "./FreeShippingBar";
 
@@ -20,6 +21,8 @@ export function MiniCartDrawer() {
   const setQty = useCartStore((s) => s.setLineQuantity);
   const remove = useCartStore((s) => s.removeLine);
   const addLine = useCartStore((s) => s.addLine);
+  const clearCart = useCartStore((s) => s.clearCart);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const { data: settings } = useSiteSettingsQuery({ enabled: open });
   const threshold = settings?.freeShippingThresholdCents ?? 0;
@@ -60,8 +63,34 @@ export function MiniCartDrawer() {
       : "—";
 
   return (
-    <AnimatePresence>
-      {open ? (
+    <>
+      <Modal
+        open={confirmClear}
+        title="Sepeti temizle?"
+        onClose={() => setConfirmClear(false)}
+        footer={
+          <>
+            <Button type="button" variant="ghost" onClick={() => setConfirmClear(false)}>
+              Vazgeç
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={() => {
+                clearCart();
+                showSiteToast({ message: "Sepet temizlendi.", kind: "success" });
+                setConfirmClear(false);
+              }}
+            >
+              Tümünü kaldır
+            </Button>
+          </>
+        }
+      >
+        Sepetteki tüm ürünler silinecek. Bu işlem geri alınamaz.
+      </Modal>
+      <AnimatePresence>
+        {open ? (
         <>
           <motion.button
             type="button"
@@ -228,6 +257,17 @@ export function MiniCartDrawer() {
             </div>
 
             <footer className="border-t border-[var(--ds-border)] bg-[var(--ds-surface-muted)]/80 p-4 backdrop-blur-sm">
+              {lines.length > 0 ? (
+                <div className="mb-3 flex justify-end">
+                  <button
+                    type="button"
+                    className="text-micro font-semibold text-[var(--ds-color-error)] hover:underline"
+                    onClick={() => setConfirmClear(true)}
+                  >
+                    Sepeti temizle
+                  </button>
+                </div>
+              ) : null}
               <div className="flex items-center justify-between text-body">
                 <span className="text-[var(--ds-text-muted)]">Ara toplam</span>
                 <span className="font-semibold text-[var(--ds-text)]">{fmt(subtotal)}</span>
@@ -252,6 +292,7 @@ export function MiniCartDrawer() {
           </motion.aside>
         </>
       ) : null}
-    </AnimatePresence>
+      </AnimatePresence>
+    </>
   );
 }

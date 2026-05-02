@@ -449,6 +449,9 @@ export class ProductsService {
     slug: string;
     description?: string;
     priceCents: number;
+    compareAtCents?: number | null;
+    sku?: string | null;
+    trackStock?: boolean;
     stock?: number;
     categoryId?: string;
     isPublished?: boolean;
@@ -459,6 +462,9 @@ export class ProductsService {
         slug: data.slug,
         description: data.description,
         priceCents: data.priceCents,
+        compareAtCents: data.compareAtCents ?? undefined,
+        sku: data.sku?.trim() ? data.sku.trim() : null,
+        trackStock: data.trackStock ?? true,
         stock: data.stock ?? 0,
         categoryId: data.categoryId,
         isPublished: data.isPublished ?? false,
@@ -473,6 +479,9 @@ export class ProductsService {
       slug: string;
       description: string | null;
       priceCents: number;
+      compareAtCents: number | null;
+      sku: string | null;
+      trackStock: boolean;
       stock: number;
       categoryId: string | null;
       isPublished: boolean;

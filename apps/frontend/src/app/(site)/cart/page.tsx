@@ -35,9 +35,11 @@ export default function CartPage() {
   const replaceLines = useCartStore((s) => s.replaceLines);
   const setLineQuantity = useCartStore((s) => s.setLineQuantity);
   const removeLine = useCartStore((s) => s.removeLine);
+  const clearCart = useCartStore((s) => s.clearCart);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [mounted, setMounted] = useState(false);
   const [removeLineKey, setRemoveLineKey] = useState<string | null>(null);
+  const [clearAllOpen, setClearAllOpen] = useState(false);
 
   useEffect(() => {
     hydrate();
@@ -169,6 +171,15 @@ export default function CartPage() {
       ) : (
         <div className="mt-8 grid gap-6 lg:mt-10 lg:grid-cols-[1fr_min(100%,390px)] lg:items-start lg:gap-8">
           <section className="flex flex-col gap-4">
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setClearAllOpen(true)}
+                className="text-sm font-semibold text-rose-600 underline-offset-2 hover:text-rose-700 hover:underline"
+              >
+                Sepeti temizle
+              </button>
+            </div>
             {lines.map((l) => (
               <article
                 key={l.lineKey}
@@ -299,6 +310,20 @@ export default function CartPage() {
         </div>
       )}
 
+      <ConfirmDialog
+        open={clearAllOpen}
+        title="Sepeti temizle?"
+        description="Sepetteki tüm ürünler kaldırılacak."
+        confirmLabel="Temizle"
+        cancelLabel="Vazgeç"
+        variant="danger"
+        onCancel={() => setClearAllOpen(false)}
+        onConfirm={() => {
+          clearCart();
+          setClearAllOpen(false);
+          showSiteToast({ message: "Sepet temizlendi.", kind: "success" });
+        }}
+      />
       <ConfirmDialog
         open={removeLineKey !== null}
         title="Ürünü sepetten çıkar"

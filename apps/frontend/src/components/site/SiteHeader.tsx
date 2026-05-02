@@ -15,9 +15,9 @@ import {
 import { SiteHeaderSearch } from "@/components/site/SiteHeaderSearch";
 import { shopCategoryHref, type HeaderNavCategory } from "@/lib/category-nav";
 import type { SiteSettings } from "@/lib/settings";
-import { WISHLIST_UPDATE_EVENT } from "@/lib/platform-storage-events";
 import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
 import { selectCartTotalQty, useCartStore } from "@/stores/cart-store";
+import { selectWishlistCount, useWishlistStore } from "@/stores/wishlist-store";
 
 const STATIC_TAIL_NAV = [
   { href: "/services", label: "3D baskı hizmeti" },
@@ -219,7 +219,7 @@ export function SiteHeader({
   const [open, setOpen] = useState(false);
   const cartCount = useCartStore(selectCartTotalQty);
   const openMiniCart = useCartStore((s) => s.openMiniCart);
-  const [wishCount, setWishCount] = useState(0);
+  const wishCount = useWishlistStore(selectWishlistCount);
   const [loggedIn, setLoggedIn] = useState(false);
 
   const style = {
@@ -229,26 +229,7 @@ export function SiteHeader({
 
   useEffect(() => {
     useCartStore.getState().hydrate();
-    const readWish = () => {
-      try {
-        const raw = localStorage.getItem("platform_wishlist");
-        if (!raw) return setWishCount(0);
-        const parsed = JSON.parse(raw) as unknown[];
-        setWishCount(Array.isArray(parsed) ? parsed.length : 0);
-      } catch {
-        setWishCount(0);
-      }
-    };
-    readWish();
-    const onStorage = (e: StorageEvent) => {
-      if (!e.key || e.key === "platform_wishlist") readWish();
-    };
-    window.addEventListener("storage", onStorage);
-    window.addEventListener(WISHLIST_UPDATE_EVENT, readWish);
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener(WISHLIST_UPDATE_EVENT, readWish);
-    };
+    useWishlistStore.getState().hydrate();
   }, []);
 
   useEffect(() => {
@@ -447,7 +428,13 @@ export function SiteHeader({
                 ) : null}
               </Link>
               {cat.children.length > 0 ? (
-                <div className="invisible absolute left-0 top-[calc(100%+0.35rem)] z-50 min-w-[220px] rounded-2xl border border-slate-200/80 bg-white/95 p-2 opacity-0 shadow-xl shadow-slate-900/10 ring-1 ring-slate-900/[0.04] backdrop-blur-md transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                <div
+                  className={`invisible absolute left-0 top-[calc(100%+0.35rem)] z-50 rounded-2xl border border-slate-200/80 bg-white/95 opacity-0 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/[0.04] backdrop-blur-md transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 ${
+                    cat.children.length > 4
+                      ? "grid min-w-[min(100vw-2rem,520px)] max-w-[90vw] grid-cols-2 gap-0.5 p-3 sm:grid-cols-2"
+                      : "min-w-[220px] p-2"
+                  }`}
+                >
                   {cat.children.map((sub) => (
                     <Link
                       key={sub.id}

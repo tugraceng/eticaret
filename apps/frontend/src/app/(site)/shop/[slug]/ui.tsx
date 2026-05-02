@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { commerceAddToCart } from "@/lib/commerce-analytics";
-import { WISHLIST_UPDATE_EVENT } from "@/lib/platform-storage-events";
-import { isInWishlist, toggleWishlist, WISHLIST_KEY } from "@/lib/wishlist";
+import { toggleWishlist } from "@/lib/wishlist";
 import { showSiteToast } from "@/lib/site-toast";
 import { useCartStore } from "@/stores/cart-store";
+import { useWishlistStore } from "@/stores/wishlist-store";
 import { cn } from "@/lib/cn";
 import { useProductVariantsOptional } from "./ProductVariantContext";
 
@@ -168,21 +168,7 @@ export function WishlistButton({
   imageUrl?: string;
   size?: "sm" | "md";
 }) {
-  const [active, setActive] = useState(false);
-
-  useEffect(() => {
-    const sync = () => setActive(isInWishlist(productId));
-    sync();
-    const onStorage = (e: StorageEvent) => {
-      if (!e.key || e.key === WISHLIST_KEY) sync();
-    };
-    window.addEventListener("storage", onStorage);
-    window.addEventListener(WISHLIST_UPDATE_EVENT, sync);
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener(WISHLIST_UPDATE_EVENT, sync);
-    };
-  }, [productId]);
+  const active = useWishlistStore((s) => s.items.some((i) => i.productId === productId));
 
   return (
     <button
@@ -193,7 +179,6 @@ export function WishlistButton({
         e.preventDefault();
         e.stopPropagation();
         const now = toggleWishlist({ productId, slug, title, priceCents, imageUrl });
-        setActive(now);
         showSiteToast({
           message: now ? "Favorilere eklendi." : "Favorilerden çıkarıldı.",
           kind: "success",

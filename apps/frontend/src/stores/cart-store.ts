@@ -28,6 +28,7 @@ type CartState = {
   }) => void;
   setLineQuantity: (lineKey: string, quantity: number) => void;
   removeLine: (lineKey: string) => void;
+  clearCart: () => void;
 };
 
 function totalQty(lines: LocalCartLine[]) {
@@ -75,6 +76,11 @@ export const useCartStore = create<CartState>((set, get) => ({
     const next = get().lines.filter((l) => l.lineKey !== lineKey);
     writeLocalCartToStorage(next);
     set({ lines: next });
+  },
+
+  clearCart: () => {
+    writeLocalCartToStorage([]);
+    set({ lines: [] });
   },
 }));
 

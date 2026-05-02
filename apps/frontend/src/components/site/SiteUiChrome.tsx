@@ -1,7 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect } from "react";
-import { MiniCartDrawer } from "@/components/store/MiniCartDrawer";
 import { CART_STORAGE_KEY, syncCartFromStorage } from "@/lib/cart-sync";
 import { CART_UPDATE_EVENT } from "@/lib/platform-storage-events";
 import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
@@ -10,6 +10,11 @@ import { BackToTop } from "./BackToTop";
 import { CartAbandonToast } from "./CartAbandonToast";
 import { EmailCapturePopup } from "./EmailCapturePopup";
 import { SiteToaster } from "./SiteToaster";
+
+const MiniCartDrawer = dynamic(
+  () => import("@/components/store/MiniCartDrawer").then((m) => m.MiniCartDrawer),
+  { ssr: false },
+);
 
 export function SiteUiChrome() {
   useEffect(() => {
