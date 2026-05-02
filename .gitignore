@@ -1,0 +1,18 @@
+node_modules
+dist
+.next
+.env
+.env.local
+.env.*.local
+*.log
+coverage
+.turbo
+.DS_Store
+apps/backend/dist
+apps/backend/uploads
+apps/frontend/.next
+uploads
+
+# Yerel kalıntılar / arşiv
+*.rar
+_tmp*

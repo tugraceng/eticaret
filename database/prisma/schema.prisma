@@ -1,0 +1,592 @@
+// Single-store storefront schema.
+// Run from repo root: npm run db:generate / db:migrate
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  MOCK
+  IYZICO
+  PAYTR
+  STRIPE
+}
+
+enum DiscountKind {
+  PERCENT
+  FIXED
+}
+
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum HomeSectionKind {
+  /// Tam genişlik vitrin slaytları — config.slides[]
+  HERO
+  TRUST_STRIP
+  CATEGORY_ICONS
+  RAIL_BESTSELLERS
+  RAIL_POPULAR
+  RAIL_NEWEST
+  STORY_STRIP
+  PROMO_BANNER
+  /// Ana ürün ızgarası (filtre / kategori) — tek satır; sıra panelden
+  PRODUCT_CATALOG
+  BANNERS
+  FEATURED_PRODUCTS
+  FEATURED_CATEGORIES
+  RICH_TEXT
+  BLOG_TEASER
+  TESTIMONIALS
+  CTA
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  name            String?
+  surname         String?
+  phone           String?
+  birthDate       DateTime?
+  kvkkAcceptedAt  DateTime?
+  marketingOptIn  Boolean   @default(false)
+  role            UserRole  @default(CUSTOMER)
+  tokenVersion    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  customer      Customer?
+  orders        Order[]        @relation("OrderBuyer")
+  notifications Notification[]
+  reviews       Review[]
+  passwordResetTokens PasswordResetToken[]
+  returnRequests ReturnRequest[] @relation("ReturnRequester")
+  cart         Cart?
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+}
+
+model CartItem {
+  id               String   @id @default(cuid())
+  cartId           String
+  productId        String
+  productVariantId String?
+  /// Sepet satırı birleştirme anahtarı: "v:<variantId>" veya "p:<productId>"
+  lineKey          String
+  quantity         Int      @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  cart             Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id], onDelete: SetNull)
+
+  @@unique([cartId, lineKey])
+  @@index([productId])
+}
+
+model SiteSettings {
+  id               String   @id @default(cuid())
+  siteName         String   @default("Mağaza")
+  logoUrl          String?
+  faviconUrl       String?
+  primaryColor     String   @default("#0f172a")
+  secondaryColor   String   @default("#3b82f6")
+  accentColor      String?
+  fontFamily       String?
+  contactEmail     String?
+  contactPhone     String?
+  address          String?
+  /// JSON: { instagram, facebook, x, youtube, linkedin, ... }
+  socialLinks      Json     @default("{}")
+  defaultMetaTitle String?
+  defaultMetaDesc  String?  @db.Text
+  ogImageUrl       String?
+  // Kargo
+  shippingFeeCents           Int @default(0)
+  freeShippingThresholdCents Int @default(0) // 0 ise eşik yok
+  // KDV (basis points: 2000 = %20). Fiyatlara dahil mi?
+  taxRateBp        Int      @default(0)
+  taxIncluded      Boolean  @default(true)
+  // Stok uyarı eşiği
+  lowStockThreshold Int     @default(5)
+  // WhatsApp entegrasyonu
+  whatsappEnabled       Boolean @default(false)
+  whatsappNumber        String? // E.164 formatı, ör: 905551234567
+  whatsappGreeting      String? // Hazır mesaj (FAB için)
+  whatsappPhoneId       String? // Cloud API phone_number_id
+  whatsappAccessToken   String? // Cloud API erişim anahtarı
+  whatsappShippedTemplate String? // Onaylı şablon adı (ör: order_shipped)
+  whatsappTemplateLang  String @default("tr")
+  // Promosyon popup (anasayfa / tüm site)
+  popupEnabled            Boolean @default(false)
+  popupTitle              String?
+  popupBody               String?  @db.Text
+  popupCtaLabel           String?
+  popupCtaHref            String?
+  popupImageUrl           String?
+  /// sm | md | lg | xl | full
+  popupSize               String   @default("md")
+  popupDismissBackdrop    Boolean  @default(true)
+  /// true: sekme kapanana kadar tekrar gösterme
+  popupSessionOnly        Boolean  @default(false)
+  /// Sürüm anahtarı — değiştirip kaydedince daha önce kapatanlara yeniden gösterilir
+  popupStorageKey         String   @default("1")
+  // Üst promosyon şeridi (masaüstü)
+  topPromoLine1      String   @default("Tüm ürünlerde %3 havale/EFT indirimi")
+  topPromoLine2      String   @default("2.000 TL üzeri kargo ücretsiz")
+  topPromoLine3      String   @default("9 aya varan taksit imkânı")
+  topPromoBgColor    String   @default("#0f172a")
+  topPromoTextColor  String   @default("#f8fafc")
+  /// Üst bant kayan metin: bir tam turun süresi (sn). Daha büyük = daha yavaş.
+  topPromoMarqueeDurationSec Int @default(50)
+  // Giriş / kayıt sol panel
+  authPanelTitle         String   @default("Her adımda kalite.")
+  authPanelSubtitle      String   @default("Hassas üretim ve zamansız tasarımı bir araya getiren seçkin ürünler, tek tıkla kapınızda.") @db.Text
+  authPanelImageUrl      String?
+  authPanelGradientFrom  String   @default("#334155")
+  authPanelGradientTo    String   @default("#020617")
+  authPanelTextColor     String   @default("#ffffff")
+  // Mağaza + ürün detayı: xl+ yan sütun kendi kampanyaları
+  shopRailLeftEnabled  Boolean  @default(false)
+  shopRailLeftTitle    String   @default("")
+  shopRailLeftBody     String   @default("") @db.Text
+  shopRailLeftCode     String   @default("")
+  shopRailLeftCtaLabel String   @default("")
+  shopRailLeftCtaHref  String   @default("")
+  shopRailRightEnabled  Boolean  @default(false)
+  shopRailRightTitle    String   @default("")
+  shopRailRightBody     String   @default("") @db.Text
+  shopRailRightCode     String   @default("")
+  shopRailRightCtaLabel String   @default("")
+  shopRailRightCtaHref  String   @default("")
+  updatedAt        DateTime @updatedAt
+}
+
+model ShippingRate {
+  id                String   @id @default(cuid())
+  country           String   @default("TR")
+  city              String?  // null = ülke geneli
+  feeCents          Int
+  freeThresholdCents Int     @default(0) // 0 ise eşik yok
+  isActive          Boolean  @default(true)
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([country, city])
+}
+
+model HomeSection {
+  id        String          @id @default(cuid())
+  kind      HomeSectionKind
+  title     String?
+  subtitle  String?
+  body      String?         @db.Text
+  mediaUrl  String?
+  ctaLabel  String?
+  ctaHref   String?
+  /// Kind-specific payload: FEATURED_PRODUCTS → { productIds: string[] },
+  /// FEATURED_CATEGORIES → { categoryIds: string[] }, BANNERS → { slides: [...] }, etc.
+  config    Json            @default("{}")
+  isVisible Boolean         @default(true)
+  sortOrder Int             @default(0)
+
+  @@index([sortOrder])
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  parentId    String?
+  sortOrder   Int        @default(0)
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  products    Product[]
+}
+
+model Product {
+  id             String         @id @default(cuid())
+  categoryId     String?
+  name           String
+  slug           String         @unique
+  description    String?        @db.Text
+  priceCents     Int
+  compareAtCents Int?
+  sku            String?
+  stock          Int            @default(0)
+  trackStock     Boolean        @default(true)
+  lowStockThreshold Int?
+  isPublished    Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  category       Category?      @relation(fields: [categoryId], references: [id])
+  images         ProductImage[]
+  variants       ProductVariant[]
+  orderItems     OrderItem[]
+  reviews        Review[]
+  stockMovements StockMovement[]
+  cartItems      CartItem[]
+
+  @@index([isPublished])
+  @@index([categoryId])
+}
+
+/// Ürün seçenekleri (renk/beden vb.). priceCents null ise ürün fiyatı kullanılır.
+model ProductVariant {
+  id         String   @id @default(cuid())
+  productId  String
+  sku        String?
+  label      String
+  priceCents Int?
+  stock      Int      @default(0)
+  trackStock Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+  stockMovements StockMovement[]
+
+  @@index([productId])
+  @@index([productId, isActive])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String?
+  authorName String?
+  rating    Int
+  title     String?
+  body      String   @db.Text
+  isApproved Boolean @default(true)
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([productId, createdAt])
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model Customer {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  surname   String?
+  phone     String?
+  userId    String?   @unique
+  user      User?     @relation(fields: [userId], references: [id])
+  addresses Address[]
+  orders    Order[]
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  customerId  String
+  label       String?
+  contactName String?
+  phone       String?
+  line1       String
+  line2       String?
+  district    String?
+  city        String
+  state       String?
+  postalCode  String
+  country     String   @default("TR")
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  customerId     String?
+  guestEmail     String?
+  buyerUserId    String?
+  status         OrderStatus @default(PENDING)
+  subtotalCents  Int
+  taxCents       Int         @default(0)
+  shippingCents  Int         @default(0)
+  totalCents     Int
+  currency       String      @default("TRY")
+  trackingNumber String?
+
+  // Teslimat / iletişim (checkout sırasında alınır)
+  contactName       String?
+  contactPhone      String?
+  identityNumber    String? // T.C. Kimlik No (opsiyonel, 11 haneli)
+  shippingLine1     String?
+  shippingLine2     String?
+  shippingDistrict  String?
+  shippingCity      String?
+  shippingPostalCode String?
+  shippingCountry   String?  @default("TR")
+  notes             String?
+
+  // Kupon / indirim
+  discountCode   String?
+  discountCents  Int       @default(0)
+
+  // Yasal onaylar
+  kvkkAcceptedAt           DateTime?
+  distanceSalesAcceptedAt  DateTime?
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  customer  Customer?   @relation(fields: [customerId], references: [id])
+  buyerUser User?       @relation("OrderBuyer", fields: [buyerUserId], references: [id])
+  items     OrderItem[]
+  payments  Payment[]
+  returns   ReturnRequest[]
+
+  @@index([status])
+  @@index([buyerUserId])
+}
+
+model OrderItem {
+  id                   String  @id @default(cuid())
+  orderId              String
+  productId            String
+  productVariantId     String?
+  variantLabelSnapshot String?
+  quantity             Int
+  unitPriceCents       Int
+  titleSnapshot        String
+  order                Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product              Product @relation(fields: [productId], references: [id])
+  productVariant       ProductVariant? @relation(fields: [productVariantId], references: [id], onDelete: SetNull)
+  returnItems          ReturnItem[]
+
+  @@index([orderId])
+}
+
+model ReturnRequest {
+  id         String       @id @default(cuid())
+  orderId    String
+  userId     String?
+  status     ReturnStatus @default(PENDING)
+  reason     String       @db.Text
+  note       String?      @db.Text
+  decidedAt  DateTime?
+  decidedBy  String?
+  /// Ödeme iadesi: SUCCEEDED | SKIPPED | FAILED (iyzico/MOCK durumuna göre)
+  refundStatus String?
+  refundCents  Int?
+  refundDetail String?    @db.Text
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  order      Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user       User?        @relation("ReturnRequester", fields: [userId], references: [id])
+  items      ReturnItem[]
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+}
+
+model ReturnItem {
+  id             String        @id @default(cuid())
+  returnId       String
+  orderItemId    String
+  quantity       Int
+  request        ReturnRequest @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  orderItem      OrderItem     @relation(fields: [orderItemId], references: [id])
+
+  @@index([returnId])
+}
+
+model StockMovement {
+  id                String   @id @default(cuid())
+  productId         String
+  productVariantId  String?
+  delta             Int      // pozitif = stok girişi, negatif = çıkış
+  reason            String   // "order_create" | "order_cancel" | "return" | "admin_adjust"
+  orderId           String?
+  note              String?
+  createdAt         DateTime @default(now())
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productVariant    ProductVariant? @relation(fields: [productVariantId], references: [id], onDelete: SetNull)
+
+  @@index([productId, createdAt])
+  @@index([createdAt])
+}
+
+/// CMS: flexible pages (About, custom landings) with structured JSON blocks
+model Page {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  title       String
+  content     Json?
+  isPublished Boolean @default(true)
+}
+
+model BlogPost {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  title         String
+  excerpt       String?
+  body          String    @db.Text
+  coverImageUrl String?
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Service {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  title       String
+  summary     String?
+  description String  @db.Text
+  iconUrl     String?
+  sortOrder   Int     @default(0)
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  summary     String?
+  description String    @db.Text
+  gallery     Json      @default("[]")
+  completedAt DateTime?
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  url       String
+  mimeType  String?
+  name      String?
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String?
+  read      Boolean  @default(false)
+  metadata  Json?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  event     String
+  path      String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Payment {
+  id          String          @id @default(cuid())
+  orderId     String?
+  provider    PaymentProvider @default(MOCK)
+  externalId  String?
+  amountCents Int
+  currency    String          @default("TRY")
+  status      String
+  rawResponse Json?
+  createdAt   DateTime        @default(now())
+  order       Order?          @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+}
+
+model DiscountCode {
+  id             String       @id @default(cuid())
+  code           String       @unique
+  kind           DiscountKind @default(PERCENT)
+  /// PERCENT için 0..100, FIXED için cents
+  value          Int
+  /// Minimum sepet tutarı (cents, 0 ise şart yok)
+  minSubtotalCents Int        @default(0)
+  /// Toplam kullanım limiti (0 ise sınırsız)
+  usageLimit     Int          @default(0)
+  usageCount     Int          @default(0)
+  startsAt       DateTime?
+  expiresAt      DateTime?
+  isActive       Boolean      @default(true)
+  description    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model PaymentProviderConfig {
+  id        String          @id @default(cuid())
+  provider  PaymentProvider @unique
+  enabled   Boolean         @default(false)
+  sandbox   Boolean         @default(true)
+  apiKey    String?
+  secretKey String?
+  /// Provider-specific extras (baseUrl override, webhook secret, locale, etc.)
+  extra     Json            @default("{}")
+  updatedAt DateTime        @updatedAt
+}
