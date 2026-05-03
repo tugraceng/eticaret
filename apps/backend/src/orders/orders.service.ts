@@ -388,6 +388,16 @@ export class OrdersService {
     return o;
   }
 
+  async getForViewer(id: string, viewer?: { sub: string; role: "ADMIN" | "CUSTOMER" }) {
+    const o = await this.getPublic(id);
+    if (viewer?.role === "ADMIN" || (viewer?.sub && o.buyerUserId === viewer.sub)) {
+      return o;
+    }
+    throw new ForbiddenException(
+      "Sipariş detayını görüntülemek için müşteri hesabınızla giriş yapın.",
+    );
+  }
+
   async cancelByCustomer(id: string, userId: string) {
     const o = await this.prisma.order.findUnique({ where: { id } });
     if (!o) throw new NotFoundException();

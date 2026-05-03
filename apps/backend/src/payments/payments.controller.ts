@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   ParseEnumPipe,
@@ -185,6 +186,9 @@ export class PaymentsController {
   // Legacy
   @Post("mock-checkout")
   mock(@Body() dto: MockPayDto) {
+    if (process.env.NODE_ENV === "production") {
+      throw new ForbiddenException("Mock ödeme üretim ortamında kullanılamaz.");
+    }
     return this.payments.mockCheckout(dto.orderId);
   }
 }

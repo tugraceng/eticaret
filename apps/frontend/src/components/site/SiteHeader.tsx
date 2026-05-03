@@ -22,7 +22,6 @@ import { selectWishlistCount, useWishlistStore } from "@/stores/wishlist-store";
 const STATIC_TAIL_NAV = [
   { href: "/services", label: "3D baskı hizmeti" },
   { href: "/about", label: "Bize ulaşın" },
-  { href: "/orders/track", label: "Sipariş takibi" },
 ] as const;
 
 function HeartIcon({ className = "" }: { className?: string }) {
@@ -359,20 +358,12 @@ export function SiteHeader({
 
           <div className="hidden items-center gap-2 sm:flex">
             {loggedIn ? (
-              <>
-                <Link
-                  href="/orders"
-                  className="header-auth-outline"
-                >
-                  Siparişlerim
-                </Link>
-                <Link
-                  href="/hesap"
-                  className="header-auth-solid"
-                >
-                  Hesabım
-                </Link>
-              </>
+              <Link
+                href="/hesap"
+                className="header-auth-solid"
+              >
+                Hesabım
+              </Link>
             ) : (
               <>
                 <Link

@@ -205,7 +205,7 @@ export function CustomerAccountHome() {
             </div>
 
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-7">
-              {tab === "overview" && <OverviewTab orders={orders} onGoto={selectTab} />}
+              {tab === "overview" && <OverviewTab orders={orders} me={me} onGoto={selectTab} />}
               {tab === "orders" && <OrdersTab token={token!} orders={orders} onChange={setOrders} />}
               {tab === "returns" && (
                 <div>
@@ -229,23 +229,54 @@ export function CustomerAccountHome() {
   );
 }
 
+function SectionIntro({
+  eyebrow,
+  title,
+  body,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="mb-6 border-b border-slate-100 pb-5">
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+        {eyebrow}
+      </p>
+      <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-900">
+        {title}
+      </h2>
+      <p className="mt-1 max-w-2xl text-sm text-slate-600">{body}</p>
+    </div>
+  );
+}
+
 // Overview ---------------------------------------------------------------
 
 function OverviewTab({
   orders,
+  me,
   onGoto,
 }: {
   orders: OrderRow[];
+  me: MeData | null;
   onGoto: (tab: AccountTabId) => void;
 }) {
-  const total = orders.reduce((s, o) => s + o.totalCents, 0);
   const activeShipments = orders.filter((o) =>
     ["SHIPPED", "PROCESSING", "PAID"].includes(o.status),
   ).length;
   const recent = orders.slice(0, 4);
+  const addresses = me?.customer?.addresses ?? [];
+  const hasProfileDetails = Boolean(me?.name && me?.surname && me?.phone);
+  const defaultAddress = addresses.find((a) => a.isDefault) ?? addresses[0];
 
   return (
     <div>
+      <SectionIntro
+        eyebrow="Genel bakış"
+        title="Hesap özeti"
+        body="Sipariş durumunuzu, teslimat ayarlarınızı ve hızlı işlemleri tek yerden yönetin."
+      />
       <div className="grid gap-4 sm:grid-cols-3">
         <button
           type="button"
@@ -277,15 +308,79 @@ function OverviewTab({
           <p className="mt-3 text-2xl font-semibold text-slate-900">{activeShipments}</p>
           <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">Aktif gönderi</p>
         </button>
-        <div className="flex flex-col items-center rounded-2xl border border-slate-200/80 bg-slate-50/60 px-4 py-6 text-center">
+        <button
+          type="button"
+          onClick={() => onGoto("addresses")}
+          className="flex flex-col items-center rounded-2xl border border-slate-200/80 bg-slate-50/60 px-4 py-6 text-center transition hover:border-slate-300 hover:shadow-sm"
+        >
           <span className="grid h-10 w-10 place-items-center rounded-full bg-sky-100 text-sky-600">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-              <rect x="2" y="5" width="20" height="14" rx="2" />
-              <path d="M2 10h20" />
+              <path d="M12 21s7-4.5 7-10a7 7 0 0 0-14 0c0 5.5 7 10 7 10z" />
+              <circle cx="12" cy="11" r="2" />
             </svg>
           </span>
-          <p className="mt-3 text-2xl font-semibold text-slate-900">{priceFmt(total)}</p>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">Harcama</p>
+          <p className="mt-3 text-2xl font-semibold text-slate-900">{addresses.length}</p>
+          <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">Kayıtlı adres</p>
+        </button>
+      </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Hesap durumu</p>
+              <h3 className="mt-1 text-base font-semibold text-slate-900">
+                {hasProfileDetails ? "Profil bilgileriniz hazır" : "Profilinizi tamamlayın"}
+              </h3>
+            </div>
+            <span
+              className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                hasProfileDetails ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"
+              }`}
+            >
+              {hasProfileDetails ? "Tamam" : "Eksik"}
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-slate-600">
+            Ad, soyad ve telefon bilgileriniz teslimat sürecinin daha hızlı ilerlemesini sağlar.
+          </p>
+          <button
+            type="button"
+            onClick={() => onGoto("profile")}
+            className="mt-4 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Profili düzenle
+          </button>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Varsayılan teslimat</p>
+          {defaultAddress ? (
+            <>
+              <h3 className="mt-1 text-base font-semibold text-slate-900">
+                {defaultAddress.label || defaultAddress.city}
+              </h3>
+              <p className="mt-2 line-clamp-2 text-sm text-slate-600">
+                {[defaultAddress.line1, defaultAddress.district, defaultAddress.city]
+                  .filter(Boolean)
+                  .join(" / ")}
+              </p>
+            </>
+          ) : (
+            <>
+              <h3 className="mt-1 text-base font-semibold text-slate-900">Adres ekleyin</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Checkout sırasında tek tıkla kullanmak için bir teslimat adresi kaydedin.
+              </p>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => onGoto("addresses")}
+            className="mt-4 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Adresleri yönet
+          </button>
         </div>
       </div>
 
@@ -398,17 +493,29 @@ function OrdersTab({
 
   if (orders.length === 0) {
     return (
-      <div className="surface-soft p-10 text-center text-sm text-slate-500">
-        Henüz siparişiniz yok.{" "}
-        <Link href="/#urunler" className="link-underline font-semibold text-slate-900">
-          Alışverişe başlayın
-        </Link>
+      <div>
+        <SectionIntro
+          eyebrow="Siparişler"
+          title="Sipariş geçmişi"
+          body="Tamamlanan ve devam eden siparişleriniz burada listelenir."
+        />
+        <div className="surface-soft p-10 text-center text-sm text-slate-500">
+          Henüz siparişiniz yok.{" "}
+          <Link href="/#urunler" className="link-underline font-semibold text-slate-900">
+            Alışverişe başlayın
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
     <div>
+      <SectionIntro
+        eyebrow="Siparişler"
+        title="Sipariş geçmişi"
+        body="Sipariş durumunuzu takip edin, bekleyen siparişlerde iptal işlemini buradan yönetin."
+      />
       {err && (
         <pre className="mb-3 overflow-auto rounded-xl bg-rose-50 p-3 text-xs text-rose-700">
           {err}
@@ -613,6 +720,11 @@ function AddressesTab({
 
   return (
     <div>
+      <SectionIntro
+        eyebrow="Teslimat"
+        title="Adres defteri"
+        body="Kayıtlı adresleriniz checkout sırasında hızlı teslimat seçimi için kullanılır."
+      />
       {err && (
         <pre className="mb-3 overflow-auto rounded-xl bg-rose-50 p-3 text-xs text-rose-700">
           {err}
@@ -845,6 +957,11 @@ function ProfileTab({
 
   return (
     <div>
+      <SectionIntro
+        eyebrow="Profil"
+        title="Kişisel bilgiler"
+        body="Teslimat ve hesap iletişimi için kullanılan bilgilerinizi güncel tutun."
+      />
       <div className="grid gap-3 sm:grid-cols-2">
         <LabelInput label="Ad" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
         <LabelInput
@@ -929,6 +1046,11 @@ function PasswordTab({ token }: { token: string }) {
 
   return (
     <div className="max-w-lg">
+      <SectionIntro
+        eyebrow="Güvenlik"
+        title="Şifre değiştir"
+        body="Hesabınızı korumak için güçlü ve benzersiz bir şifre kullanın."
+      />
       <div className="grid gap-3">
         <LabelInput
           label="Mevcut şifre"

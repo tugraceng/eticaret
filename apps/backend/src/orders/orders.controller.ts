@@ -223,7 +223,11 @@ export class OrdersController {
   }
 
   @Get(":id")
-  track(@Param("id") id: string) {
-    return this.orders.getPublic(id);
+  @UseGuards(OptionalJwtAuthGuard)
+  track(@Param("id") id: string, @Req() req: ReqUser) {
+    const viewer = req.user
+      ? { sub: req.user.sub, role: req.user.role as "ADMIN" | "CUSTOMER" }
+      : undefined;
+    return this.orders.getForViewer(id, viewer);
   }
 }

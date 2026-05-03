@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
 
@@ -25,12 +24,10 @@ const statusClass: Record<string, string> = {
 };
 
 export default function OrdersPage() {
-  const router = useRouter();
   const [phase, setPhase] = useState<"loading" | "ok">("loading");
   const [loggedIn, setLoggedIn] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [err, setErr] = useState<string | null>(null);
-  const [trackNo, setTrackNo] = useState("");
 
   useEffect(() => {
     const tok = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
@@ -60,12 +57,6 @@ export default function OrdersPage() {
     };
   }, []);
 
-  function trackSubmit(e: FormEvent) {
-    e.preventDefault();
-    const id = trackNo.trim();
-    if (id) router.push(`/orders/${encodeURIComponent(id)}`);
-  }
-
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <div className="fade-up section-shell">
@@ -81,35 +72,22 @@ export default function OrdersPage() {
       </div>
 
       {!loggedIn && (
-        <form onSubmit={trackSubmit} className="surface-soft mt-8 p-6">
+        <section className="surface-soft mt-8 p-6">
           <p className="text-sm text-slate-600">
-            Sipariş numaranızı girerek durumu görüntüleyebilirsiniz.
+            Sipariş takibi yalnızca müşteri hesabınızdan görüntülenebilir.
           </p>
-          <div className="mt-4 flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-[220px]">
-              <label className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                Sipariş No
-              </label>
-              <input
-                value={trackNo}
-                onChange={(e) => setTrackNo(e.target.value)}
-                className="input-soft mt-2"
-                placeholder="Örn. cln3k2..."
-                required
-              />
-            </div>
-            <button type="submit" className="btn-primary">
-              Takip et <span aria-hidden>→</span>
-            </button>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link href="/hesap/giris" className="btn-primary">
+              Giriş yap
+            </Link>
+            <Link href="/hesap/kayit" className="btn-ghost">
+              Hesap oluştur
+            </Link>
           </div>
           <p className="mt-4 text-xs text-slate-500">
-            Hesabınız varsa{" "}
-            <Link href="/hesap/giris" className="link-underline font-semibold text-slate-900">
-              giriş yaparak
-            </Link>{" "}
-            tüm siparişlerinizi görebilirsiniz.
+            Giriş yaptıktan sonra hesap detaylarında tüm siparişlerinizi ve kargo durumunu görebilirsiniz.
           </p>
-        </form>
+        </section>
       )}
 
       {loggedIn && phase !== "ok" && (

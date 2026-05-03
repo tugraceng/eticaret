@@ -84,7 +84,6 @@ function iconForItem(item: DockItem) {
 }
 
 const DOCK_QUICK_LINKS = [
-  { href: "/orders/track", label: "Sipariş takibi" },
   { href: "/about", label: "İletişim" },
 ] as const;
 

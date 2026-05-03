@@ -26,14 +26,12 @@ const columns = {
     { href: "/cart", label: "Sepet" },
     { href: "/favoriler", label: "Favoriler" },
     { href: "/checkout", label: "Ödeme" },
-    { href: "/orders", label: "Siparişlerim" },
     { href: "/hesap", label: "Hesabım" },
   ],
   Destek: [
     { href: "/contact", label: "Destek" },
     { href: "/teslimat-iade", label: "Kargo ve iade" },
     { href: "/hesap/iadeler", label: "İadelerim" },
-    { href: "/orders/track", label: "Sipariş takibi" },
   ],
   Yasal: [
     { href: "/kvkk", label: "KVKK" },
