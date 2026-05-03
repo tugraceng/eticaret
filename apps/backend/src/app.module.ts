@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./auth/auth.module";
 import { ProductsModule } from "./products/products.module";
@@ -19,6 +20,8 @@ import { ReviewsModule } from "./reviews/reviews.module";
 import { ShippingModule } from "./shipping/shipping.module";
 import { WhatsAppModule } from "./whatsapp/whatsapp.module";
 import { UploadsModule } from "./uploads/uploads.module";
+import { MarketingModule } from "./marketing/marketing.module";
+import { EinvoiceModule } from "./einvoice/einvoice.module";
 
 @Module({
   imports: [
@@ -31,6 +34,8 @@ import { UploadsModule } from "./uploads/uploads.module";
         ".env",
       ],
     }),
+    ScheduleModule.forRoot(),
+    EinvoiceModule,
     PrismaModule,
     EmailModule,
     CategoriesModule,
@@ -49,6 +54,7 @@ import { UploadsModule } from "./uploads/uploads.module";
     WhatsAppModule,
     AnalyticsModule,
     UploadsModule,
+    MarketingModule,
   ],
 })
 export class AppModule {}

@@ -5,10 +5,11 @@ import { ShopPageClient } from "@/components/store/ShopPageClient";
 export const dynamic = "force-dynamic";
 
 type ShopCategory = { id: string; name: string; slug: string };
-type SortKey = "newest" | "price_asc" | "price_desc" | "popular";
+type SortKey = "newest" | "price_asc" | "price_desc" | "popular" | "bestseller";
 
 const SORTS: Array<{ key: SortKey; label: string }> = [
   { key: "newest", label: "En yeni" },
+  { key: "bestseller", label: "En çok satan" },
   { key: "popular", label: "Popüler" },
   { key: "price_asc", label: "Fiyat (artan)" },
   { key: "price_desc", label: "Fiyat (azalan)" },
@@ -32,6 +33,9 @@ function buildCatalogQueryString(args: {
   maxPriceCents?: number;
   minAvgRating?: string;
   inStockOnly: boolean;
+  onSaleOnly: boolean;
+  featuredOnly: boolean;
+  newOnly: boolean;
 }) {
   const p = new URLSearchParams();
   p.set("limit", "12");
@@ -42,6 +46,9 @@ function buildCatalogQueryString(args: {
   if (typeof args.maxPriceCents === "number") p.set("maxPriceCents", String(args.maxPriceCents));
   if (args.minAvgRating) p.set("minAvgRating", args.minAvgRating);
   if (args.inStockOnly) p.set("inStock", "1");
+  if (args.onSaleOnly) p.set("onSale", "1");
+  if (args.featuredOnly) p.set("featured", "1");
+  if (args.newOnly) p.set("newProduct", "1");
   return p.toString();
 }
 
@@ -57,6 +64,9 @@ export default async function ShopPage({
     minAvgRating?: string;
     page?: string;
     inStock?: string;
+    onSale?: string;
+    featured?: string;
+    newProduct?: string;
     view?: string;
   }>;
 }) {
@@ -69,6 +79,9 @@ export default async function ShopPage({
   const minAvgRating = asMinAvgRating(sp.minAvgRating?.trim());
   const page = asPositiveInt(sp.page) ?? 1;
   const inStockOnly = sp.inStock === "1";
+  const onSaleOnly = sp.onSale === "1";
+  const featuredOnly = sp.featured === "1";
+  const newOnly = sp.newProduct === "1";
   const view: "grid" | "list" = sp.view === "list" ? "list" : "grid";
 
   const catalogQs = buildCatalogQueryString({
@@ -79,6 +92,9 @@ export default async function ShopPage({
     maxPriceCents,
     minAvgRating,
     inStockOnly,
+    onSaleOnly,
+    featuredOnly,
+    newOnly,
   });
 
   const [categories, catalog] = await Promise.all([
@@ -100,6 +116,9 @@ export default async function ShopPage({
     maxPriceCents: maxPriceCents ? String(maxPriceCents) : undefined,
     minAvgRating,
     ...(inStockOnly ? { inStock: "1" as const } : {}),
+    ...(onSaleOnly ? { onSale: "1" as const } : {}),
+    ...(featuredOnly ? { featured: "1" as const } : {}),
+    ...(newOnly ? { newProduct: "1" as const } : {}),
     ...(view === "list" ? { view: "list" as const } : {}),
   };
 
@@ -118,6 +137,9 @@ export default async function ShopPage({
       maxPriceCents={maxPriceCents}
       minAvgRating={minAvgRating}
       inStockOnly={inStockOnly}
+      onSaleOnly={onSaleOnly}
+      featuredOnly={featuredOnly}
+      newOnly={newOnly}
       page={page}
       view={view}
     />

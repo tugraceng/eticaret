@@ -1,6 +1,7 @@
 "use client";
 
 import { apiUrl } from "@/lib/api";
+import { adminFetch } from "../api";
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { ProductFormWizard } from "../components/forms/ProductFormWizard";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
@@ -23,6 +24,11 @@ export function ProductsPanel({
   editStock,
   editPublished,
   editCategoryId,
+  editMetaTitle,
+  editMetaDescription,
+  editSeoKeywords,
+  editFeatured,
+  editNew,
   imgAlt,
   setEditName,
   setEditSlug,
@@ -34,6 +40,11 @@ export function ProductsPanel({
   setEditStock,
   setEditPublished,
   setEditCategoryId,
+  setEditMetaTitle,
+  setEditMetaDescription,
+  setEditSeoKeywords,
+  setEditFeatured,
+  setEditNew,
   setImgAlt,
   addProductImageFromFile,
   saveProductEdit,
@@ -79,6 +90,11 @@ export function ProductsPanel({
   editStock: string;
   editPublished: boolean;
   editCategoryId: string;
+  editMetaTitle: string;
+  editMetaDescription: string;
+  editSeoKeywords: string;
+  editFeatured: boolean;
+  editNew: boolean;
   imgAlt: string;
   setEditName: Dispatch<SetStateAction<string>>;
   setEditSlug: Dispatch<SetStateAction<string>>;
@@ -90,6 +106,11 @@ export function ProductsPanel({
   setEditStock: Dispatch<SetStateAction<string>>;
   setEditPublished: Dispatch<SetStateAction<boolean>>;
   setEditCategoryId: Dispatch<SetStateAction<string>>;
+  setEditMetaTitle: Dispatch<SetStateAction<string>>;
+  setEditMetaDescription: Dispatch<SetStateAction<string>>;
+  setEditSeoKeywords: Dispatch<SetStateAction<string>>;
+  setEditFeatured: Dispatch<SetStateAction<boolean>>;
+  setEditNew: Dispatch<SetStateAction<boolean>>;
   setImgAlt: Dispatch<SetStateAction<string>>;
   addProductImageFromFile: (file: File) => Promise<void>;
   saveProductEdit: () => Promise<void>;
@@ -151,15 +172,20 @@ export function ProductsPanel({
   useEffect(() => {
     void (async () => {
       try {
-        const r = await fetch(apiUrl("/settings"));
-        if (!r.ok) return;
-        const j = (await r.json()) as { lowStockThreshold?: number };
+        const j = (await adminFetch("/settings/admin", token)) as { lowStockThreshold?: number };
         if (typeof j.lowStockThreshold === "number") setLowTh(j.lowStockThreshold);
       } catch {
-        /* ignore */
+        try {
+          const r = await fetch(apiUrl("/settings"));
+          if (!r.ok) return;
+          const j = (await r.json()) as { lowStockThreshold?: number };
+          if (typeof j.lowStockThreshold === "number") setLowTh(j.lowStockThreshold);
+        } catch {
+          /* ignore */
+        }
       }
     })();
-  }, []);
+  }, [token]);
 
   const filteredProducts = useMemo(() => {
     let list = products;
@@ -321,6 +347,36 @@ export function ProductsPanel({
               />
               Stok takibi (satışta stok düşsün)
             </label>
+          </div>
+
+          <div className="mt-4 space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">SEO ve rozetler</p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <Field label="Meta başlık">
+                <input className="input-soft" value={editMetaTitle} onChange={(e) => setEditMetaTitle(e.target.value)} maxLength={200} />
+              </Field>
+              <Field label="Anahtar kelimeler" hint="Virgülle ayırın">
+                <input className="input-soft" value={editSeoKeywords} onChange={(e) => setEditSeoKeywords(e.target.value)} maxLength={4000} />
+              </Field>
+            </div>
+            <Field label="Meta açıklama">
+              <textarea
+                className="input-soft min-h-[72px] resize-y"
+                value={editMetaDescription}
+                onChange={(e) => setEditMetaDescription(e.target.value)}
+                maxLength={8000}
+              />
+            </Field>
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input type="checkbox" checked={editFeatured} onChange={(e) => setEditFeatured(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+                Öne çıkan
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input type="checkbox" checked={editNew} onChange={(e) => setEditNew(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+                Yeni ürün
+              </label>
+            </div>
           </div>
 
           <div className="mt-5 rounded-2xl border border-amber-200 bg-white/70 p-4">

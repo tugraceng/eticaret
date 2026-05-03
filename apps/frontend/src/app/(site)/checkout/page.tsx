@@ -114,6 +114,8 @@ function CheckoutInner() {
   // consents
   const [kvkk, setKvkk] = useState(false);
   const [mss, setMss] = useState(false);
+  /** Misafir için: kampanya / fırsat e-postası izni (terk edilmiş sepet ve kampanyalar) */
+  const [marketingCheckoutOptIn, setMarketingCheckoutOptIn] = useState(false);
 
   // saved addresses
   const [addresses, setAddresses] = useState<MeAddress[]>([]);
@@ -152,6 +154,46 @@ function CheckoutInner() {
       }
     })();
   }, []);
+
+  const guestAbandonPayload = useMemo(
+    () =>
+      JSON.stringify(
+        lines.map((l) => ({
+          productId: l.productId,
+          productVariantId: l.productVariantId,
+          lineKey: l.lineKey,
+          quantity: l.quantity,
+          title: l.title,
+          priceCents: typeof l.priceCents === "number" ? l.priceCents : 0,
+          slug: l.slug,
+        })),
+      ),
+    [lines],
+  );
+
+  useEffect(() => {
+    if (loggedIn) return;
+    if (!lines.length) return;
+    const em = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return;
+    const t = window.setTimeout(() => {
+      try {
+        const parsed = JSON.parse(guestAbandonPayload) as Array<Record<string, unknown>>;
+        void fetch(apiUrl("/cart/guest-abandon"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: em,
+            marketingOptIn: marketingCheckoutOptIn,
+            lines: parsed,
+          }),
+        }).catch(() => undefined);
+      } catch {
+        /* ignore */
+      }
+    }, 900);
+    return () => window.clearTimeout(t);
+  }, [loggedIn, email, marketingCheckoutOptIn, guestAbandonPayload, lines.length]);
 
   useEffect(() => {
     const pre = sessionStorage.getItem(CUSTOMER_EMAIL_KEY);
@@ -971,6 +1013,18 @@ function CheckoutInner() {
                 />
               </div>
               <div className="mt-4 space-y-2 rounded-2xl bg-slate-50 p-4">
+                <label className="flex items-start gap-3 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={marketingCheckoutOptIn}
+                    onChange={(e) => setMarketingCheckoutOptIn(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                  />
+                  <span>
+                    Kampanya, indirim ve hatırlatma iletileri için e-posta almak istiyorum. (İsteğe bağlı —
+                    ticari elektronik ileti izni; dilediğinizde hesabınızdan kapatabilirsiniz.)
+                  </span>
+                </label>
                 <label className="flex items-start gap-3 text-sm text-slate-700">
                   <input
                     type="checkbox"

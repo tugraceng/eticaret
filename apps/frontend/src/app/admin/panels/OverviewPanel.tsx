@@ -58,6 +58,7 @@ export function OverviewPanel({
     { href: "/admin/categories", label: "Kategoriler", hint: "Ürün grupları", icon: Icon.Folder },
     { href: "/admin/products", label: "Ürünler", hint: "Ekle veya düzenle", icon: Icon.Box },
     { href: "/admin/orders", label: "Siparişler", hint: "Durum güncelle", icon: Icon.Bag },
+    { href: "/admin/marketing", label: "Kampanyalar", hint: "E-posta ve terk edilmiş sepet", icon: Icon.Megaphone },
     { href: "/admin/home", label: "Ana sayfa", hint: "Vitrin ve slaytlar", icon: Icon.Home },
   ] as const;
 
@@ -91,6 +92,7 @@ export function OverviewPanel({
         counters.pendingReviews > 0 ||
         counters.pendingReturns > 0 ||
         counters.pendingOrders > 0 ||
+        (counters.abandonedCartCount ?? 0) > 0 ||
         unreadNotifs > 0) && (
         <AdminCard
           tone="warning"
@@ -133,9 +135,59 @@ export function OverviewPanel({
                 </Link>
               </li>
             ) : null}
+            {(counters.abandonedCartCount ?? 0) > 0 ? (
+              <li>
+                <Link className="font-semibold underline-offset-2 hover:underline" href="/admin/marketing">
+                  Terk edilmiş sepet kaydı: {counters.abandonedCartCount}
+                </Link>
+              </li>
+            ) : null}
           </ul>
         </AdminCard>
       )}
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+        <StatCard
+          label="Bugünkü ciro (ödenen siparişler)"
+          value={(counters.todayRevenueCents / 100).toLocaleString("tr-TR", {
+            style: "currency",
+            currency: orders[0]?.currency ?? "TRY",
+            maximumFractionDigits: 0,
+          })}
+          hint="İptal edilmemiş siparişlerin toplamı"
+          icon={<Icon.Bag />}
+          tone="emerald"
+        />
+        <StatCard
+          label="Kampanya izni (KVKK+)"
+          value={counters.marketingOptInCount}
+          hint="E-posta kampanyasına uygun müşteri"
+          icon={<Icon.Users />}
+          tone="sky"
+        />
+        <StatCard
+          label="Terk edilmiş sepet"
+          value={counters.abandonedCartCount}
+          hint="Giriş yapmış, sepetinde ürün"
+          icon={<Icon.Bag />}
+          tone="amber"
+        />
+      </div>
+
+      {counters.lastCampaign ? (
+        <AdminCard title="Son tamamlanan kampanya" description="Gönderim özeti (admin bildirimleriyle eşlenir).">
+          <p className="text-sm text-slate-800">
+            <span className="font-semibold">{counters.lastCampaign.title}</span> — alıcı:{" "}
+            {counters.lastCampaign.recipientCount}, başarılı: {counters.lastCampaign.successCount}, hata:{" "}
+            {counters.lastCampaign.failCount}
+          </p>
+          {counters.lastCampaign.sentAt ? (
+            <p className="mt-1 text-xs text-slate-500">
+              {new Date(counters.lastCampaign.sentAt).toLocaleString("tr-TR")}
+            </p>
+          ) : null}
+        </AdminCard>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard

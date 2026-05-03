@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
 type ProductWithRelations = {
@@ -65,10 +66,13 @@ export class ProductsService {
     minPriceCents?: number;
     maxPriceCents?: number;
     minAvgRating?: number;
-    sort?: "newest" | "price_asc" | "price_desc" | "popular";
+    sort?: "newest" | "price_asc" | "price_desc" | "popular" | "bestseller";
     page?: number;
     limit?: number;
     inStockOnly?: boolean;
+    onSaleOnly?: boolean;
+    featuredOnly?: boolean;
+    newOnly?: boolean;
   }) {
     let minRatingProductIds: string[] | undefined;
     if (
@@ -135,9 +139,77 @@ export class ProductsService {
             ],
           }
         : {}),
+      ...(input?.onSaleOnly ? { compareAtCents: { not: null } } : {}),
+      ...(input?.featuredOnly ? { isFeatured: true } : {}),
+      ...(input?.newOnly ? { isNew: true } : {}),
     };
 
     const sort = input?.sort ?? "newest";
+    const { page, limit, skip } = this.normalizePaging(input?.page, input?.limit);
+
+    if (sort === "bestseller") {
+      const allIds = await this.prisma.product.findMany({ where, select: { id: true } });
+      const idList = allIds.map((x) => x.id);
+      if (!idList.length) {
+        return {
+          items: [],
+          page,
+          limit,
+          total: 0,
+          totalPages: 1,
+          hasPrev: false,
+          hasNext: false,
+        };
+      }
+      const rows = await this.prisma.$queryRaw<Array<{ productId: string; qty: bigint }>>(
+        Prisma.sql`
+      SELECT oi."productId", SUM(oi."quantity")::bigint AS qty
+      FROM "OrderItem" oi
+      INNER JOIN "Order" o ON o.id = oi."orderId"
+      WHERE o.status IS DISTINCT FROM 'CANCELLED'::"OrderStatus"
+        AND oi."productId" IN (${Prisma.join(idList)})
+      GROUP BY oi."productId"
+    `,
+      );
+      const qtyMap = new Map(rows.map((r) => [r.productId, Number(r.qty)]));
+      idList.sort((a, b) => {
+        const da = qtyMap.get(a) ?? 0;
+        const db = qtyMap.get(b) ?? 0;
+        if (db !== da) return db - da;
+        return b.localeCompare(a);
+      });
+      const total = idList.length;
+      const pageIds = idList.slice(skip, skip + limit);
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      if (!pageIds.length) {
+        return {
+          items: [],
+          page,
+          limit,
+          total,
+          totalPages,
+          hasPrev: page > 1,
+          hasNext: page < totalPages,
+        };
+      }
+      const products = await this.prisma.product.findMany({
+        where: { id: { in: pageIds } },
+        include: { images: { orderBy: { sortOrder: "asc" } }, category: true },
+      });
+      const order = new Map(pageIds.map((id, i) => [id, i]));
+      products.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      const items = await this.withRatings(products);
+      return {
+        items,
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPrev: page > 1,
+        hasNext: page < totalPages,
+      };
+    }
+
     const orderBy =
       sort === "price_asc"
         ? ({ priceCents: "asc" } as const)
@@ -146,8 +218,6 @@ export class ProductsService {
           : sort === "popular"
             ? ({ reviews: { _count: "desc" } } as const)
             : ({ updatedAt: "desc" } as const);
-
-    const { page, limit, skip } = this.normalizePaging(input?.page, input?.limit);
 
     const [total, products] = await this.prisma.$transaction([
       this.prisma.product.count({ where }),
@@ -448,6 +518,9 @@ export class ProductsService {
     name: string;
     slug: string;
     description?: string;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    seoKeywords?: string | null;
     priceCents: number;
     compareAtCents?: number | null;
     sku?: string | null;
@@ -455,12 +528,17 @@ export class ProductsService {
     stock?: number;
     categoryId?: string;
     isPublished?: boolean;
+    isFeatured?: boolean;
+    isNew?: boolean;
   }) {
     return this.prisma.product.create({
       data: {
         name: data.name,
         slug: data.slug,
         description: data.description,
+        metaTitle: data.metaTitle?.trim() ? data.metaTitle.trim() : null,
+        metaDescription: data.metaDescription?.trim() ? data.metaDescription.trim() : null,
+        seoKeywords: data.seoKeywords?.trim() ? data.seoKeywords.trim() : null,
         priceCents: data.priceCents,
         compareAtCents: data.compareAtCents ?? undefined,
         sku: data.sku?.trim() ? data.sku.trim() : null,
@@ -468,6 +546,8 @@ export class ProductsService {
         stock: data.stock ?? 0,
         categoryId: data.categoryId,
         isPublished: data.isPublished ?? false,
+        isFeatured: data.isFeatured ?? false,
+        isNew: data.isNew ?? false,
       },
     });
   }
@@ -478,6 +558,9 @@ export class ProductsService {
       name: string;
       slug: string;
       description: string | null;
+      metaTitle: string | null;
+      metaDescription: string | null;
+      seoKeywords: string | null;
       priceCents: number;
       compareAtCents: number | null;
       sku: string | null;
@@ -485,10 +568,23 @@ export class ProductsService {
       stock: number;
       categoryId: string | null;
       isPublished: boolean;
+      isFeatured: boolean;
+      isNew: boolean;
     }>,
   ) {
     await this.ensure(id);
-    return this.prisma.product.update({ where: { id }, data });
+    const { metaTitle, metaDescription, seoKeywords, ...rest } = data;
+    const patch: Prisma.ProductUpdateInput = { ...rest };
+    if (metaTitle !== undefined) {
+      patch.metaTitle = metaTitle?.trim() ? metaTitle.trim() : null;
+    }
+    if (metaDescription !== undefined) {
+      patch.metaDescription = metaDescription?.trim() ? metaDescription.trim() : null;
+    }
+    if (seoKeywords !== undefined) {
+      patch.seoKeywords = seoKeywords?.trim() ? seoKeywords.trim() : null;
+    }
+    return this.prisma.product.update({ where: { id }, data: patch });
   }
 
   async remove(id: string) {

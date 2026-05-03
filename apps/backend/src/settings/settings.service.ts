@@ -21,11 +21,17 @@ export class SettingsService {
       whatsappAccessToken: _accessToken,
       whatsappPhoneId: _phoneId,
       whatsappShippedTemplate: _tpl,
+      whatsappTemplateLang: _waTplLang,
+      birthdayCouponAutomationEnabled: _birthdayAuto,
+      lowStockThreshold: _lowStock,
       ...safe
     } = full;
     void _accessToken;
     void _phoneId;
     void _tpl;
+    void _waTplLang;
+    void _birthdayAuto;
+    void _lowStock;
     return safe;
   }
 
@@ -91,6 +97,7 @@ export class SettingsService {
       shopRailRightCode: string;
       shopRailRightCtaLabel: string;
       shopRailRightCtaHref: string;
+      birthdayCouponAutomationEnabled: boolean;
     }>,
   ) {
     const current = await this.getSettings();

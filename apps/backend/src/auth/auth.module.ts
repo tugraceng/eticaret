@@ -5,7 +5,15 @@ import { PassportModule } from "@nestjs/passport";
 import type { SignOptions } from "jsonwebtoken";
 import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
+import { GoogleAuthController } from "./google-auth.controller";
+import { GoogleOAuthGuard } from "./google-oauth.guard";
+import { GoogleStrategy } from "./google.strategy";
 import { JwtStrategy } from "./jwt.strategy";
+
+const googleOAuthEnabled =
+  !!process.env.GOOGLE_CLIENT_ID &&
+  !!process.env.GOOGLE_CLIENT_SECRET &&
+  !!process.env.GOOGLE_CALLBACK_URL;
 
 @Module({
   imports: [
@@ -26,8 +34,12 @@ import { JwtStrategy } from "./jwt.strategy";
       },
     }),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  controllers: [AuthController, ...(googleOAuthEnabled ? [GoogleAuthController] : [])],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    ...(googleOAuthEnabled ? [GoogleStrategy, GoogleOAuthGuard] : []),
+  ],
   exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

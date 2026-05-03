@@ -15,6 +15,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   MinLength,
   ValidateIf,
@@ -69,6 +70,29 @@ class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   isPublished?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  metaTitle?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(8000)
+  metaDescription?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  seoKeywords?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isFeatured?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isNew?: boolean;
 }
 
 class AdjustStockDto {
@@ -206,6 +230,32 @@ class UpdateProductDto {
   @IsOptional()
   @IsBoolean()
   isPublished?: boolean;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== undefined)
+  @IsString()
+  @MaxLength(200)
+  metaTitle?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== undefined)
+  @IsString()
+  @MaxLength(8000)
+  metaDescription?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== undefined)
+  @IsString()
+  @MaxLength(4000)
+  seoKeywords?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isFeatured?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isNew?: boolean;
 }
 
 @Controller("products")
@@ -231,10 +281,13 @@ export class ProductsController {
     @Query("minPriceCents") minPriceCents?: string,
     @Query("maxPriceCents") maxPriceCents?: string,
     @Query("minAvgRating") minAvgRating?: string,
-    @Query("sort") sort?: "newest" | "price_asc" | "price_desc" | "popular",
+    @Query("sort") sort?: "newest" | "price_asc" | "price_desc" | "popular" | "bestseller",
     @Query("page") page?: string,
     @Query("limit") limit?: string,
     @Query("inStock") inStock?: string,
+    @Query("onSale") onSale?: string,
+    @Query("featured") featured?: string,
+    @Query("newProduct") newProduct?: string,
   ) {
     const min = minPriceCents ? Number(minPriceCents) : undefined;
     const max = maxPriceCents ? Number(maxPriceCents) : undefined;
@@ -242,6 +295,9 @@ export class ProductsController {
     const p = page ? Number(page) : undefined;
     const l = limit ? Number(limit) : undefined;
     const inStockOnly = inStock === "1" || inStock === "true";
+    const onSaleOnly = onSale === "1" || onSale === "true";
+    const featuredOnly = featured === "1" || featured === "true";
+    const newOnly = newProduct === "1" || newProduct === "true";
     return this.products.catalog({
       q,
       categoryId,
@@ -252,6 +308,9 @@ export class ProductsController {
       page: Number.isFinite(p) ? p : undefined,
       limit: Number.isFinite(l) ? l : undefined,
       inStockOnly: inStockOnly || undefined,
+      onSaleOnly: onSaleOnly || undefined,
+      featuredOnly: featuredOnly || undefined,
+      newOnly: newOnly || undefined,
     });
   }
 

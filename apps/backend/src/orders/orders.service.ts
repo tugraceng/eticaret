@@ -4,6 +4,7 @@ import { EmailService } from "../email/email.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { WhatsAppService } from "../whatsapp/whatsapp.service";
+import { EinvoiceService } from "../einvoice/einvoice.service";
 
 type CreateOrderInput = {
   items: { productId: string; quantity: number; productVariantId?: string }[];
@@ -34,6 +35,7 @@ export class OrdersService {
     private readonly notifications: NotificationsService,
     private readonly discounts: DiscountsService,
     private readonly whatsapp: WhatsAppService,
+    private readonly einvoice: EinvoiceService,
   ) {}
 
   async create(input: CreateOrderInput) {
@@ -45,7 +47,7 @@ export class OrdersService {
       throw new BadRequestException("Mesafeli Satış Sözleşmesini onaylamanız gerekir.");
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const order = await this.prisma.$transaction(async (tx) => {
       const products = await tx.product.findMany({
         where: { id: { in: input.items.map((i) => i.productId) }, isPublished: true },
         include: { variants: { where: { isActive: true } } },
@@ -214,6 +216,14 @@ export class OrdersService {
         include: { items: true },
       });
 
+      if (input.buyerUserId) {
+        await tx.abandonedCart.deleteMany({ where: { userId: input.buyerUserId } });
+      }
+      if (input.guestEmail?.trim()) {
+        const em = input.guestEmail.trim().toLowerCase();
+        await tx.guestAbandonedCart.deleteMany({ where: { email: em } });
+      }
+
       if (discountId) {
         await tx.discountCode.update({
           where: { id: discountId },
@@ -314,6 +324,8 @@ export class OrdersService {
       }
       return order;
     });
+    void this.einvoice.onOrderCreated(order.id);
+    return order;
   }
 
   listMine(buyerUserId: string) {

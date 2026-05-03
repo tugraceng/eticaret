@@ -27,6 +27,8 @@ import { ReviewsPanel } from "./panels/ReviewsPanel";
 import { ReturnsPanel } from "./panels/ReturnsPanel";
 import { StockPanel } from "./panels/StockPanel";
 import { DiscountsPanel } from "./panels/DiscountsPanel";
+import { MarketingPanel } from "./panels/MarketingPanel";
+import { CustomersPanel } from "./panels/CustomersPanel";
 import { formatCentsAsTryInput, parseTryToCentsOptional } from "./utils/money";
 import type {
   AnalyticsRow,
@@ -76,7 +78,26 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     pendingReturns: number;
     lowStock: number;
     pendingOrders: number;
-  }>({ pendingReviews: 0, pendingReturns: 0, lowStock: 0, pendingOrders: 0 });
+    marketingOptInCount: number;
+    abandonedCartCount: number;
+    todayRevenueCents: number;
+    lastCampaign: {
+      title: string;
+      successCount: number;
+      failCount: number;
+      recipientCount: number;
+      sentAt: string | null;
+    } | null;
+  }>({
+    pendingReviews: 0,
+    pendingReturns: 0,
+    lowStock: 0,
+    pendingOrders: 0,
+    marketingOptInCount: 0,
+    abandonedCartCount: 0,
+    todayRevenueCents: 0,
+    lastCampaign: null,
+  });
   const [insights, setInsights] = useState<SalesInsights | null>(null);
 
   const [catName, setCatName] = useState("");
@@ -110,6 +131,11 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   const [editStock, setEditStock] = useState("");
   const [editPublished, setEditPublished] = useState(true);
   const [editCategoryId, setEditCategoryId] = useState("");
+  const [editMetaTitle, setEditMetaTitle] = useState("");
+  const [editMetaDescription, setEditMetaDescription] = useState("");
+  const [editSeoKeywords, setEditSeoKeywords] = useState("");
+  const [editFeatured, setEditFeatured] = useState(false);
+  const [editNew, setEditNew] = useState(false);
 
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
@@ -160,8 +186,27 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
         pendingReturns: number;
         lowStock: number;
         pendingOrders: number;
+        marketingOptInCount?: number;
+        abandonedCartCount?: number;
+        todayRevenueCents?: number;
+        lastCampaign?: {
+          title: string;
+          successCount: number;
+          failCount: number;
+          recipientCount: number;
+          sentAt: string | null;
+        } | null;
       };
-      setCounters(c);
+      setCounters({
+        pendingReviews: c.pendingReviews ?? 0,
+        pendingReturns: c.pendingReturns ?? 0,
+        lowStock: c.lowStock ?? 0,
+        pendingOrders: c.pendingOrders ?? 0,
+        marketingOptInCount: c.marketingOptInCount ?? 0,
+        abandonedCartCount: c.abandonedCartCount ?? 0,
+        todayRevenueCents: c.todayRevenueCents ?? 0,
+        lastCampaign: c.lastCampaign ?? null,
+      });
     } catch {
       // sayaçlar opsiyonel — sessizce yut
     }
@@ -661,6 +706,11 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     setEditStock(String(p.stock));
     setEditPublished(p.isPublished);
     setEditCategoryId(p.categoryId ?? "");
+    setEditMetaTitle(p.metaTitle ?? "");
+    setEditMetaDescription(p.metaDescription ?? "");
+    setEditSeoKeywords(p.seoKeywords ?? "");
+    setEditFeatured(Boolean(p.isFeatured));
+    setEditNew(Boolean(p.isNew));
     setImgAlt("");
     setNewVariantLabel("");
     setNewVariantSku("");
@@ -688,6 +738,9 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
           name: editName.trim(),
           slug: editSlug.trim(),
           description: editDescription.trim() || null,
+          metaTitle: editMetaTitle.trim() || null,
+          metaDescription: editMetaDescription.trim() || null,
+          seoKeywords: editSeoKeywords.trim() || null,
           priceCents,
           compareAtCents: compareParsed.cents,
           sku: editSku.trim() || null,
@@ -695,6 +748,8 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
           stock: st,
           isPublished: editPublished,
           categoryId: editCategoryId || null,
+          isFeatured: editFeatured,
+          isNew: editNew,
         }),
       });
       setEditingProductId(null);
@@ -720,6 +775,11 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     editStock,
     editPublished,
     editCategoryId,
+    editMetaTitle,
+    editMetaDescription,
+    editSeoKeywords,
+    editFeatured,
+    editNew,
     loadProducts,
   ]);
 
@@ -966,6 +1026,9 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
           {token && tab === "stock" ? <StockPanel token={token} /> : null}
 
           {token && tab === "discounts" ? <DiscountsPanel token={token} /> : null}
+          {token && tab === "marketing" ? <MarketingPanel token={token} /> : null}
+
+          {token && tab === "customers" ? <CustomersPanel token={token} /> : null}
 
           {token && tab === "categories" ? (
             <CategoriesPanel
@@ -1006,6 +1069,11 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               editStock={editStock}
               editPublished={editPublished}
               editCategoryId={editCategoryId}
+              editMetaTitle={editMetaTitle}
+              editMetaDescription={editMetaDescription}
+              editSeoKeywords={editSeoKeywords}
+              editFeatured={editFeatured}
+              editNew={editNew}
               imgAlt={imgAlt}
               setEditName={setEditName}
               setEditSlug={setEditSlug}
@@ -1017,6 +1085,11 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               setEditStock={setEditStock}
               setEditPublished={setEditPublished}
               setEditCategoryId={setEditCategoryId}
+              setEditMetaTitle={setEditMetaTitle}
+              setEditMetaDescription={setEditMetaDescription}
+              setEditSeoKeywords={setEditSeoKeywords}
+              setEditFeatured={setEditFeatured}
+              setEditNew={setEditNew}
               setImgAlt={setImgAlt}
               addProductImageFromFile={addProductImageFromFile}
               saveProductEdit={saveProductEdit}

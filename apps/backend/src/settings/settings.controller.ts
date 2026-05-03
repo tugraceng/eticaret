@@ -274,6 +274,10 @@ class UpdateSettingsDto {
   @IsOptional()
   @IsString()
   shopRailRightCtaHref?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  birthdayCouponAutomationEnabled?: boolean;
 }
 
 class CreateHomeSectionDto {

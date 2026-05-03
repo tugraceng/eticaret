@@ -5,12 +5,17 @@ export type ProductRow = {
   name: string;
   slug: string;
   description?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  seoKeywords?: string | null;
   priceCents: number;
   compareAtCents?: number | null;
   sku?: string | null;
   trackStock?: boolean;
   stock: number;
   isPublished: boolean;
+  isFeatured?: boolean;
+  isNew?: boolean;
   categoryId?: string | null;
   category?: { id: string; name: string; slug: string } | null;
   images?: Array<{ id: string; url: string; alt?: string | null; sortOrder: number }>;
@@ -102,4 +107,14 @@ export type AdminCounters = {
   pendingReturns: number;
   lowStock: number;
   pendingOrders: number;
+  marketingOptInCount: number;
+  abandonedCartCount: number;
+  todayRevenueCents: number;
+  lastCampaign: {
+    title: string;
+    successCount: number;
+    failCount: number;
+    recipientCount: number;
+    sentAt: string | null;
+  } | null;
 };

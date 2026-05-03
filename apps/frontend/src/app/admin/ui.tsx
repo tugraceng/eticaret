@@ -315,4 +315,11 @@ export const Icon = {
       <circle cx="7.5" cy="7.5" r="1.5" />
     </svg>
   ),
+  Megaphone: ({ className = "h-5 w-5" }: IconProps) => (
+    <svg viewBox="0 0 24 24" {...stroke} className={className} aria-hidden>
+      <path d="M3 11v3h4l5 3V8L7 11H3z" />
+      <path d="M16 8a5 5 0 0 1 0 8" />
+      <path d="M19 5a8 8 0 0 1 0 14" />
+    </svg>
+  ),
 };

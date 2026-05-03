@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthSplitShell, type AuthPagePanel } from "@/components/account/AuthSplitShell";
 import { syncCartFromStorage } from "@/lib/cart-sync";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
@@ -15,11 +15,24 @@ import {
 export function CustomerLoginForm({
   siteName,
   authPanel,
+  returnTo: returnToProp,
 }: {
   siteName: string;
   authPanel?: AuthPagePanel;
+  /** Sunucudan güvenli yol (ör. `/sepet`). URL `callbackUrl` / `from` ile de verilebilir. */
+  returnTo?: string;
 }) {
   const router = useRouter();
+  const sp = useSearchParams();
+  const safeReturn = useMemo(() => {
+    if (returnToProp && returnToProp.startsWith("/") && !returnToProp.startsWith("//")) {
+      return returnToProp;
+    }
+    const raw = sp.get("callbackUrl") ?? sp.get("from") ?? "";
+    if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
+    return "/hesap";
+  }, [returnToProp, sp]);
+  const googleLoginEnabled = process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "1";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -35,13 +48,70 @@ export function CustomerLoginForm({
       cache: "no-store",
     }).then((res) => {
       if (cancelled) return;
-      if (res.ok) router.replace("/hesap");
+      if (res.ok) router.replace(safeReturn);
       else clearCustomerSession();
     });
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, safeReturn]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const oauthErr = sp.get("oauth_error");
+    if (!oauthErr) return;
+    setError(
+      oauthErr === "1"
+        ? "Google ile giriş tamamlanamadı. E-postanızla kayıtlı bir hesabınız yoksa önce kayıt olun."
+        : "Google ile giriş tamamlanamadı.",
+    );
+    const params = new URLSearchParams(sp.toString());
+    params.delete("oauth_error");
+    const q = params.toString();
+    router.replace(`${window.location.pathname}${q ? `?${q}` : ""}`, { scroll: false });
+  }, [sp, router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (!hash.startsWith("#access_token=")) return;
+    let token: string;
+    try {
+      token = decodeURIComponent(hash.slice("#access_token=".length));
+    } catch {
+      return;
+    }
+    if (!token) return;
+    let cancelled = false;
+    void (async () => {
+      setBusy(true);
+      setError(null);
+      sessionStorage.setItem(CUSTOMER_TOKEN_KEY, token);
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      try {
+        const res = await fetch(apiUrl("/auth/me"), {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        if (cancelled) return;
+        if (!res.ok) throw new Error("Oturum doğrulanamadı");
+        const me = (await res.json()) as { email: string };
+        sessionStorage.setItem(CUSTOMER_EMAIL_KEY, me.email);
+        await syncCartFromStorage();
+        router.replace(safeReturn);
+      } catch (e) {
+        if (!cancelled) {
+          clearCustomerSession();
+          setError(e instanceof Error ? e.message : "Oturum açılamadı");
+        }
+      } finally {
+        if (!cancelled) setBusy(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router, safeReturn]);
 
   const submit = useCallback(async () => {
     setError(null);
@@ -58,13 +128,13 @@ export function CustomerLoginForm({
       sessionStorage.setItem(CUSTOMER_TOKEN_KEY, data.accessToken);
       sessionStorage.setItem(CUSTOMER_EMAIL_KEY, data.user.email);
       await syncCartFromStorage();
-      router.replace("/hesap");
+      router.replace(safeReturn);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Giriş başarısız");
     } finally {
       setBusy(false);
     }
-  }, [email, password, router]);
+  }, [email, password, router, safeReturn]);
 
   return (
     <AuthSplitShell
@@ -81,9 +151,17 @@ export function CustomerLoginForm({
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          disabled
-          title="Çok yakında"
-          className="flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-400"
+          disabled={!googleLoginEnabled || busy}
+          title={googleLoginEnabled ? "Google ile giriş" : "Backend’de Google OAuth tanımlayıp NEXT_PUBLIC_GOOGLE_LOGIN=1 yapın"}
+          onClick={() => {
+            if (!googleLoginEnabled || busy) return;
+            window.location.assign(apiUrl("/auth/oauth/google"));
+          }}
+          className={
+            googleLoginEnabled
+              ? "flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-60"
+              : "flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-400"
+          }
         >
           <span className="text-base font-bold" aria-hidden>
             G
@@ -93,7 +171,7 @@ export function CustomerLoginForm({
         <button
           type="button"
           disabled
-          title="Çok yakında"
+          title="Apple Sign In ayrı yapılandırma gerektirir"
           className="flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-400"
         >
           <span className="text-base" aria-hidden>
@@ -102,7 +180,9 @@ export function CustomerLoginForm({
           Apple
         </button>
       </div>
-      <p className="text-center text-[11px] text-slate-400">Sosyal giriş çok yakında</p>
+      <p className="text-center text-[11px] text-slate-400">
+        {googleLoginEnabled ? "Google: önce sitede aynı e-posta ile kayıt olmalısınız." : "Google için .env; Apple yakında."}
+      </p>
 
       <div className="relative py-1">
         <div className="absolute inset-0 flex items-center" aria-hidden>
@@ -164,7 +244,10 @@ export function CustomerLoginForm({
 
         <p className="text-center text-sm text-slate-600">
           Hesabınız yok mu?{" "}
-          <Link href="/hesap/kayit" className="font-semibold text-slate-900 hover:underline">
+          <Link
+            href={`/hesap/kayit?callbackUrl=${encodeURIComponent(safeReturn)}`}
+            className="font-semibold text-slate-900 hover:underline"
+          >
             Kayıt olun
           </Link>
         </p>

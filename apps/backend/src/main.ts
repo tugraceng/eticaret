@@ -48,6 +48,9 @@ async function bootstrap() {
   const uploadDir = uploadSvc.getUploadDir();
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  if (process.env.TRUST_PROXY === "1" || process.env.TRUST_PROXY === "true") {
+    app.set("trust proxy", 1);
+  }
   app.useStaticAssets(uploadDir, { prefix: "/uploads/" });
   app.enableCors(buildCorsOptions());
   app.setGlobalPrefix("api");

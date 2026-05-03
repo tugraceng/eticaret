@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthSplitShell, type AuthPagePanel } from "@/components/account/AuthSplitShell";
+import { syncCartFromStorage } from "@/lib/cart-sync";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import {
   CUSTOMER_EMAIL_KEY,
@@ -32,6 +33,12 @@ export function CustomerRegisterForm({
   authPanel?: AuthPagePanel;
 }) {
   const router = useRouter();
+  const sp = useSearchParams();
+  const safeReturn = useMemo(() => {
+    const raw = sp.get("callbackUrl") ?? sp.get("from") ?? "";
+    if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
+    return "/hesap";
+  }, [sp]);
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [email, setEmail] = useState("");
@@ -54,13 +61,13 @@ export function CustomerRegisterForm({
       cache: "no-store",
     }).then((res) => {
       if (cancelled) return;
-      if (res.ok) router.replace("/hesap");
+      if (res.ok) router.replace(safeReturn);
       else clearCustomerSession();
     });
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, safeReturn]);
 
   const validate = useCallback((): string | null => {
     if (!name.trim()) return "Ad zorunlu.";
@@ -105,13 +112,14 @@ export function CustomerRegisterForm({
       const data = JSON.parse(text) as { accessToken: string; user: { email: string } };
       sessionStorage.setItem(CUSTOMER_TOKEN_KEY, data.accessToken);
       sessionStorage.setItem(CUSTOMER_EMAIL_KEY, data.user.email);
-      router.replace("/hesap");
+      await syncCartFromStorage();
+      router.replace(safeReturn);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Kayıt başarısız");
     } finally {
       setBusy(false);
     }
-  }, [email, password, name, surname, phone, birthDate, kvkk, marketing, router, validate]);
+  }, [email, password, name, surname, phone, birthDate, kvkk, marketing, router, safeReturn, validate]);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -264,7 +272,10 @@ export function CustomerRegisterForm({
 
         <p className="text-center text-sm text-slate-600">
           Zaten hesabınız var mı?{" "}
-          <Link href="/hesap/giris" className="font-semibold text-slate-900 hover:underline">
+          <Link
+            href={`/hesap/giris?callbackUrl=${encodeURIComponent(safeReturn)}`}
+            className="font-semibold text-slate-900 hover:underline"
+          >
             Giriş yapın
           </Link>
         </p>

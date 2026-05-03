@@ -98,4 +98,54 @@ export class NotificationsService {
       this.log.warn(`notifyStock failed: ${e instanceof Error ? e.message : e}`);
     }
   }
+
+  async notifyCampaignSent(title: string, successCount: number) {
+    try {
+      const admins = await this.prisma.user.findMany({
+        where: { role: "ADMIN" },
+        select: { id: true },
+      });
+      if (!admins.length) return;
+      await this.prisma.$transaction(
+        admins.map((u) =>
+          this.prisma.notification.create({
+            data: {
+              userId: u.id,
+              type: "marketing.campaign.ok",
+              title: "Kampanya gönderimi tamamlandı",
+              body: `"${title}" — ${successCount} alıcıya başarıyla iletildi.`,
+              metadata: { title, successCount },
+            },
+          }),
+        ),
+      );
+    } catch (e) {
+      this.log.warn(`notifyCampaignSent failed: ${e instanceof Error ? e.message : e}`);
+    }
+  }
+
+  async notifyCampaignSentWithErrors(title: string, success: number, failed: number) {
+    try {
+      const admins = await this.prisma.user.findMany({
+        where: { role: "ADMIN" },
+        select: { id: true },
+      });
+      if (!admins.length) return;
+      await this.prisma.$transaction(
+        admins.map((u) =>
+          this.prisma.notification.create({
+            data: {
+              userId: u.id,
+              type: "marketing.campaign.partial",
+              title: "Kampanya gönderimi (kısmi hata)",
+              body: `"${title}" — başarılı: ${success}, hatalı: ${failed}.`,
+              metadata: { title, success, failed },
+            },
+          }),
+        ),
+      );
+    } catch (e) {
+      this.log.warn(`notifyCampaignSentWithErrors failed: ${e instanceof Error ? e.message : e}`);
+    }
+  }
 }

@@ -90,6 +90,27 @@ export class AuthService {
     };
   }
 
+  /** Google OAuth: yalnızca aynı e-posta ile kayıtlı müşteri hesapları. */
+  async findCustomerForGoogleOAuth(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, role: true, tokenVersion: true },
+    });
+    if (!user) {
+      throw new UnauthorizedException(
+        "Bu Google hesabının e-postası mağazada kayıtlı değil. Önce kayıt olun, ardından Google ile giriş yapın.",
+      );
+    }
+    if (user.role !== "CUSTOMER") {
+      throw new UnauthorizedException("Bu giriş yalnızca mağaza müşteri hesapları içindir.");
+    }
+    return user;
+  }
+
+  issueAccessTokenForUser(user: { id: string; email: string; role: UserRole; tokenVersion: number }) {
+    return this.sign(user);
+  }
+
   async forgotPassword(emailRaw: string) {
     const email = emailRaw.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({ where: { email } });

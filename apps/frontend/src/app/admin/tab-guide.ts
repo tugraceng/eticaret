@@ -30,9 +30,17 @@ export const ADMIN_TAB_GUIDE: Record<Tab, { title: string; body: string }> = {
     title: "Siparişler",
     body: "Sipariş durumunu güncelleyin (hazırlanıyor, kargoda…). Detay için satırdaki bağlantıyı kullanın.",
   },
+  customers: {
+    title: "Müşteriler",
+    body: "Kayıtlı müşteri hesaplarını listeleyin: e-posta, sipariş sayısı ve kampanya izni.",
+  },
   discounts: {
     title: "İndirim kodları",
     body: "Müşterilerin sepette kullanacağı kuponları oluşturun; yüzde veya sabit tutar tanımlayabilirsiniz.",
+  },
+  marketing: {
+    title: "Kampanya mesajları",
+    body: "İzinli müşterilere e-posta kampanyası oluşturun, alıcı sayısını önizleyin ve terk edilmiş sepet hatırlatması gönderin.",
   },
   payments: {
     title: "Ödeme ayarları",

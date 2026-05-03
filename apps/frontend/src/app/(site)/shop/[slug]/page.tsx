@@ -30,6 +30,11 @@ type Product = {
   slug: string;
   name: string;
   description: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  seoKeywords?: string | null;
+  isFeatured?: boolean;
+  isNew?: boolean;
   priceCents: number;
   compareAtCents?: number | null;
   stock?: number;
@@ -50,14 +55,27 @@ export async function generateMetadata({
   try {
     const { slug } = await params;
     const product = await getProductBySlug(slug);
-    const title = product.name;
-    const description =
-      product.description?.slice(0, 160) ?? `${product.name} ürününü inceleyin ve güvenle sipariş verin.`;
+    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+    const canonical = `${siteUrl}/shop/${product.slug}`;
+    const title = (product.metaTitle?.trim() || product.name).slice(0, 200);
+    const rawDesc =
+      product.metaDescription?.trim() ||
+      product.description?.trim() ||
+      `${product.name} ürününü inceleyin ve güvenle sipariş verin.`;
+    const description = rawDesc.slice(0, 200);
     const image = absoluteFromSite(product.images?.[0]?.url);
+    const kw = product.seoKeywords
+      ?.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 24);
     return {
       title,
       description,
+      keywords: kw?.length ? kw : undefined,
+      alternates: { canonical },
       openGraph: {
+        url: canonical,
         title,
         description,
         type: "website",
@@ -79,11 +97,13 @@ export async function generateMetadata({
 }
 
 function productJsonLd(product: Product, pageUrl: string, imageUrl?: string | null) {
+  const desc =
+    product.metaDescription?.trim() || product.description?.trim() || `${product.name} — ürün detayı`;
   return {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    description: product.description ?? undefined,
+    description: desc,
     image: imageUrl ? [imageUrl] : undefined,
     sku: product.slug,
     offers: {
@@ -136,6 +156,29 @@ export default async function ProductPage({
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const productCanonical = `${siteUrl}/shop/${product.slug}`;
   const jsonLd = productJsonLd(product, productCanonical, absoluteFromSite(product.images?.[0]?.url));
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Mağaza", item: `${siteUrl}/shop` },
+      ...(product.category
+        ? [
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: product.category.name,
+              item: `${siteUrl}/shop?categoryId=${encodeURIComponent(product.category.id)}`,
+            },
+          ]
+        : []),
+      {
+        "@type": "ListItem",
+        position: product.category ? 3 : 2,
+        name: product.name,
+        item: productCanonical,
+      },
+    ],
+  };
 
   const variantDtos: ProductVariantDto[] = (product.variants ?? []).map((v) => ({
     id: v.id,
@@ -153,6 +196,10 @@ export default async function ProductPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
       <ProductViewTracker productId={product.id} name={product.name} priceCents={product.priceCents} />
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:max-w-7xl">
@@ -182,9 +229,21 @@ export default async function ProductPage({
           <ProductGallery productName={product.name} images={gallery} onSale={onSale} />
 
           <div>
-            <h1 className="text-3xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-4xl">
-              {product.name}
-            </h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-3xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-4xl">
+                {product.name}
+              </h1>
+              {product.isFeatured ? (
+                <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-900">
+                  Öne çıkan
+                </span>
+              ) : null}
+              {product.isNew ? (
+                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-900">
+                  Yeni
+                </span>
+              ) : null}
+            </div>
 
             <ProductDetailPrice
               basePriceCents={product.priceCents}

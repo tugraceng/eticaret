@@ -35,6 +35,31 @@ type CartInputLine = {
 export class CustomersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Yönetici paneli: kayıtlı müşteri (CUSTOMER) özeti ve sipariş sayısı */
+  async listAdminSummaries() {
+    return this.prisma.user.findMany({
+      where: { role: "CUSTOMER" },
+      orderBy: { createdAt: "desc" },
+      take: 500,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        surname: true,
+        phone: true,
+        marketingOptIn: true,
+        birthDate: true,
+        createdAt: true,
+        customer: {
+          select: {
+            id: true,
+            _count: { select: { orders: true } },
+          },
+        },
+      },
+    });
+  }
+
   async getMe(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -290,13 +315,19 @@ export class CustomersService {
         });
       }
     });
-    return this.getCart(userId);
+    const out = await this.getCart(userId);
+    await this.persistAbandonedSnapshot(userId, out.lines);
+    return out;
   }
 
   async mergeCart(userId: string, lines: CartInputLine[]) {
     const cart = await this.ensureCart(userId);
     const incoming = this.normalizeCartLines(lines);
-    if (incoming.length === 0) return this.getCart(userId);
+    if (incoming.length === 0) {
+      const out = await this.getCart(userId);
+      await this.persistAbandonedSnapshot(userId, out.lines);
+      return out;
+    }
 
     const existing = await this.prisma.cartItem.findMany({ where: { cartId: cart.id } });
     const mergedMap = new Map<
@@ -340,7 +371,9 @@ export class CustomersService {
         })),
       });
     });
-    return this.getCart(userId);
+    const out = await this.getCart(userId);
+    await this.persistAbandonedSnapshot(userId, out.lines);
+    return out;
   }
 
   private normalizeCartLines(lines: CartInputLine[]) {
@@ -374,6 +407,47 @@ export class CustomersService {
       where: { userId },
       update: {},
       create: { userId },
+    });
+  }
+
+  private async persistAbandonedSnapshot(
+    userId: string,
+    lines: Array<{
+      lineKey: string;
+      title: string;
+      quantity: number;
+      priceCents: number;
+      slug?: string;
+    }>,
+  ) {
+    if (!lines.length) {
+      await this.prisma.abandonedCart.deleteMany({ where: { userId } });
+      return;
+    }
+    const totalCents = lines.reduce((s, l) => s + l.priceCents * l.quantity, 0);
+    const itemCount = lines.reduce((s, l) => s + l.quantity, 0);
+    const snapshot = lines.map((l) => ({
+      title: l.title,
+      quantity: l.quantity,
+      slug: l.slug,
+      lineKey: l.lineKey,
+      priceCents: l.priceCents,
+    }));
+    await this.prisma.abandonedCart.upsert({
+      where: { userId },
+      create: {
+        userId,
+        snapshot,
+        totalCents,
+        itemCount,
+        lastActivityAt: new Date(),
+      },
+      update: {
+        snapshot,
+        totalCents,
+        itemCount,
+        lastActivityAt: new Date(),
+      },
     });
   }
 

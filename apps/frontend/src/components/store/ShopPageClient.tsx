@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useCallback, memo } from "react";
+import { useCallback, memo, useState } from "react";
 import { ShopToolbar } from "@/app/(site)/shop/ShopToolbar";
 import { ShopCatalogGrid, type CatalogPayload } from "@/app/(site)/shop/ShopCatalogGrid";
 
 type ShopCategory = { id: string; name: string; slug: string };
-export type ShopSortKey = "newest" | "price_asc" | "price_desc" | "popular";
+export type ShopSortKey = "newest" | "price_asc" | "price_desc" | "popular" | "bestseller";
 
 function toQuery(base: Record<string, string | undefined>) {
   const p = new URLSearchParams();
@@ -84,6 +84,9 @@ export function ShopPageClient({
   maxPriceCents,
   minAvgRating,
   inStockOnly,
+  onSaleOnly,
+  featuredOnly,
+  newOnly,
   page,
   view,
 }: {
@@ -100,9 +103,14 @@ export function ShopPageClient({
   maxPriceCents?: number;
   minAvgRating?: string;
   inStockOnly: boolean;
+  onSaleOnly: boolean;
+  featuredOnly: boolean;
+  newOnly: boolean;
   page: number;
   view: "grid" | "list";
 }) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
       <header className="mb-8 flex flex-col gap-5 lg:mb-10 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
@@ -119,7 +127,15 @@ export function ShopPageClient({
       </header>
 
       <div className="lg:grid lg:grid-cols-[minmax(0,280px)_1fr] lg:items-start lg:gap-8 xl:gap-10">
-        <aside className="mb-8 lg:mb-0">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((v) => !v)}
+          className="mb-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-ds-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-2 text-sm font-semibold text-[var(--ds-text)] shadow-card lg:hidden"
+          aria-expanded={filtersOpen}
+        >
+          {filtersOpen ? "Filtreleri gizle" : "Filtreleri göster"}
+        </button>
+        <aside className={`mb-8 lg:mb-0 ${filtersOpen ? "block" : "hidden"} lg:block`}>
           <form
             key={`${catalogQs}|${page}`}
             method="GET"
@@ -188,6 +204,36 @@ export function ShopPageClient({
                 className="h-4 w-4 rounded border-[var(--ds-border)]"
               />
               Yalnızca stokta olanlar
+            </label>
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-ds-lg border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-3 py-2 text-small text-[var(--ds-text)]">
+              <input
+                type="checkbox"
+                name="onSale"
+                value="1"
+                defaultChecked={onSaleOnly}
+                className="h-4 w-4 rounded border-[var(--ds-border)]"
+              />
+              İndirimli ürünler
+            </label>
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-ds-lg border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-3 py-2 text-small text-[var(--ds-text)]">
+              <input
+                type="checkbox"
+                name="featured"
+                value="1"
+                defaultChecked={featuredOnly}
+                className="h-4 w-4 rounded border-[var(--ds-border)]"
+              />
+              Öne çıkanlar
+            </label>
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-ds-lg border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-3 py-2 text-small text-[var(--ds-text)]">
+              <input
+                type="checkbox"
+                name="newProduct"
+                value="1"
+                defaultChecked={newOnly}
+                className="h-4 w-4 rounded border-[var(--ds-border)]"
+              />
+              Yeni ürünler
             </label>
             {view === "list" ? <input type="hidden" name="view" value="list" /> : null}
             {q ? <input type="hidden" name="q" value={q} /> : null}

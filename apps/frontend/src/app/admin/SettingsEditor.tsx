@@ -68,6 +68,7 @@ type Settings = {
   shopRailRightCode?: string;
   shopRailRightCtaLabel?: string;
   shopRailRightCtaHref?: string;
+  birthdayCouponAutomationEnabled?: boolean;
 };
 
 const SOCIAL_KEYS = ["instagram", "facebook", "x", "youtube", "linkedin", "tiktok"] as const;
@@ -191,6 +192,7 @@ export function SettingsEditor({ token }: { token: string }) {
   const [shopRailRightCode, setShopRailRightCode] = useState("");
   const [shopRailRightCtaLabel, setShopRailRightCtaLabel] = useState("");
   const [shopRailRightCtaHref, setShopRailRightCtaHref] = useState("");
+  const [birthdayCouponAutomationEnabled, setBirthdayCouponAutomationEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -258,6 +260,7 @@ export function SettingsEditor({ token }: { token: string }) {
       setShopRailRightCode(s.shopRailRightCode ?? "");
       setShopRailRightCtaLabel(s.shopRailRightCtaLabel ?? "");
       setShopRailRightCtaHref(s.shopRailRightCtaHref ?? "");
+      setBirthdayCouponAutomationEnabled(Boolean(s.birthdayCouponAutomationEnabled));
       setAuthPanelTitle(s.authPanelTitle ?? "Her adımda kalite.");
       setAuthPanelSubtitle(s.authPanelSubtitle ?? "");
       setAuthPanelImageUrl(s.authPanelImageUrl ?? "");
@@ -343,6 +346,7 @@ export function SettingsEditor({ token }: { token: string }) {
         shopRailRightCode: shopRailRightCode.trim(),
         shopRailRightCtaLabel: shopRailRightCtaLabel.trim(),
         shopRailRightCtaHref: shopRailRightCtaHref.trim(),
+        birthdayCouponAutomationEnabled,
         authPanelTitle: authPanelTitle.trim() || "Her adımda kalite.",
         authPanelSubtitle:
           authPanelSubtitle.trim() ||
@@ -419,6 +423,7 @@ export function SettingsEditor({ token }: { token: string }) {
     shopRailRightCode,
     shopRailRightCtaLabel,
     shopRailRightCtaHref,
+    birthdayCouponAutomationEnabled,
     authPanelTitle,
     authPanelSubtitle,
     authPanelImageUrl,
@@ -810,6 +815,27 @@ export function SettingsEditor({ token }: { token: string }) {
             />
           </Field>
         </div>
+      </AdminCard>
+
+      <AdminCard
+        title="Pazarlama — doğum günü otomasyonu"
+        description="Açıkken yönetici veya dış cron, Kampanya ekranındaki “Doğum günü işini çalıştır” ile önümüzdeki 7 gün içinde doğum günü olan izinli müşterilere yılda bir kez %10 kupon e-postası gönderebilir."
+      >
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-800">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 rounded border-slate-300"
+            checked={birthdayCouponAutomationEnabled}
+            onChange={(e) => setBirthdayCouponAutomationEnabled(e.target.checked)}
+          />
+          <span>
+            <span className="font-semibold">Doğum günü kuponu otomasyonunu etkinleştir</span>
+            <span className="mt-1 block text-xs text-slate-500">
+              Kapalıyken “Çalıştır” isteği yanıt verir ancak işlem yapmaz. Açtıktan sonra kaydedin; ardından Pazarlama
+              sekmesinden veya harici zamanlayıcıdan tetikleyin.
+            </span>
+          </span>
+        </label>
       </AdminCard>
 
       <AdminCard

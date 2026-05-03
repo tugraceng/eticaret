@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import {
@@ -14,7 +14,7 @@ import { AccountDashboardSidebar } from "@/components/account/AccountDashboardSi
 import { CustomerReturns } from "@/components/account/CustomerReturns";
 import { ConfirmDialog } from "@/components/site/ConfirmDialog";
 import { showSiteToast } from "@/lib/site-toast";
-import type { AccountTabId } from "@/components/account/account-tab-ids";
+import { isAccountTabId, type AccountTabId } from "@/components/account/account-tab-ids";
 
 type OrderRow = {
   id: string;
@@ -96,6 +96,7 @@ async function authFetch(token: string, path: string, init?: RequestInit) {
 
 export function CustomerAccountHome() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [phase, setPhase] = useState<"loading" | "ok">("loading");
   const [token, setToken] = useState<string | null>(null);
   const [tab, setTab] = useState<AccountTabId>("overview");
@@ -131,6 +132,20 @@ export function CustomerAccountHome() {
       cancel = true;
     };
   }, [router]);
+
+  useEffect(() => {
+    const raw = searchParams.get("tab");
+    if (raw && isAccountTabId(raw)) setTab(raw);
+    else if (!raw) setTab("overview");
+  }, [searchParams]);
+
+  const selectTab = useCallback(
+    (id: AccountTabId) => {
+      setTab(id);
+      router.replace(`/hesap?tab=${encodeURIComponent(id)}`, { scroll: false });
+    },
+    [router],
+  );
 
   const refreshMe = useCallback(async () => {
     if (!token) return;
@@ -172,7 +187,7 @@ export function CustomerAccountHome() {
         )}
 
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-          <AccountDashboardSidebar active={tab} onSelect={setTab} onLogout={logout} />
+          <AccountDashboardSidebar active={tab} onSelect={selectTab} onLogout={logout} />
 
           <div className="min-w-0 flex-1">
             <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -190,7 +205,7 @@ export function CustomerAccountHome() {
             </div>
 
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-7">
-              {tab === "overview" && <OverviewTab orders={orders} onGoto={setTab} />}
+              {tab === "overview" && <OverviewTab orders={orders} onGoto={selectTab} />}
               {tab === "orders" && <OrdersTab token={token!} orders={orders} onChange={setOrders} />}
               {tab === "returns" && (
                 <div>

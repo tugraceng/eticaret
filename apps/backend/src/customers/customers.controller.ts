@@ -27,6 +27,7 @@ import {
 import { Type } from "class-transformer";
 import type { Request } from "express";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
+import { AdminGuard } from "../common/guards/admin.guard";
 import { CustomersService } from "./customers.service";
 
 type ReqUser = Request & { user: { sub: string } };
@@ -157,6 +158,12 @@ class UpsertCartDto {
 @Controller("customers")
 export class CustomersController {
   constructor(private readonly customers: CustomersService) {}
+
+  @Get("admin")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  listAdminCustomers() {
+    return this.customers.listAdminSummaries();
+  }
 
   @Get("me")
   @UseGuards(JwtAuthGuard)

@@ -55,9 +55,13 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
   const [variantTrack, setVariantTrack] = useState(true);
   const [variantActive, setVariantActive] = useState(true);
 
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
   const [seoKeywords, setSeoKeywords] = useState("");
 
   const [isPublished, setIsPublished] = useState(true);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [isNew, setIsNew] = useState(false);
 
   const dirty =
     name.trim() !== "" ||
@@ -189,6 +193,9 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
           name: name.trim(),
           slug: slug.trim().toLowerCase(),
           description: description.trim() || undefined,
+          metaTitle: metaTitle.trim() || null,
+          metaDescription: metaDescription.trim() || null,
+          seoKeywords: seoKeywords.trim() || null,
           priceCents: price.cents,
           compareAtCents: comp.cents,
           sku: sku.trim() || null,
@@ -196,6 +203,8 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
           stock: st,
           categoryId: categoryId || undefined,
           isPublished,
+          isFeatured,
+          isNew,
         }),
       })) as { id: string };
 
@@ -252,7 +261,11 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
       setImagePreviews([]);
       setFirstImageAlt("");
       setVariants([]);
+      setMetaTitle("");
+      setMetaDescription("");
       setSeoKeywords("");
+      setIsFeatured(false);
+      setIsNew(false);
       onFinished();
     } catch (e) {
       onError(e instanceof Error ? e.message : "Ürün kaydedilirken bir hata oluştu.");
@@ -500,26 +513,36 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
       {step === 5 ? (
         <div className="space-y-4">
           <p className="text-sm text-slate-600">
-            Arama motorları ürün adınızı, kısa açıklamayı ve adres (slug) bilgisini kullanır. Aşağıya ek anahtar
-            kelimeler yazabilirsiniz; şu an yalnızca kayıt tutmak içindir — API genişletmesi sonrası siteye
-            yansıtılabilir.
+            Boş bıraktığınız alanlarda mağaza, ürün adı ve açıklamadan otomatik özet üretir. Anahtar kelimeleri
+            virgülle ayırın.
           </p>
-          <Field
-            label="Ek anahtar kelimeler (isteğe bağlı)"
-            hint="Virgülle ayırın. Örn. el yapımı, hediye, doğal ahşap"
-          >
+          <Field label="Meta başlık (isteğe bağlı)" hint="Arama sonuçlarında görünen başlık; önerilen en fazla ~60 karakter.">
+            <input
+              className="input-soft"
+              value={metaTitle}
+              onChange={(e) => setMetaTitle(e.target.value)}
+              placeholder="Boşsa ürün adı kullanılır"
+              maxLength={200}
+            />
+          </Field>
+          <Field label="Meta açıklama (isteğe bağlı)" hint="Arama snippet&apos;i; önerilen ~150–160 karakter.">
+            <textarea
+              className="input-soft min-h-[88px] resize-y"
+              value={metaDescription}
+              onChange={(e) => setMetaDescription(e.target.value)}
+              placeholder="Boşsa ürün açıklamasının kısaltması kullanılır"
+              maxLength={8000}
+            />
+          </Field>
+          <Field label="Ek anahtar kelimeler (isteğe bağlı)" hint="Virgülle ayırın. Örn. el yapımı, hediye, doğal ahşap">
             <input
               className="input-soft"
               value={seoKeywords}
               onChange={(e) => setSeoKeywords(e.target.value)}
-              placeholder="Şimdilik not amaçlı — backend alanı hazır olunca bağlanacak"
+              placeholder="örn. hediye, el yapımı"
+              maxLength={4000}
             />
           </Field>
-          <p className="rounded-xl bg-amber-50 px-4 py-3 text-xs text-amber-950">
-            <strong>TODO (backend):</strong> Ürün modeline <code className="font-mono">metaTitle</code> /{" "}
-            <code className="font-mono">metaDescription</code> alanları eklendiğinde bu adım otomatik kayda
-            bağlanacak.
-          </p>
         </div>
       ) : null}
 
@@ -529,9 +552,17 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
             <input type="checkbox" checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
             Ürün yayında olsun (işaretli değilse taslak olarak kaydedilir)
           </label>
+          <label className="flex items-center gap-2 text-sm text-slate-800">
+            <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+            Öne çıkan rozeti (katalog / vitrin filtrelerinde kullanılabilir)
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-800">
+            <input type="checkbox" checked={isNew} onChange={(e) => setIsNew(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+            Yeni ürün rozeti
+          </label>
           <p className="rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-600">
-            <strong className="text-slate-800">Öne çıkan / yeni ürün rozetleri</strong> şu an şema genişletmesi gerektirir.
-            İsterseniz ürünü yayına aldıktan sonra ana sayfa düzeninden vitrine ekleyebilirsiniz.
+            Ana sayfa vitrin blokları ayrıca <strong className="text-slate-800">Ana sayfa vitrini</strong> düzeninden yönetilir;
+            rozetler ürün kartlarında ve filtrelerde görünür.
           </p>
         </div>
       ) : null}

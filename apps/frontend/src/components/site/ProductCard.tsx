@@ -14,6 +14,8 @@ export type ProductCardData = {
   category?: { name: string; slug: string } | null;
   avgRating?: number;
   reviewCount?: number;
+  isFeatured?: boolean;
+  isNew?: boolean;
 };
 
 function Stars({ value }: { value: number }) {
@@ -99,11 +101,23 @@ function ProductCardInner({ product }: { product: ProductCardData }) {
 
           <div className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-t from-slate-900/20 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-          {onSale && (
-            <span className="absolute left-3 top-3 z-[4] rounded-full bg-rose-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
-              %{discount} indirim
-            </span>
-          )}
+          <div className="absolute left-3 top-3 z-[4] flex max-w-[70%] flex-col gap-1.5">
+            {onSale && (
+              <span className="w-fit rounded-full bg-rose-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+                %{discount} indirim
+              </span>
+            )}
+            {product.isFeatured ? (
+              <span className="w-fit rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
+                Öne çıkan
+              </span>
+            ) : null}
+            {product.isNew ? (
+              <span className="w-fit rounded-full bg-emerald-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
+                Yeni
+              </span>
+            ) : null}
+          </div>
           {product.category && (
             <span className="absolute right-3 top-3 z-[4] rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-700 backdrop-blur">
               {product.category.name}

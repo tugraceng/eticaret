@@ -73,6 +73,127 @@ export class EmailService implements OnModuleInit {
     }
   }
 
+  /** Pazarlama toplu gönderiminde alıcı bazlı sonuç için (stub modunda her zaman başarılı). */
+  async sendMarketingMail(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<{ ok: true } | { ok: false; error: string }> {
+    if (!this.transporter) {
+      this.logger.log(`[email:stub] marketing to=${to} subject="${subject}"`);
+      return { ok: true };
+    }
+    try {
+      await this.transporter.sendMail({
+        from: this.fromAddress,
+        to,
+        subject,
+        html,
+        text: html.replace(/<[^>]+>/g, ""),
+      });
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
+  }
+
+  async campaignEmail(payload: {
+    to: string;
+    title: string;
+    bodyHtml: string;
+    couponCode?: string | null;
+    ctaLink?: string | null;
+    couponExpiresAt?: Date | null;
+    channel: string;
+    whatsappDigits?: string | null;
+  }): Promise<{ ok: true } | { ok: false; error?: string }> {
+    let extras = "";
+    if (payload.couponCode) {
+      extras += `<p style="font-size:17px">Kupon kodunuz: <strong>${payload.couponCode}</strong></p>`;
+    }
+    if (payload.couponExpiresAt) {
+      extras += `<p>Son kullanım: <strong>${payload.couponExpiresAt.toLocaleDateString("tr-TR")}</strong></p>`;
+    }
+    if (payload.ctaLink) {
+      extras += `<p><a href="${payload.ctaLink}">Devam et</a></p>`;
+    }
+    if (payload.channel === "WHATSAPP_LINK" && payload.whatsappDigits) {
+      extras += `<p><a href="https://wa.me/${payload.whatsappDigits}">WhatsApp ile yazın</a></p>`;
+    }
+    const html = `<h2>${payload.title}</h2><div>${payload.bodyHtml}</div>${extras}`;
+    return this.sendMarketingMail(payload.to, payload.title, html);
+  }
+
+  async couponEmail(payload: {
+    to: string;
+    subject: string;
+    introHtml: string;
+    code: string;
+    expiresAt?: Date | null;
+    ctaHref?: string | null;
+  }): Promise<{ ok: true } | { ok: false; error?: string }> {
+    let extras = `<p style="font-size:17px">Kod: <strong>${payload.code}</strong></p>`;
+    if (payload.expiresAt) {
+      extras += `<p>Geçerlilik: ${payload.expiresAt.toLocaleDateString("tr-TR")}</p>`;
+    }
+    if (payload.ctaHref) {
+      extras += `<p><a href="${payload.ctaHref}">Mağazaya git</a></p>`;
+    }
+    const html = `<h2>${payload.subject}</h2><div>${payload.introHtml}</div>${extras}`;
+    return this.sendMarketingMail(payload.to, payload.subject, html);
+  }
+
+  async birthdayCouponEmail(payload: {
+    to: string;
+    name?: string | null;
+    code: string;
+    expiresAt?: Date | null;
+    storeName?: string;
+  }): Promise<{ ok: true } | { ok: false; error?: string }> {
+    const who = payload.name?.trim() ? ` ${payload.name.trim()}` : "";
+    const subject = `${payload.storeName ?? "Mağaza"} · Doğum gününüz kutlu olsun`;
+    const intro = `<p>Merhaba${who},</p><p>Özel gününüz için bir indirim kodu hazırladık.</p>`;
+    let extras = `<p style="font-size:17px">Kod: <strong>${payload.code}</strong></p>`;
+    if (payload.expiresAt) {
+      extras += `<p>Son kullanım: ${payload.expiresAt.toLocaleDateString("tr-TR")}</p>`;
+    }
+    const html = `<h2>İyi ki doğdunuz</h2>${intro}${extras}`;
+    return this.sendMarketingMail(payload.to, subject, html);
+  }
+
+  async abandonedCartEmail(payload: {
+    to: string;
+    lines: Array<{ title: string; quantity: number; slug?: string }>;
+    totalCents: number;
+    couponCode?: string;
+    ctaHref: string;
+    storeBaseUrl?: string;
+  }): Promise<{ ok: true } | { ok: false; error?: string }> {
+    const subject = "Sepetinizde ürünler sizi bekliyor";
+    const origin = (payload.storeBaseUrl ?? payload.ctaHref).replace(/\/$/, "");
+    const rows = payload.lines
+      .slice(0, 12)
+      .map(
+        (l) =>
+          `<li>${l.quantity}× ${l.title}${
+            l.slug ? ` — <a href="${origin}/shop/${l.slug}">ürüne git</a>` : ""
+          }</li>`,
+      )
+      .join("");
+    const tot = (payload.totalCents / 100).toFixed(2);
+    let couponBlock = "";
+    if (payload.couponCode) {
+      couponBlock = `<p>Özel kodunuz: <strong>${payload.couponCode}</strong></p>`;
+    }
+    const html = `
+      <h2>Sepetinize göz atın</h2>
+      <p>Eklediğiniz ürünler hâlâ sizin için ayrıldı. Sepet tutarı (yaklaşık): <strong>${tot} TL</strong></p>
+      <ul>${rows}</ul>
+      ${couponBlock}
+      <p><a href="${payload.ctaHref}">Sepete dön</a></p>`;
+    return this.sendMarketingMail(payload.to, subject, html);
+  }
+
   orderCreated(payload: {
     orderId: string;
     guestEmail?: string | null;

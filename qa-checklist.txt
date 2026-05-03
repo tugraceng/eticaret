@@ -1,0 +1,17 @@
+Genel kontrol — manuel QA (kısa)
+===============================
+
+Hesap / giriş
+- /hesap/giris: e-posta + şifre girişi; callbackUrl ve from ile dönüş yolu (/sepet vb.).
+- Google: GOOGLE_* + PUBLIC_WEB_URL backend; NEXT_PUBLIC_GOOGLE_LOGIN=1 frontend; önce aynı e-posta ile kayıt, sonra Google; hata durumunda oauth_error mesajı.
+- /hesap?tab=siparisler (veya diğer sekmeler): URL ile sekme açılıyor mu.
+
+Checkout / sepet
+- Misafir checkout; girişli checkout; terk sepet akışı (guest-abandon) throttle ile uyumlu mu.
+
+Admin / pazarlama
+- Kampanya gönderimi; MARKETING_EMAIL_GAP_MS ile gecikme (isteğe bağlı).
+- Müşteriler sekmesi; ürün SEO / rozet alanları.
+
+Sipariş / yasal
+- EINVOICE_PROVIDER dolu iken sipariş sonrası log (yer tutucu); none/boşda sessiz.

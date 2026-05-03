@@ -90,6 +90,12 @@ export const ADMIN_NAV_GROUPS: readonly AdminNavGroup[] = [
         icon: Icon.Bag,
       },
       {
+        id: "customers",
+        label: "Müşteriler",
+        hint: "Kayıtlı hesaplar, iletişim ve sipariş özeti",
+        icon: Icon.Users,
+      },
+      {
         id: "returns",
         label: "İade talepleri",
         hint: "Müşteri iade isteklerini işleyin",
@@ -112,6 +118,12 @@ export const ADMIN_NAV_GROUPS: readonly AdminNavGroup[] = [
         label: "İndirim kodları",
         hint: "Kupon oluşturma — yüzde veya sabit indirim",
         icon: Icon.Tag,
+      },
+      {
+        id: "marketing",
+        label: "Kampanya mesajları",
+        hint: "İzinli müşterilere e-posta, terk edilmiş sepet hatırlatması",
+        icon: Icon.Megaphone,
       },
       {
         id: "payments",

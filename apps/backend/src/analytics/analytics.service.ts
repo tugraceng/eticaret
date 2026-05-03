@@ -22,7 +22,19 @@ export class AnalyticsService {
   async adminCounters() {
     const settings = await this.prisma.siteSettings.findFirst();
     const globalThreshold = settings?.lowStockThreshold ?? 5;
-    const [pendingReviews, pendingReturns, products, pendingOrders] = await Promise.all([
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const [
+      pendingReviews,
+      pendingReturns,
+      products,
+      pendingOrders,
+      marketingOptInCount,
+      abandonedCartCount,
+      todayRevenueAgg,
+      lastCampaign,
+    ] = await Promise.all([
       this.prisma.review.count({ where: { isApproved: false } }),
       this.prisma.returnRequest.count({ where: { status: "PENDING" } }),
       this.prisma.product.findMany({
@@ -34,6 +46,35 @@ export class AnalyticsService {
         },
       }),
       this.prisma.order.count({ where: { status: "PENDING" } }),
+      this.prisma.user.count({
+        where: {
+          role: "CUSTOMER",
+          marketingOptIn: true,
+          kvkkAcceptedAt: { not: null },
+        },
+      }),
+      Promise.all([
+        this.prisma.abandonedCart.count({ where: { itemCount: { gt: 0 } } }),
+        this.prisma.guestAbandonedCart.count({ where: { itemCount: { gt: 0 } } }),
+      ]).then(([a, g]) => a + g),
+      this.prisma.order.aggregate({
+        where: {
+          createdAt: { gte: startOfToday },
+          status: { not: "CANCELLED" },
+        },
+        _sum: { totalCents: true },
+      }),
+      this.prisma.campaignMessage.findFirst({
+        where: { status: "COMPLETED" },
+        orderBy: { sentAt: "desc" },
+        select: {
+          title: true,
+          successCount: true,
+          failCount: true,
+          recipientCount: true,
+          sentAt: true,
+        },
+      }),
     ]);
     let lowStock = 0;
     for (const p of products) {
@@ -47,6 +88,15 @@ export class AnalyticsService {
         }
       }
     }
-    return { pendingReviews, pendingReturns, lowStock, pendingOrders };
+    return {
+      pendingReviews,
+      pendingReturns,
+      lowStock,
+      pendingOrders,
+      marketingOptInCount,
+      abandonedCartCount,
+      todayRevenueCents: todayRevenueAgg._sum.totalCents ?? 0,
+      lastCampaign,
+    };
   }
 }

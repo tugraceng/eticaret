@@ -87,6 +87,8 @@ model User {
   passwordResetTokens PasswordResetToken[]
   returnRequests ReturnRequest[] @relation("ReturnRequester")
   cart         Cart?
+  abandonedCart AbandonedCart?
+  birthdayCouponLogs BirthdayCouponLog[]
 }
 
 model Cart {
@@ -191,6 +193,8 @@ model SiteSettings {
   shopRailRightCode     String   @default("")
   shopRailRightCtaLabel String   @default("")
   shopRailRightCtaHref  String   @default("")
+  /// Doğum günü otomatik kupon e-postası (ileride cron ile)
+  birthdayCouponAutomationEnabled Boolean @default(false)
   updatedAt        DateTime @updatedAt
 }
 
@@ -244,6 +248,11 @@ model Product {
   name           String
   slug           String         @unique
   description    String?        @db.Text
+  /// Boşsa mağaza `generateMetadata` ürün adı + açıklamadan türetir.
+  metaTitle      String?
+  metaDescription String?       @db.Text
+  /// Virgülle ayrılmış ek anahtar kelimeler (SEO)
+  seoKeywords    String?        @db.Text
   priceCents     Int
   compareAtCents Int?
   sku            String?
@@ -251,6 +260,8 @@ model Product {
   trackStock     Boolean        @default(true)
   lowStockThreshold Int?
   isPublished    Boolean        @default(false)
+  isFeatured     Boolean        @default(false)
+  isNew          Boolean        @default(false)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   category       Category?      @relation(fields: [categoryId], references: [id])
@@ -263,6 +274,8 @@ model Product {
 
   @@index([isPublished])
   @@index([categoryId])
+  @@index([isFeatured])
+  @@index([isNew])
 }
 
 /// Ürün seçenekleri (renk/beden vb.). priceCents null ise ürün fiyatı kullanılır.
@@ -577,6 +590,92 @@ model DiscountCode {
   description    String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+
+  campaignMessages CampaignMessage[]
+}
+
+/// Giriş yapmış müşterinin sunucu sepeti — terk edilmiş sepet takibi için anlık görüntü
+model AbandonedCart {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  /// Satır özeti: title, quantity, slug, lineKey, priceCents vb.
+  snapshot       Json     @default("[]")
+  totalCents     Int      @default(0)
+  itemCount      Int      @default(0)
+  lastActivityAt DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([lastActivityAt])
+}
+
+/// Checkout’ta e-posta veren misafir — terk edilmiş sepet (tarayıcı sepeti anlık görüntüsü)
+model GuestAbandonedCart {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  marketingOptIn   Boolean  @default(false)
+  snapshot         Json     @default("[]")
+  totalCents       Int      @default(0)
+  itemCount        Int      @default(0)
+  lastActivityAt   DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([lastActivityAt])
+}
+
+/// Yılda bir kez doğum günü kuponu gönderildi mi (otomasyon tekrarını önler)
+model BirthdayCouponLog {
+  id     String   @id @default(cuid())
+  userId String
+  year   Int
+  sentAt DateTime @default(now())
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year])
+  @@index([year])
+}
+
+/// Admin tarafından oluşturulan kampanya mesajı (taslak / gönderim)
+model CampaignMessage {
+  id               String   @id @default(cuid())
+  title            String
+  body             String   @db.Text
+  /// ALL_OPT_IN | LAST_30_SHOPPERS | NEVER_ORDERED | ABANDONED | BIRTHDAY_7D
+  audience         String
+  /// EMAIL | WHATSAPP_LINK | SMS_READY
+  channel          String   @default("EMAIL")
+  discountCodeId   String?
+  ctaLink          String?
+  couponExpiresAt  DateTime?
+  status           String   @default("DRAFT")
+  recipientCount   Int      @default(0)
+  successCount     Int      @default(0)
+  failCount        Int      @default(0)
+  lastErrorSummary String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  sentAt           DateTime?
+
+  discountCode DiscountCode?       @relation(fields: [discountCodeId], references: [id], onDelete: SetNull)
+  recipients   CampaignRecipient[]
+
+  @@index([createdAt])
+}
+
+model CampaignRecipient {
+  id         String          @id @default(cuid())
+  campaignId String
+  userId     String?
+  email      String
+  status     String          @default("PENDING")
+  error      String?         @db.Text
+  sentAt     DateTime?
+  campaign   CampaignMessage @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([email])
 }
 
 model PaymentProviderConfig {
