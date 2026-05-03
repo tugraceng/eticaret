@@ -51,10 +51,25 @@ function normalizeStoredLine(x: Record<string, unknown>): LocalCartLine | null {
   };
 }
 
-export async function mergeLocalCartToServer(lines: CartPayloadLine[]): Promise<LocalCartLine[] | null> {
+function linesToCartPayload(lines: CartPayloadLine[]) {
+  return lines.map((l) => ({
+    productId: l.productId,
+    quantity: l.quantity,
+    productVariantId: l.productVariantId,
+    lineKey: l.lineKey ?? lineKeyFor(l.productId, l.productVariantId),
+    title: l.title,
+    priceCents: l.priceCents,
+    slug: l.slug,
+    imageUrl: l.imageUrl,
+  }));
+}
+
+/** Sunucu + yerel toplu birleştirme — yalnızca giriş/kayıt sonrası bir kez (tekrar çağrılırsa adetler katlanır). */
+export async function mergeGuestCartIntoServerCart(): Promise<LocalCartLine[] | null> {
   if (typeof window === "undefined") return null;
   const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
   if (!token) return null;
+  const local = readLocalCartFromStorage();
   try {
     const res = await fetch(apiUrl("/customers/me/cart/merge"), {
       method: "POST",
@@ -62,22 +77,58 @@ export async function mergeLocalCartToServer(lines: CartPayloadLine[]): Promise<
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        lines: lines.map((l) => ({
-          productId: l.productId,
-          quantity: l.quantity,
-          productVariantId: l.productVariantId,
-          lineKey: l.lineKey ?? lineKeyFor(l.productId, l.productVariantId),
-          title: l.title,
-          priceCents: l.priceCents,
-          slug: l.slug,
-          imageUrl: l.imageUrl,
-        })),
-      }),
+      body: JSON.stringify({ lines: linesToCartPayload(local) }),
     });
     if (!res.ok) return null;
     const data = (await res.json()) as { lines?: LocalCartLine[] };
-    return Array.isArray(data.lines) ? data.lines : null;
+    const out = Array.isArray(data.lines) ? data.lines : null;
+    if (out) writeLocalCartToStorage(out);
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+/** Oturum açıkken sunucu sepetini yerel depoya yazar (yerel boşken). */
+export async function pullServerCartToStorage(): Promise<LocalCartLine[] | null> {
+  if (typeof window === "undefined") return null;
+  const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+  if (!token) return null;
+  try {
+    const res = await fetch(apiUrl("/customers/me/cart"), {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { lines?: LocalCartLine[] };
+    const out = Array.isArray(data.lines) ? data.lines : [];
+    writeLocalCartToStorage(out);
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+/** Oturum açıkken yerel sepeti sunucuya bire bir yazar (idempotent; tekrar çağrıda adet katlanmaz). */
+export async function pushLocalCartToServer(): Promise<LocalCartLine[] | null> {
+  if (typeof window === "undefined") return null;
+  const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+  if (!token) return null;
+  const local = readLocalCartFromStorage();
+  try {
+    const res = await fetch(apiUrl("/customers/me/cart"), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ lines: linesToCartPayload(local) }),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { lines?: LocalCartLine[] };
+    const out = Array.isArray(data.lines) ? data.lines : [];
+    writeLocalCartToStorage(out);
+    return out;
   } catch {
     return null;
   }
@@ -140,9 +191,19 @@ export function mergeLineIntoLocalCart(line: {
   writeLocalCartToStorage(cart);
 }
 
+/**
+ * Oturum açıkken sepeti sunucu ile hizalar.
+ * - Yerel satır varsa: PUT ile sunucuyu yerelle eşitler (periyodik çağrıda güvenli).
+ * - Yerel boşsa: GET ile sunucudan çeker (başka cihazda eklenen ürünler).
+ * Misafir + üye sepetini toplamak için giriş/kayıt akışında `mergeGuestCartIntoServerCart` kullanın.
+ */
 export async function syncCartFromStorage(): Promise<LocalCartLine[] | null> {
+  if (typeof window === "undefined") return null;
+  const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+  if (!token) return null;
   const local = readLocalCartFromStorage();
-  const merged = await mergeLocalCartToServer(local);
-  if (merged) writeLocalCartToStorage(merged);
-  return merged;
+  if (local.length === 0) {
+    return pullServerCartToStorage();
+  }
+  return pushLocalCartToServer();
 }

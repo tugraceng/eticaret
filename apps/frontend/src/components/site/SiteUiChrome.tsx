@@ -38,7 +38,7 @@ export function SiteUiChrome() {
       try {
         if (sessionStorage.getItem(CUSTOMER_TOKEN_KEY)) {
           void syncCartFromStorage().then((merged) => {
-            if (merged?.length) useCartStore.getState().replaceLines(merged);
+            if (merged !== null) useCartStore.getState().replaceLines(merged);
             else useCartStore.getState().hydrate();
           });
         }
@@ -47,8 +47,6 @@ export function SiteUiChrome() {
       }
     };
     run();
-    const id = window.setInterval(run, 8000);
-    return () => window.clearInterval(id);
   }, []);
 
   return (

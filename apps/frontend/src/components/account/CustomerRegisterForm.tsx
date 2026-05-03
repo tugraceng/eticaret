@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthSplitShell, type AuthPagePanel } from "@/components/account/AuthSplitShell";
-import { syncCartFromStorage } from "@/lib/cart-sync";
+import { mergeGuestCartIntoServerCart } from "@/lib/cart-sync";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import {
   CUSTOMER_EMAIL_KEY,
@@ -112,7 +112,7 @@ export function CustomerRegisterForm({
       const data = JSON.parse(text) as { accessToken: string; user: { email: string } };
       sessionStorage.setItem(CUSTOMER_TOKEN_KEY, data.accessToken);
       sessionStorage.setItem(CUSTOMER_EMAIL_KEY, data.user.email);
-      await syncCartFromStorage();
+      await mergeGuestCartIntoServerCart();
       router.replace(safeReturn);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Kayıt başarısız");
