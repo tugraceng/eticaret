@@ -276,6 +276,10 @@ model Product {
   @@index([categoryId])
   @@index([isFeatured])
   @@index([isNew])
+  // Performans: listeleme ve filtreli katalog sorguları için
+  @@index([isPublished, updatedAt])
+  @@index([isPublished, priceCents])
+  @@index([categoryId, isPublished, updatedAt])
 }
 
 /// Ürün seçenekleri (renk/beden vb.). priceCents null ise ürün fiyatı kullanılır.
@@ -315,6 +319,8 @@ model Review {
 
   @@index([productId, createdAt])
   @@index([userId])
+  // withRatings groupBy isApproved=true bazlı; performans için ek index
+  @@index([isApproved, productId])
 }
 
 model PasswordResetToken {
@@ -414,6 +420,10 @@ model Order {
 
   @@index([status])
   @@index([buyerUserId])
+  // Admin listesi (createdAt desc) ve /orders/me için
+  @@index([createdAt])
+  @@index([buyerUserId, createdAt])
+  @@index([status, createdAt])
 }
 
 model OrderItem {
@@ -483,6 +493,7 @@ model StockMovement {
 
   @@index([productId, createdAt])
   @@index([createdAt])
+  @@index([orderId])
 }
 
 /// CMS: flexible pages (About, custom landings) with structured JSON blocks
@@ -504,6 +515,8 @@ model BlogPost {
   publishedAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([publishedAt])
 }
 
 model Service {

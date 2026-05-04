@@ -1,5 +1,9 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { AppCacheService } from "../common/cache/app-cache.service";
 import { PrismaService } from "../prisma/prisma.service";
+
+const KEY_LIST = "shipping:list";
+const TTL_MS = 60_000;
 
 type CreateInput = {
   country?: string;
@@ -12,12 +16,21 @@ type CreateInput = {
 
 @Injectable()
 export class ShippingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: AppCacheService,
+  ) {}
 
   list() {
-    return this.prisma.shippingRate.findMany({
-      orderBy: [{ country: "asc" }, { city: "asc" }, { sortOrder: "asc" }],
-    });
+    return this.cache.getOrSet(KEY_LIST, TTL_MS, () =>
+      this.prisma.shippingRate.findMany({
+        orderBy: [{ country: "asc" }, { city: "asc" }, { sortOrder: "asc" }],
+      }),
+    );
+  }
+
+  private invalidate() {
+    this.cache.delPrefix("shipping:");
   }
 
   async quote(params: { country?: string | null; city?: string | null; subtotalCents: number }) {
@@ -65,8 +78,8 @@ export class ShippingService {
     };
   }
 
-  create(input: CreateInput) {
-    return this.prisma.shippingRate.create({
+  async create(input: CreateInput) {
+    const created = await this.prisma.shippingRate.create({
       data: {
         country: (input.country ?? "TR").toUpperCase(),
         city: input.city?.trim() || null,
@@ -76,6 +89,8 @@ export class ShippingService {
         sortOrder: input.sortOrder ?? 0,
       },
     });
+    this.invalidate();
+    return created;
   }
 
   async update(id: string, input: Partial<CreateInput>) {
@@ -88,12 +103,16 @@ export class ShippingService {
       data.freeThresholdCents = Math.max(0, Math.floor(input.freeThresholdCents));
     if (input.isActive !== undefined) data.isActive = input.isActive;
     if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
-    return this.prisma.shippingRate.update({ where: { id }, data });
+    const updated = await this.prisma.shippingRate.update({ where: { id }, data });
+    this.invalidate();
+    return updated;
   }
 
   async remove(id: string) {
     await this.ensure(id);
-    return this.prisma.shippingRate.delete({ where: { id } });
+    const removed = await this.prisma.shippingRate.delete({ where: { id } });
+    this.invalidate();
+    return removed;
   }
 
   private async ensure(id: string) {

@@ -1,10 +1,19 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { AppCacheService } from "../common/cache/app-cache.service";
+import { JobQueueService } from "../common/jobs/job-queue.service";
 import { DiscountsService } from "../discounts/discounts.service";
 import { EmailService } from "../email/email.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { WhatsAppService } from "../whatsapp/whatsapp.service";
 import { EinvoiceService } from "../einvoice/einvoice.service";
+
+const TOPIC_ORDER_EMAIL = "orders.email.orderCreated";
+const TOPIC_STOCK_ALERT_EMAIL = "orders.email.stockAlert";
+const TOPIC_ORDER_NOTIFY = "orders.notify.newOrder";
+const TOPIC_ORDER_NOTIFY_STOCK = "orders.notify.stock";
+const TOPIC_ORDER_EINVOICE = "orders.einvoice";
+const TOPIC_ORDER_WHATSAPP = "orders.whatsapp.shipped";
 
 type CreateOrderInput = {
   items: { productId: string; quantity: number; productVariantId?: string }[];
@@ -36,7 +45,47 @@ export class OrdersService {
     private readonly discounts: DiscountsService,
     private readonly whatsapp: WhatsAppService,
     private readonly einvoice: EinvoiceService,
-  ) {}
+    private readonly cache: AppCacheService,
+    private readonly jobs: JobQueueService,
+  ) {
+    // Job handler kayıtları — response geri döndükten sonra çalışırlar.
+    this.jobs.registerHandler<Parameters<EmailService["orderCreated"]>[0]>(
+      TOPIC_ORDER_EMAIL,
+      (p) => this.email.orderCreated(p),
+    );
+    this.jobs.registerHandler<Parameters<EmailService["stockAlert"]>[0]>(
+      TOPIC_STOCK_ALERT_EMAIL,
+      (p) => this.email.stockAlert(p),
+    );
+    this.jobs.registerHandler<{
+      orderId: string;
+      totalCents: number;
+      currency: string;
+      guestEmail?: string;
+    }>(TOPIC_ORDER_NOTIFY, (p) =>
+      this.notifications.notifyNewOrder(p.orderId, p.totalCents, p.currency, p.guestEmail),
+    );
+    this.jobs.registerHandler<{
+      productId: string;
+      name: string;
+      stock: number;
+      threshold: number;
+    }>(TOPIC_ORDER_NOTIFY_STOCK, (p) =>
+      this.notifications.notifyStock(p.productId, p.name, p.stock, p.threshold),
+    );
+    this.jobs.registerHandler<{ orderId: string }>(TOPIC_ORDER_EINVOICE, (p) =>
+      this.einvoice.onOrderCreated(p.orderId),
+    );
+    this.jobs.registerHandler<Parameters<WhatsAppService["notifyShipped"]>[0]>(
+      TOPIC_ORDER_WHATSAPP,
+      (p) => this.whatsapp.notifyShipped(p),
+    );
+  }
+
+  private invalidateProductAndBestsellerCaches() {
+    // Stok / satış değişti → ürün listeleri ve bestseller cache'i geçersiz.
+    this.cache.delPrefix("products:");
+  }
 
   async create(input: CreateOrderInput) {
     if (!input.items?.length) throw new BadRequestException("Sepet boş");
@@ -302,29 +351,36 @@ export class OrdersService {
         });
       }
 
-      this.email.orderCreated({
+      // Email/Notify/E-invoice — JobQueue'e atılır (response bekletilmez).
+      this.jobs.enqueue(TOPIC_ORDER_EMAIL, {
         orderId: order.id,
         guestEmail: input.guestEmail,
         totalCents: order.totalCents,
         currency: order.currency,
-      });
-      void this.notifications.notifyNewOrder(
-        order.id,
-        order.totalCents,
-        order.currency,
-        input.guestEmail,
-      );
+      }, { name: "email.orderCreated" });
+      this.jobs.enqueue(TOPIC_ORDER_NOTIFY, {
+        orderId: order.id,
+        totalCents: order.totalCents,
+        currency: order.currency,
+        guestEmail: input.guestEmail,
+      }, { name: "notify.newOrder" });
       for (const alert of lowStockAlerts) {
-        void this.notifications.notifyStock(alert.id, alert.name, alert.stock, alert.threshold);
-        this.email.stockAlert({
+        this.jobs.enqueue(TOPIC_ORDER_NOTIFY_STOCK, {
+          productId: alert.id,
+          name: alert.name,
+          stock: alert.stock,
+          threshold: alert.threshold,
+        }, { name: "notify.stock" });
+        this.jobs.enqueue(TOPIC_STOCK_ALERT_EMAIL, {
           productName: alert.name,
           stock: alert.stock,
           outOfStock: alert.stock <= 0,
-        });
+        }, { name: "email.stockAlert" });
       }
       return order;
     });
-    void this.einvoice.onOrderCreated(order.id);
+    this.jobs.enqueue(TOPIC_ORDER_EINVOICE, { orderId: order.id }, { name: "einvoice" });
+    this.invalidateProductAndBestsellerCaches();
     return order;
   }
 
@@ -405,7 +461,7 @@ export class OrdersService {
     if (o.status !== "PENDING") {
       throw new BadRequestException("Sadece beklemedeki siparişler iptal edilebilir");
     }
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.order.update({
         where: { id },
         data: { status: "CANCELLED" },
@@ -450,6 +506,8 @@ export class OrdersService {
       }
       return updated;
     });
+    this.invalidateProductAndBestsellerCaches();
+    return result;
   }
 
   listAdmin() {
@@ -594,23 +652,24 @@ export class OrdersService {
     return after;
   }
 
-  private async sendShippedNotification(order: {
+  private sendShippedNotification(order: {
     id: string;
     contactPhone: string | null;
     contactName: string | null;
     trackingNumber: string | null;
   }) {
     if (!order.contactPhone || !order.trackingNumber) return;
-    try {
-      await this.whatsapp.notifyShipped({
+    // WhatsApp Cloud API external HTTP — admin response'unu bekletmeden kuyruğa at.
+    this.jobs.enqueue(
+      TOPIC_ORDER_WHATSAPP,
+      {
         orderId: order.id,
         customerPhone: order.contactPhone,
         customerName: order.contactName,
         trackingNumber: order.trackingNumber,
-      });
-    } catch {
-      // bildirim hatası sipariş akışını kırmasın
-    }
+      },
+      { name: "whatsapp.shipped", retries: 3, backoffMs: 500 },
+    );
   }
 
   private async ensure(id: string) {

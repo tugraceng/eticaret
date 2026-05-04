@@ -1,9 +1,18 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { AppCacheService } from "../common/cache/app-cache.service";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class ReviewsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: AppCacheService,
+  ) {}
+
+  /** Yorum rating ortalaması değişebilir → ürün bySlug / bestseller cache'ini temizle. */
+  private invalidateProductAggregates() {
+    this.cache.delPrefix("products:");
+  }
 
   async listByProduct(slug: string) {
     const product = await this.prisma.product.findFirst({
@@ -64,7 +73,7 @@ export class ReviewsService {
     });
     if (!product) throw new NotFoundException();
 
-    return this.prisma.review.create({
+    const created = await this.prisma.review.create({
       data: {
         productId: product.id,
         userId: userId ?? null,
@@ -76,14 +85,19 @@ export class ReviewsService {
         isApproved: Boolean(userId),
       },
     });
+    if (created.isApproved) this.invalidateProductAggregates();
+    return created;
   }
 
   async remove(id: string) {
     await this.prisma.review.delete({ where: { id } });
+    this.invalidateProductAggregates();
   }
 
   async setApproved(id: string, isApproved: boolean) {
-    return this.prisma.review.update({ where: { id }, data: { isApproved } });
+    const updated = await this.prisma.review.update({ where: { id }, data: { isApproved } });
+    this.invalidateProductAggregates();
+    return updated;
   }
 
   async listAdmin(filter?: "all" | "pending" | "approved") {

@@ -3,6 +3,7 @@ import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import type { CorsOptions } from "@nestjs/common/interfaces/external/cors-options.interface";
 import { AppModule } from "./app.module";
+import { perfMiddleware } from "./common/perf/perf.middleware";
 import { UploadsService } from "./uploads/uploads.service";
 
 function parseOriginList(raw: string | undefined): string[] {
@@ -52,6 +53,7 @@ async function bootstrap() {
     app.set("trust proxy", 1);
   }
   app.useStaticAssets(uploadDir, { prefix: "/uploads/" });
+  app.use(perfMiddleware);
   app.enableCors(buildCorsOptions());
   app.setGlobalPrefix("api");
   app.useGlobalPipes(

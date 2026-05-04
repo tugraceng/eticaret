@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
+import { AppCacheService } from "../common/cache/app-cache.service";
 import { PrismaService } from "../prisma/prisma.service";
 
 type ProductWithRelations = {
@@ -7,9 +8,25 @@ type ProductWithRelations = {
   [key: string]: unknown;
 };
 
+const PRODUCTS_CACHE_TTL = 30_000;
+const PRODUCTS_BYSLUG_CACHE_TTL = 30_000;
+const PRODUCTS_BESTSELLERS_CACHE_TTL = 60_000;
+const PRODUCTS_RELATED_CACHE_TTL = 60_000;
+
+// Pagination kullanılmayan ham listelerde hard cap.
+const UNPAGED_MAX = 60;
+
 @Injectable()
 export class ProductsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: AppCacheService,
+  ) {}
+
+  /** Ürünle ilgili her mutation'dan sonra çağrılır; ürün listelerini / detay cache'ini temizler. */
+  invalidate() {
+    this.cache.delPrefix("products:");
+  }
 
   private normalizePaging(pageRaw?: number, limitRaw?: number) {
     const page = Number.isFinite(pageRaw) && (pageRaw ?? 0) > 0 ? Math.floor(pageRaw as number) : 1;
@@ -41,23 +58,31 @@ export class ProductsService {
   }
 
   async list(q?: string, categoryId?: string) {
-    const products = await this.prisma.product.findMany({
-      where: {
-        isPublished: true,
-        ...(categoryId ? { categoryId } : {}),
-        ...(q
-          ? {
-              OR: [
-                { name: { contains: q, mode: "insensitive" } },
-                { description: { contains: q, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      },
-      orderBy: { updatedAt: "desc" },
-      include: { images: { orderBy: { sortOrder: "asc" } }, category: true },
-    });
-    return this.withRatings(products);
+    const cacheable = !q; // arama yoksa cache'leyebiliriz
+    const key = `products:list:q=${q ?? ""}|cat=${categoryId ?? ""}`;
+    const loader = async () => {
+      const products = await this.prisma.product.findMany({
+        where: {
+          isPublished: true,
+          ...(categoryId ? { categoryId } : {}),
+          ...(q
+            ? {
+                OR: [
+                  { name: { contains: q, mode: "insensitive" } },
+                  { description: { contains: q, mode: "insensitive" } },
+                ],
+              }
+            : {}),
+        },
+        orderBy: { updatedAt: "desc" },
+        take: UNPAGED_MAX, // bellek güvenliği için hard cap; /products/catalog pagination'lıdır
+        include: { images: { orderBy: { sortOrder: "asc" } }, category: true },
+      });
+      return this.withRatings(products);
+    };
+    return cacheable
+      ? this.cache.getOrSet(key, PRODUCTS_CACHE_TTL, loader)
+      : loader();
   }
 
   async catalog(input?: {
@@ -244,6 +269,14 @@ export class ProductsService {
 
   async bestsellers(limitRaw?: number) {
     const limit = Math.min(Math.max(limitRaw ?? 8, 1), 24);
+    return this.cache.getOrSet(
+      `products:bestsellers:limit=${limit}`,
+      PRODUCTS_BESTSELLERS_CACHE_TTL,
+      () => this.bestsellersInner(limit),
+    );
+  }
+
+  private async bestsellersInner(limit: number) {
     const rows = await this.prisma.$queryRaw<Array<{ productId: string; qty: bigint }>>`
       SELECT oi."productId", SUM(oi."quantity")::bigint AS qty
       FROM "OrderItem" oi
@@ -328,7 +361,7 @@ export class ProductsService {
       typeof data.sortOrder === "number"
         ? data.sortOrder
         : (agg._max.sortOrder ?? -1) + 1;
-    return this.prisma.productVariant.create({
+    const created = await this.prisma.productVariant.create({
       data: {
         productId,
         label: data.label.trim(),
@@ -340,6 +373,8 @@ export class ProductsService {
         isActive: data.isActive ?? true,
       },
     });
+    this.invalidate();
+    return created;
   }
 
   async updateVariant(
@@ -375,10 +410,12 @@ export class ProductsService {
     if (data.trackStock !== undefined) patch.trackStock = data.trackStock;
     if (data.sortOrder !== undefined) patch.sortOrder = data.sortOrder;
     if (data.isActive !== undefined) patch.isActive = data.isActive;
-    return this.prisma.productVariant.update({
+    const updated = await this.prisma.productVariant.update({
       where: { id: variantId },
       data: patch,
     });
+    this.invalidate();
+    return updated;
   }
 
   async removeVariant(productId: string, variantId: string) {
@@ -386,7 +423,9 @@ export class ProductsService {
       where: { id: variantId, productId },
     });
     if (!existing) throw new NotFoundException();
-    return this.prisma.productVariant.delete({ where: { id: variantId } });
+    const removed = await this.prisma.productVariant.delete({ where: { id: variantId } });
+    this.invalidate();
+    return removed;
   }
 
   async listStockMovements(productId?: string) {
@@ -441,7 +480,7 @@ export class ProductsService {
   async adjustStock(productId: string, delta: number, note?: string) {
     const p = await this.prisma.product.findUnique({ where: { id: productId } });
     if (!p) throw new NotFoundException();
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.product.update({
         where: { id: productId },
         data: { stock: { increment: delta } },
@@ -456,6 +495,8 @@ export class ProductsService {
       });
       return updated;
     });
+    this.invalidate();
+    return result;
   }
 
   async listByIds(ids: string[]) {
@@ -468,20 +509,36 @@ export class ProductsService {
   }
 
   async bySlug(slug: string) {
-    const p = await this.prisma.product.findFirst({
-      where: { slug, isPublished: true },
-      include: {
-        images: { orderBy: { sortOrder: "asc" } },
-        category: true,
-        variants: { where: { isActive: true }, orderBy: { sortOrder: "asc" } },
+    const value = await this.cache.getOrSet(
+      `products:bySlug:slug=${slug}`,
+      PRODUCTS_BYSLUG_CACHE_TTL,
+      async () => {
+        const p = await this.prisma.product.findFirst({
+          where: { slug, isPublished: true },
+          include: {
+            images: { orderBy: { sortOrder: "asc" } },
+            category: true,
+            variants: { where: { isActive: true }, orderBy: { sortOrder: "asc" } },
+          },
+        });
+        if (!p) return null;
+        const [with_] = await this.withRatings([p]);
+        return with_;
       },
-    });
-    if (!p) throw new NotFoundException();
-    const [with_] = await this.withRatings([p]);
-    return with_;
+    );
+    if (!value) throw new NotFoundException();
+    return value;
   }
 
-  async related(slug: string, take = 8) {
+  related(slug: string, take = 8) {
+    return this.cache.getOrSet(
+      `products:related:slug=${slug}|take=${take}`,
+      PRODUCTS_RELATED_CACHE_TTL,
+      () => this.relatedInner(slug, take),
+    );
+  }
+
+  private async relatedInner(slug: string, take: number) {
     const base = await this.prisma.product.findFirst({
       where: { slug, isPublished: true },
       select: { id: true, categoryId: true },
@@ -514,7 +571,7 @@ export class ProductsService {
     return this.withRatings([...sameCategory, ...fillers]);
   }
 
-  create(data: {
+  async create(data: {
     name: string;
     slug: string;
     description?: string;
@@ -531,7 +588,7 @@ export class ProductsService {
     isFeatured?: boolean;
     isNew?: boolean;
   }) {
-    return this.prisma.product.create({
+    const created = await this.prisma.product.create({
       data: {
         name: data.name,
         slug: data.slug,
@@ -550,6 +607,8 @@ export class ProductsService {
         isNew: data.isNew ?? false,
       },
     });
+    this.invalidate();
+    return created;
   }
 
   async update(
@@ -584,12 +643,16 @@ export class ProductsService {
     if (seoKeywords !== undefined) {
       patch.seoKeywords = seoKeywords?.trim() ? seoKeywords.trim() : null;
     }
-    return this.prisma.product.update({ where: { id }, data: patch });
+    const updated = await this.prisma.product.update({ where: { id }, data: patch });
+    this.invalidate();
+    return updated;
   }
 
   async remove(id: string) {
     await this.ensure(id);
-    return this.prisma.product.delete({ where: { id } });
+    const removed = await this.prisma.product.delete({ where: { id } });
+    this.invalidate();
+    return removed;
   }
 
   async addImage(productId: string, url: string, alt?: string) {
@@ -599,9 +662,11 @@ export class ProductsService {
       _max: { sortOrder: true },
     });
     const sortOrder = (agg._max.sortOrder ?? -1) + 1;
-    return this.prisma.productImage.create({
+    const img = await this.prisma.productImage.create({
       data: { productId, url: url.trim(), alt: alt?.trim(), sortOrder },
     });
+    this.invalidate();
+    return img;
   }
 
   private async ensure(id: string) {

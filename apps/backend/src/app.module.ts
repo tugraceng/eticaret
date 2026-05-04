@@ -22,6 +22,9 @@ import { WhatsAppModule } from "./whatsapp/whatsapp.module";
 import { UploadsModule } from "./uploads/uploads.module";
 import { MarketingModule } from "./marketing/marketing.module";
 import { EinvoiceModule } from "./einvoice/einvoice.module";
+import { PerfModule } from "./common/perf/perf.module";
+import { AppCacheModule } from "./common/cache/cache.module";
+import { JobsModule } from "./common/jobs/jobs.module";
 
 @Module({
   imports: [
@@ -35,6 +38,9 @@ import { EinvoiceModule } from "./einvoice/einvoice.module";
       ],
     }),
     ScheduleModule.forRoot(),
+    PerfModule,
+    AppCacheModule,
+    JobsModule,
     EinvoiceModule,
     PrismaModule,
     EmailModule,

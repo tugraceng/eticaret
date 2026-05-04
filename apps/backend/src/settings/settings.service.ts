@@ -1,10 +1,19 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import type { HomeSectionKind, Prisma } from "@prisma/client";
+import { AppCacheService } from "../common/cache/app-cache.service";
 import { PrismaService } from "../prisma/prisma.service";
+
+const KEY_PUBLIC = "settings:public";
+const KEY_HOME_VISIBLE = "home-sections:visible";
+const KEY_HOME_ALL = "home-sections:all";
+const TTL_MS = 60_000;
 
 @Injectable()
 export class SettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: AppCacheService,
+  ) {}
 
   async getSettings() {
     const existing = await this.prisma.siteSettings.findFirst();
@@ -12,10 +21,23 @@ export class SettingsService {
     return this.prisma.siteSettings.create({ data: {} });
   }
 
+  private invalidateSettings() {
+    this.cache.del(KEY_PUBLIC);
+  }
+
+  private invalidateHomeSections() {
+    this.cache.del(KEY_HOME_VISIBLE);
+    this.cache.del(KEY_HOME_ALL);
+  }
+
   /**
    * Herkese açık /settings uç noktası için — hassas alanlar (API anahtarları vs.) maskelenir.
    */
-  async getPublicSettings() {
+  getPublicSettings() {
+    return this.cache.getOrSet(KEY_PUBLIC, TTL_MS, () => this.loadPublicSettings());
+  }
+
+  private async loadPublicSettings() {
     const full = await this.getSettings();
     const {
       whatsappAccessToken: _accessToken,
@@ -101,23 +123,28 @@ export class SettingsService {
     }>,
   ) {
     const current = await this.getSettings();
-    return this.prisma.siteSettings.update({
+    const updated = await this.prisma.siteSettings.update({
       where: { id: current.id },
       data: {
         ...data,
         socialLinks: data.socialLinks as Prisma.InputJsonValue | undefined,
       },
     });
+    this.invalidateSettings();
+    return updated;
   }
 
   listHomeSections(opts?: { onlyVisible?: boolean }) {
-    return this.prisma.homeSection.findMany({
-      where: opts?.onlyVisible ? { isVisible: true } : undefined,
-      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-    });
+    const key = opts?.onlyVisible ? KEY_HOME_VISIBLE : KEY_HOME_ALL;
+    return this.cache.getOrSet(key, TTL_MS, () =>
+      this.prisma.homeSection.findMany({
+        where: opts?.onlyVisible ? { isVisible: true } : undefined,
+        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+      }),
+    );
   }
 
-  createHomeSection(data: {
+  async createHomeSection(data: {
     kind: HomeSectionKind;
     title?: string | null;
     subtitle?: string | null;
@@ -129,7 +156,7 @@ export class SettingsService {
     isVisible?: boolean;
     sortOrder?: number;
   }) {
-    return this.prisma.homeSection.create({
+    const created = await this.prisma.homeSection.create({
       data: {
         kind: data.kind,
         title: data.title ?? undefined,
@@ -143,6 +170,8 @@ export class SettingsService {
         sortOrder: data.sortOrder ?? 0,
       },
     });
+    this.invalidateHomeSections();
+    return created;
   }
 
   async updateHomeSection(
@@ -161,18 +190,22 @@ export class SettingsService {
   ) {
     await this.ensureSection(id);
     const { config, ...rest } = data;
-    return this.prisma.homeSection.update({
+    const updated = await this.prisma.homeSection.update({
       where: { id },
       data: {
         ...rest,
         config: config === undefined ? undefined : (config as Prisma.InputJsonValue),
       },
     });
+    this.invalidateHomeSections();
+    return updated;
   }
 
   async removeHomeSection(id: string) {
     await this.ensureSection(id);
-    return this.prisma.homeSection.delete({ where: { id } });
+    const removed = await this.prisma.homeSection.delete({ where: { id } });
+    this.invalidateHomeSections();
+    return removed;
   }
 
   async reorderHomeSections(ids: string[]) {
@@ -184,6 +217,7 @@ export class SettingsService {
         }),
       ),
     );
+    this.invalidateHomeSections();
     return this.listHomeSections();
   }
 
