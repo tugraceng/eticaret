@@ -41,7 +41,12 @@ function mergeFetchInit(init?: RequestInit): RequestInit {
 }
 
 export function apiUrl(path: string): string {
-  return `${base()}${path}`;
+  const b = base();
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  if (b.endsWith("/api") && normalizedPath.startsWith("/api/")) {
+    return `${b}${normalizedPath.slice(4)}`;
+  }
+  return `${b}${normalizedPath}`;
 }
 
 const STATUS_MESSAGES_TR: Partial<Record<number, string>> = {

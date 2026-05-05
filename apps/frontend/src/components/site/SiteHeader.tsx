@@ -244,8 +244,16 @@ export function SiteHeader({
       }
     };
     readToken();
-    const id = window.setInterval(readToken, 5000);
-    return () => window.clearInterval(id);
+    const onFocus = () => readToken();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") readToken();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [pathname]);
 
   const headerSurface = isHome
@@ -339,7 +347,7 @@ export function SiteHeader({
             <button
               type="button"
               onClick={() => openMiniCart()}
-              className="relative grid h-9 w-9 place-items-center rounded-full text-slate-600 hover:bg-white hover:text-slate-900"
+              className="relative hidden h-9 w-9 place-items-center rounded-full text-slate-600 hover:bg-white hover:text-slate-900 md:grid"
               aria-label="Sepeti aç"
               aria-haspopup="dialog"
               aria-controls="mini-cart-panel"

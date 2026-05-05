@@ -23,6 +23,7 @@ export function HomeRetailSection({
   products,
   categories,
 }: Props) {
+  const isEmpty = products.length === 0;
   const rails = categories.slice(0, 2).map((c) => ({
     title: c.name,
     href: `/shop?categoryId=${encodeURIComponent(c.id)}`,
@@ -78,6 +79,14 @@ export function HomeRetailSection({
           </div>
         )}
 
+        {isEmpty ? (
+          <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/90 p-8 text-center">
+            <p className="text-base font-semibold text-slate-900">Henüz ürün eklenmedi</p>
+            <p className="mt-2 text-sm text-slate-600">Admin panelinden ürün ekleyip tekrar deneyin.</p>
+            <p className="mt-1 text-xs text-slate-500">Kategori ekleyin ve ürünleri kategorilere bağlayın.</p>
+          </div>
+        ) : null}
+
         {(rails.length ? rails : [fallbackRail]).map((rail) => (
           <section key={rail.title} className="mt-8">
             <HomeProductRail title={rail.title} href={rail.href} products={rail.products} />
@@ -107,7 +116,15 @@ export function HomeRetailSection({
         </div>
 
         <div className="mt-12">
-          <HomeEditorialProductGrid products={products} />
+          {isEmpty ? (
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
+              <p className="text-xl font-semibold text-slate-900">Henüz ürün eklenmedi</p>
+              <p className="mt-2 text-sm text-slate-600">Vitrin boş görünüyor. Admin panelinden ürün ekleyin.</p>
+              <p className="mt-1 text-sm text-slate-500">Kategori ekleyin ve ürünlerinizi yayınlayın.</p>
+            </div>
+          ) : (
+            <HomeEditorialProductGrid products={products} />
+          )}
         </div>
       </section>
     </div>

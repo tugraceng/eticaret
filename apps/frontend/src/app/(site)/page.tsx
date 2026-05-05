@@ -3,7 +3,7 @@ import { HomeSectionRenderer } from "@/components/home/HomeSections";
 import type { HomeRenderContext } from "@/components/home/HomeSections";
 import { HomeRetailSection } from "@/components/home/HomeRetailSection";
 import { RecentlyViewedRail } from "@/components/store/RecentlyViewedRail";
-import { apiJson } from "@/lib/api";
+import { apiJsonSafe } from "@/lib/api";
 import { IMPLICIT_RETAIL_BEFORE_KINDS } from "@/lib/homeLayout";
 import { getHomeSections, getSiteSettings } from "@/lib/settings";
 import type { ProductCardData } from "@/components/site/ProductCard";
@@ -36,37 +36,26 @@ export default async function HomePage({
 
   let products: ProductCardData[] = [];
   let categories: ShopCategory[] = [];
-  try {
-    const [plist, clist] = await Promise.all([
-      apiJson<ProductCardData[]>(productApiPath(q, categoryId)),
-      apiJson<ShopCategory[]>("/categories"),
-    ]);
-    products = plist;
-    categories = clist;
-  } catch {
-    products = [];
-    categories = [];
-  }
+  const [plist, clist] = await Promise.all([
+    apiJsonSafe<ProductCardData[]>(productApiPath(q, categoryId)),
+    apiJsonSafe<ShopCategory[]>("/categories"),
+  ]);
+  products = Array.isArray(plist) ? plist : [];
+  categories = Array.isArray(clist) ? clist : [];
 
   type CatalogSlice = { items: ProductCardData[] };
   let popularRail: ProductCardData[] = [];
   let newestRail: ProductCardData[] = [];
   let bestsellerRail: ProductCardData[] = [];
   if (!filtering) {
-    try {
-      const [pop, neu, best] = await Promise.all([
-        apiJson<CatalogSlice>("/products/catalog?sort=popular&limit=10&page=1"),
-        apiJson<CatalogSlice>("/products/catalog?sort=newest&limit=10&page=1"),
-        apiJson<ProductCardData[]>("/products/bestsellers?limit=10"),
-      ]);
-      popularRail = pop.items ?? [];
-      newestRail = neu.items ?? [];
-      bestsellerRail = Array.isArray(best) ? best : [];
-    } catch {
-      popularRail = [];
-      newestRail = [];
-      bestsellerRail = [];
-    }
+    const [pop, neu, best] = await Promise.all([
+      apiJsonSafe<CatalogSlice>("/products/catalog?sort=popular&limit=10&page=1"),
+      apiJsonSafe<CatalogSlice>("/products/catalog?sort=newest&limit=10&page=1"),
+      apiJsonSafe<ProductCardData[]>("/products/bestsellers?limit=10"),
+    ]);
+    popularRail = pop?.items ?? [];
+    newestRail = neu?.items ?? [];
+    bestsellerRail = Array.isArray(best) ? best : [];
   }
 
   const activeCategory = categoryId
@@ -127,6 +116,15 @@ export default async function HomePage({
 
   return (
     <div className="home-page flex flex-col">
+      {!filtering && visible.length === 0 ? (
+        <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
+            <p className="text-2xl font-semibold text-slate-900">Henüz ürün eklenmedi</p>
+            <p className="mt-2 text-sm text-slate-600">Ana sayfa bolumleri su an bos. Admin panelinden bolum ekleyin.</p>
+            <p className="mt-1 text-sm text-slate-500">Kategori ekleyin ve urunleri yayinlayin.</p>
+          </div>
+        </section>
+      ) : null}
       {!filtering ? streamNodes : null}
 
       {filtering ? (

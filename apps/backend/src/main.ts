@@ -3,6 +3,7 @@ import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import type { CorsOptions } from "@nestjs/common/interfaces/external/cors-options.interface";
 import { AppModule } from "./app.module";
+import { GlobalExceptionFilter } from "./common/http/global-exception.filter";
 import { perfMiddleware } from "./common/perf/perf.middleware";
 import { UploadsService } from "./uploads/uploads.service";
 
@@ -56,6 +57,7 @@ async function bootstrap() {
   app.use(perfMiddleware);
   app.enableCors(buildCorsOptions());
   app.setGlobalPrefix("api");
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
