@@ -156,6 +156,7 @@ export class SettingsService {
     isVisible?: boolean;
     sortOrder?: number;
   }) {
+    const config = this.normalizeHomeSectionConfig(data.config);
     const created = await this.prisma.homeSection.create({
       data: {
         kind: data.kind,
@@ -165,7 +166,7 @@ export class SettingsService {
         mediaUrl: data.mediaUrl ?? undefined,
         ctaLabel: data.ctaLabel ?? undefined,
         ctaHref: data.ctaHref ?? undefined,
-        config: (data.config ?? {}) as Prisma.InputJsonValue,
+        config: config as Prisma.InputJsonValue,
         isVisible: data.isVisible ?? true,
         sortOrder: data.sortOrder ?? 0,
       },
@@ -190,11 +191,12 @@ export class SettingsService {
   ) {
     await this.ensureSection(id);
     const { config, ...rest } = data;
+    const normalizedConfig = config === undefined ? undefined : this.normalizeHomeSectionConfig(config);
     const updated = await this.prisma.homeSection.update({
       where: { id },
       data: {
         ...rest,
-        config: config === undefined ? undefined : (config as Prisma.InputJsonValue),
+        config: normalizedConfig as Prisma.InputJsonValue | undefined,
       },
     });
     this.invalidateHomeSections();
@@ -224,5 +226,30 @@ export class SettingsService {
   private async ensureSection(id: string) {
     const s = await this.prisma.homeSection.findUnique({ where: { id } });
     if (!s) throw new NotFoundException();
+  }
+
+  /**
+   * HomeSection config backend tarafında opsiyonel tutulur.
+   * Frontend alanı göndermese veya boş/null gönderse bile güvenli fallback {} olur.
+   */
+  private normalizeHomeSectionConfig(input: unknown): Record<string, unknown> {
+    if (input == null) return {};
+    if (typeof input === "string") {
+      const trimmed = input.trim();
+      if (!trimmed) return {};
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          return parsed as Record<string, unknown>;
+        }
+        return {};
+      } catch {
+        return {};
+      }
+    }
+    if (typeof input === "object" && !Array.isArray(input)) {
+      return input as Record<string, unknown>;
+    }
+    return {};
   }
 }

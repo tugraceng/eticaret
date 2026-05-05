@@ -14,7 +14,7 @@ const KIND_META: Record<
   HERO: {
     label: "Hero slayt",
     emoji: "🎬",
-    desc: "Tam genişlik vitrin; JSON içinde slides[] ile görseller ve metinler.",
+    desc: "Tam genişlik vitrin; baslik/aciklama/gorsel/CTA alanlariyla yonetin.",
   },
   TRUST_STRIP: {
     label: "Güven şeridi",
@@ -56,7 +56,7 @@ const KIND_META: Record<
     emoji: "🛒",
     desc: "Ana ürün alanı ve filtreler — tek blok yeterli; sırayı buraya göre ayarlayın.",
   },
-  BANNERS: { label: "Afişler", emoji: "🖼️", desc: "Kart/grid kampanya görselleri (JSON items)." },
+  BANNERS: { label: "Afişler", emoji: "🖼️", desc: "Kart/grid kampanya afisleri." },
   FEATURED_PRODUCTS: { label: "Öne çıkan ürünler", emoji: "📦", desc: "Seçtiğiniz ürünler veya otomatik." },
   FEATURED_CATEGORIES: {
     label: "Öne çıkan kategoriler",
@@ -64,8 +64,8 @@ const KIND_META: Record<
     desc: "Seçili veya ilk kategoriler.",
   },
   RICH_TEXT: { label: "Metin bloğu", emoji: "📄", desc: "Başlık ve metin." },
-  BLOG_TEASER: { label: "Blog özeti", emoji: "✍️", desc: "Son yazılar; limit JSON." },
-  TESTIMONIALS: { label: "Yorumlar", emoji: "💬", desc: "Müşteri görüşleri JSON." },
+  BLOG_TEASER: { label: "Blog özeti", emoji: "✍️", desc: "Son yazilar ozeti." },
+  TESTIMONIALS: { label: "Yorumlar", emoji: "💬", desc: "Musteri gorusleri." },
   CTA: { label: "CTA kartı", emoji: "🚀", desc: "Tek çağrı kutusu." },
 };
 
@@ -121,15 +121,10 @@ type Draft = {
   mediaUrl: string;
   ctaLabel: string;
   ctaHref: string;
-  configJson: string;
   isVisible: boolean;
   sortOrder: number;
   productIds: string[];
   categoryIds: string[];
-  heroBadge: string;
-  heroDiscount: string;
-  heroCode: string;
-  heroExpiresAt: string;
 };
 
 function emptyDraft(): Draft {
@@ -141,15 +136,10 @@ function emptyDraft(): Draft {
     mediaUrl: "",
     ctaLabel: "",
     ctaHref: "",
-    configJson: "{}",
     isVisible: true,
     sortOrder: 0,
     productIds: [],
     categoryIds: [],
-    heroBadge: "",
-    heroDiscount: "",
-    heroCode: "",
-    heroExpiresAt: "",
   };
 }
 
@@ -161,17 +151,6 @@ function draftFromSection(s: HomeSection): Draft {
   const categoryIds = Array.isArray(cfg.categoryIds)
     ? (cfg.categoryIds as unknown[]).filter((x): x is string => typeof x === "string")
     : [];
-  const heroBadge = typeof cfg.badge === "string" ? cfg.badge : "";
-  const heroDiscount = typeof cfg.discount === "string" ? cfg.discount : "";
-  const heroCode = typeof cfg.code === "string" ? cfg.code : "";
-  const heroExpiresAt = typeof cfg.expiresAt === "string" ? cfg.expiresAt : "";
-  const rest: Record<string, unknown> = { ...cfg };
-  delete rest.productIds;
-  delete rest.categoryIds;
-  delete rest.badge;
-  delete rest.discount;
-  delete rest.code;
-  delete rest.expiresAt;
   const kind: HomeSectionKind = s.kind;
   return {
     id: s.id,
@@ -182,31 +161,15 @@ function draftFromSection(s: HomeSection): Draft {
     mediaUrl: s.mediaUrl ?? "",
     ctaLabel: s.ctaLabel ?? "",
     ctaHref: s.ctaHref ?? "",
-    configJson: Object.keys(rest).length > 0 ? JSON.stringify(rest, null, 2) : "{}",
     isVisible: s.isVisible,
     sortOrder: s.sortOrder,
     productIds,
     categoryIds,
-    heroBadge,
-    heroDiscount,
-    heroCode,
-    heroExpiresAt,
   };
 }
 
 function buildConfig(d: Draft): Record<string, unknown> {
-  let base: Record<string, unknown> = {};
-  const trimmed = d.configJson.trim();
-  if (trimmed) {
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        base = parsed as Record<string, unknown>;
-      }
-    } catch {
-      /* ignore */
-    }
-  }
+  const base: Record<string, unknown> = {};
   if (d.kind === "FEATURED_PRODUCTS") base.productIds = d.productIds;
   if (d.kind === "FEATURED_CATEGORIES") base.categoryIds = d.categoryIds;
   return base;
@@ -575,35 +538,6 @@ export function HomeEditor({ token }: { token: string }) {
               )}
             </div>
           </div>
-        )}
-
-        {(draft.kind === "BANNERS" ||
-          draft.kind === "TESTIMONIALS" ||
-          draft.kind === "BLOG_TEASER" ||
-          draft.kind === "HERO" ||
-          draft.kind === "TRUST_STRIP") && (
-          <Field
-            label="Ek yapılandırma (JSON)"
-            className="mt-6"
-            hint={
-              draft.kind === "HERO"
-                ? 'Zorunlu alan: slides — örn: {"slides":[{"title":"Başlık","eyebrow":"Etiket","body":"Metin","image":"https://...","cta":"/shop","ctaLabel":"Git","secondaryHref":"/about","secondaryLabel":"Bilgi"}]}'
-                : draft.kind === "TRUST_STRIP"
-                  ? 'Boş bırakınca üç varsayılan madde. Özelleştirme: {"items":[{"title":"Başlık","description":"Açıklama"}]}'
-                  : draft.kind === "BANNERS"
-                    ? 'Örn: {"items":[{"title":"...","subtitle":"...","imageUrl":"...","href":"/#urunler"}]}'
-                    : draft.kind === "TESTIMONIALS"
-                      ? 'Örn: {"items":[{"quote":"...","author":"...","role":"..."}]}'
-                      : 'Örn: {"limit":3}'
-            }
-          >
-            <textarea
-              rows={5}
-              className="input-soft resize-y font-mono text-xs"
-              value={draft.configJson}
-              onChange={(e) => setDraft((d) => ({ ...d, configJson: e.target.value }))}
-            />
-          </Field>
         )}
 
         <label className="mt-6 inline-flex items-center gap-2 text-sm text-slate-700">

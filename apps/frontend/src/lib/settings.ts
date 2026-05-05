@@ -158,5 +158,9 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
 export const getHomeSections = cache(async (opts?: { all?: boolean }): Promise<HomeSection[]> => {
   const path = opts?.all ? "/home-sections?all=1" : "/home-sections";
   const data = await apiJsonSafe<HomeSection[]>(path);
-  return Array.isArray(data) ? data : [];
+  if (!Array.isArray(data)) return [];
+  return data.map((s) => ({
+    ...s,
+    config: s.config && typeof s.config === "object" ? s.config : {},
+  }));
 });

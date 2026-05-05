@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  Allow,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -309,8 +310,8 @@ class CreateHomeSectionDto {
   ctaHref?: string | null;
 
   @IsOptional()
-  @IsObject()
-  config?: Record<string, unknown>;
+  @Allow()
+  config?: unknown;
 
   @IsOptional()
   @IsBoolean()
@@ -348,8 +349,8 @@ class UpdateHomeSectionDto {
   ctaHref?: string | null;
 
   @IsOptional()
-  @IsObject()
-  config?: Record<string, unknown>;
+  @Allow()
+  config?: unknown;
 
   @IsOptional()
   @IsBoolean()
