@@ -184,7 +184,7 @@ export function ShopPageClient({
               type="number"
               min={0}
               defaultValue={minPriceCents ?? ""}
-              placeholder="Min fiyat (kuruş)"
+              placeholder="Min fiyat"
               className="input-soft min-h-11 w-full !rounded-ds-lg"
             />
             <input
@@ -192,7 +192,7 @@ export function ShopPageClient({
               type="number"
               min={0}
               defaultValue={maxPriceCents ?? ""}
-              placeholder="Max fiyat (kuruş)"
+              placeholder="Max fiyat"
               className="input-soft min-h-11 w-full !rounded-ds-lg"
             />
             <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-ds-lg border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-3 py-2 text-small text-[var(--ds-text)]">

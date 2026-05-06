@@ -67,7 +67,6 @@ export function ProductGallery({
             sizes="(max-width: 1024px) 100vw, 52vw"
             className="object-cover transition duration-500 ease-out group-hover:scale-[1.02]"
             priority={active === 0}
-            unoptimized
           />
         </button>
         {onSale && (
@@ -106,7 +105,6 @@ export function ProductGallery({
                 width={80}
                 height={80}
                 className="h-full w-full object-cover"
-                unoptimized
               />
             </button>
           ))}
@@ -150,7 +148,6 @@ export function ProductGallery({
                     width={1200}
                     height={1200}
                     className="max-h-[min(85dvh,820px)] w-auto max-w-full object-contain"
-                    unoptimized
                     priority
                   />
                 </div>

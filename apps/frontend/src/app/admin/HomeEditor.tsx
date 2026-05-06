@@ -111,6 +111,25 @@ function kindMeta(k: HomeSectionKind) {
 
 type ProductLite = { id: string; name: string; slug: string };
 type CategoryLite = { id: string; name: string; slug: string };
+type HeroSlideDraft = {
+  title: string;
+  subtitle: string;
+  body: string;
+  mediaUrl: string;
+  ctaLabel: string;
+  ctaHref: string;
+};
+
+function emptyHeroSlide(): HeroSlideDraft {
+  return {
+    title: "",
+    subtitle: "",
+    body: "",
+    mediaUrl: "",
+    ctaLabel: "",
+    ctaHref: "",
+  };
+}
 
 type Draft = {
   id?: string;
@@ -125,6 +144,7 @@ type Draft = {
   sortOrder: number;
   productIds: string[];
   categoryIds: string[];
+  heroSlides: HeroSlideDraft[];
 };
 
 function emptyDraft(): Draft {
@@ -140,6 +160,7 @@ function emptyDraft(): Draft {
     sortOrder: 0,
     productIds: [],
     categoryIds: [],
+    heroSlides: [emptyHeroSlide()],
   };
 }
 
@@ -151,6 +172,31 @@ function draftFromSection(s: HomeSection): Draft {
   const categoryIds = Array.isArray(cfg.categoryIds)
     ? (cfg.categoryIds as unknown[]).filter((x): x is string => typeof x === "string")
     : [];
+  const heroSlidesFromConfig = Array.isArray(cfg.slides)
+    ? (cfg.slides as unknown[])
+        .filter((x): x is Record<string, unknown> => typeof x === "object" && x !== null)
+        .map((x) => ({
+          title: typeof x.title === "string" ? x.title : "",
+          subtitle: typeof x.eyebrow === "string" ? x.eyebrow : "",
+          body: typeof x.body === "string" ? x.body : "",
+          mediaUrl: typeof x.image === "string" ? x.image : "",
+          ctaLabel: typeof x.ctaLabel === "string" ? x.ctaLabel : "",
+          ctaHref: typeof x.cta === "string" ? x.cta : "",
+        }))
+    : [];
+  const heroSlides =
+    heroSlidesFromConfig.length > 0
+      ? heroSlidesFromConfig
+      : [
+          {
+            title: s.title ?? "",
+            subtitle: s.subtitle ?? "",
+            body: s.body ?? "",
+            mediaUrl: s.mediaUrl ?? "",
+            ctaLabel: s.ctaLabel ?? "",
+            ctaHref: s.ctaHref ?? "",
+          },
+        ];
   const kind: HomeSectionKind = s.kind;
   return {
     id: s.id,
@@ -165,11 +211,25 @@ function draftFromSection(s: HomeSection): Draft {
     sortOrder: s.sortOrder,
     productIds,
     categoryIds,
+    heroSlides,
   };
 }
 
 function buildConfig(d: Draft): Record<string, unknown> {
   const base: Record<string, unknown> = {};
+  if (d.kind === "HERO") {
+    const slides = d.heroSlides
+      .map((s) => ({
+        title: s.title.trim(),
+        eyebrow: s.subtitle.trim(),
+        body: s.body.trim(),
+        image: s.mediaUrl.trim(),
+        ctaLabel: s.ctaLabel.trim() || "Keşfet",
+        cta: s.ctaHref.trim() || "/shop",
+      }))
+      .filter((s) => s.title && s.image);
+    if (slides.length > 0) base.slides = slides;
+  }
   if (d.kind === "FEATURED_PRODUCTS") base.productIds = d.productIds;
   if (d.kind === "FEATURED_CATEGORIES") base.categoryIds = d.categoryIds;
   return base;
@@ -217,8 +277,7 @@ export function HomeEditor({ token }: { token: string }) {
     setError(null);
     setBusy(true);
     try {
-      const payload = {
-        kind: draft.kind,
+      const payloadBase = {
         title: draft.title.trim() || null,
         subtitle: draft.subtitle.trim() || null,
         body: draft.body.trim() || null,
@@ -229,6 +288,20 @@ export function HomeEditor({ token }: { token: string }) {
         isVisible: draft.isVisible,
         sortOrder: draft.sortOrder,
       };
+      const heroAnchor = draft.kind === "HERO" ? draft.heroSlides[0] ?? emptyHeroSlide() : null;
+      const payload = {
+        ...payloadBase,
+        ...(heroAnchor
+          ? {
+              title: heroAnchor.title.trim() || null,
+              subtitle: heroAnchor.subtitle.trim() || null,
+              body: heroAnchor.body.trim() || null,
+              mediaUrl: heroAnchor.mediaUrl.trim() || null,
+              ctaLabel: heroAnchor.ctaLabel.trim() || null,
+              ctaHref: heroAnchor.ctaHref.trim() || null,
+            }
+          : {}),
+      };
       if (draft.id) {
         await adminFetch(`/home-sections/${draft.id}`, token, {
           method: "PATCH",
@@ -237,7 +310,7 @@ export function HomeEditor({ token }: { token: string }) {
       } else {
         await adminFetch("/home-sections", token, {
           method: "POST",
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ kind: draft.kind, ...payload }),
         });
       }
       setDraft(emptyDraft());
@@ -333,6 +406,12 @@ export function HomeEditor({ token }: { token: string }) {
   }, [products, productSearch]);
 
   const currentKindMeta = kindMeta(draft.kind);
+  const updateHeroSlide = (index: number, patch: Partial<HeroSlideDraft>) => {
+    setDraft((d) => ({
+      ...d,
+      heroSlides: d.heroSlides.map((s, i) => (i === index ? { ...s, ...patch } : s)),
+    }));
+  };
 
   return (
     <div className="space-y-6">
@@ -415,50 +494,145 @@ export function HomeEditor({ token }: { token: string }) {
           </Field>
         </div>
 
-        <Field label="Başlık" className="mt-3">
-          <input
-            className="input-soft"
-            value={draft.title}
-            onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-            placeholder="Görünen başlık"
-          />
-        </Field>
+        {draft.kind === "HERO" ? (
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+                Hero slaytları ({draft.heroSlides.length})
+              </p>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => setDraft((d) => ({ ...d, heroSlides: [...d.heroSlides, emptyHeroSlide()] }))}
+              >
+                <Icon.Plus /> Slayt ekle
+              </button>
+            </div>
+            {draft.heroSlides.map((slide, idx) => (
+              <div key={idx} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-xs font-semibold text-slate-700">Slayt #{idx + 1}</p>
+                  {draft.heroSlides.length > 1 ? (
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-rose-700 hover:text-rose-800"
+                      onClick={() =>
+                        setDraft((d) => ({
+                          ...d,
+                          heroSlides: d.heroSlides.filter((_, i) => i !== idx),
+                        }))
+                      }
+                    >
+                      Sil
+                    </button>
+                  ) : null}
+                </div>
+                <Field label="Başlık">
+                  <input
+                    className="input-soft"
+                    value={slide.title}
+                    onChange={(e) => updateHeroSlide(idx, { title: e.target.value })}
+                    placeholder="Görünen başlık"
+                  />
+                </Field>
+                <Field label="Üst etiket" className="mt-3">
+                  <input
+                    className="input-soft"
+                    value={slide.subtitle}
+                    onChange={(e) => updateHeroSlide(idx, { subtitle: e.target.value })}
+                    placeholder="Örn. Yeni sezon"
+                  />
+                </Field>
+                <Field label="Gövde metni" className="mt-3">
+                  <textarea
+                    className="input-soft resize-y"
+                    rows={3}
+                    value={slide.body}
+                    onChange={(e) => updateHeroSlide(idx, { body: e.target.value })}
+                  />
+                </Field>
+                <AdminImageUpload
+                  token={token}
+                  label="Slayt görseli"
+                  value={slide.mediaUrl}
+                  onChange={(url) => updateHeroSlide(idx, { mediaUrl: url })}
+                  hint="Bu alan zorunludur."
+                />
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <Field label="CTA etiketi">
+                    <input
+                      className="input-soft"
+                      value={slide.ctaLabel}
+                      onChange={(e) => updateHeroSlide(idx, { ctaLabel: e.target.value })}
+                      placeholder="Örn. Şimdi keşfet"
+                    />
+                  </Field>
+                  <Field label="CTA bağlantı">
+                    <input
+                      className="input-soft"
+                      value={slide.ctaHref}
+                      onChange={(e) => updateHeroSlide(idx, { ctaHref: e.target.value })}
+                      placeholder="/shop"
+                    />
+                  </Field>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <Field label="Başlık" className="mt-3">
+              <input
+                className="input-soft"
+                value={draft.title}
+                onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+                placeholder="Görünen başlık"
+              />
+            </Field>
 
-        <Field label="Gövde metni" className="mt-3">
-          <textarea
-            className="input-soft resize-y"
-            rows={4}
-            value={draft.body}
-            onChange={(e) => setDraft((d) => ({ ...d, body: e.target.value }))}
-          />
-        </Field>
+            <Field label="Gövde metni" className="mt-3">
+              <textarea
+                className="input-soft resize-y"
+                rows={4}
+                value={draft.body}
+                onChange={(e) => setDraft((d) => ({ ...d, body: e.target.value }))}
+              />
+            </Field>
 
-        <AdminImageUpload
-          token={token}
-          label="Medya (isteğe bağlı)"
-          value={draft.mediaUrl}
-          onChange={(url) => setDraft((d) => ({ ...d, mediaUrl: url }))}
-          hint="Bölüm tipine göre arka plan veya görsel."
-        />
-
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <Field label="CTA etiketi">
-            <input
-              className="input-soft"
-              value={draft.ctaLabel}
-              onChange={(e) => setDraft((d) => ({ ...d, ctaLabel: e.target.value }))}
-              placeholder="Örn. Şimdi keşfet"
+            <AdminImageUpload
+              token={token}
+              label="Medya (isteğe bağlı)"
+              value={draft.mediaUrl}
+              onChange={(url) => setDraft((d) => ({ ...d, mediaUrl: url }))}
+              hint="Bölüm tipine göre arka plan veya görsel."
             />
-          </Field>
-          <Field label="CTA bağlantı">
-            <input
-              className="input-soft"
-              value={draft.ctaHref}
-              onChange={(e) => setDraft((d) => ({ ...d, ctaHref: e.target.value }))}
-              placeholder="/#urunler"
-            />
-          </Field>
-        </div>
+
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <Field label="CTA etiketi">
+                <input
+                  className="input-soft"
+                  value={draft.ctaLabel}
+                  onChange={(e) => setDraft((d) => ({ ...d, ctaLabel: e.target.value }))}
+                  placeholder="Örn. Şimdi keşfet"
+                />
+              </Field>
+              <Field label="CTA bağlantı">
+                <input
+                  className="input-soft"
+                  value={draft.ctaHref}
+                  onChange={(e) => setDraft((d) => ({ ...d, ctaHref: e.target.value }))}
+                  placeholder="/#urunler"
+                />
+              </Field>
+            </div>
+          </>
+        )}
+
+        {draft.kind !== "HERO" ? null : (
+          <p className="mt-2 text-xs text-slate-500">
+            Not: Hero için geçerli içerik slayt listesinden alınır; tek bir hero bölümünde birden fazla slayt ekleyebilirsiniz.
+          </p>
+        )}
 
         {draft.kind === "FEATURED_PRODUCTS" && (
           <div className="mt-6">
