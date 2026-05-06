@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { apiJson } from "@/lib/api";
+import { apiAssetUrl, apiJson } from "@/lib/api";
 import { ProductCard, type ProductCardData } from "@/components/site/ProductCard";
 import { absoluteFromSite } from "@/lib/site-url";
 import { AddToCart } from "./ui";
@@ -131,7 +131,12 @@ export default async function ProductPage({
   } catch {
     notFound();
   }
-  const gallery = product.images ?? [];
+  const gallery = (product.images ?? [])
+    .map((img) => ({
+      ...img,
+      url: apiAssetUrl(img.url) ?? "",
+    }))
+    .filter((img) => img.url.length > 0);
   const onSale =
     typeof product.compareAtCents === "number" && product.compareAtCents! > product.priceCents;
 
@@ -155,7 +160,8 @@ export default async function ProductPage({
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const productCanonical = `${siteUrl}/shop/${product.slug}`;
-  const jsonLd = productJsonLd(product, productCanonical, absoluteFromSite(product.images?.[0]?.url));
+  const heroImage = gallery[0]?.url;
+  const jsonLd = productJsonLd(product, productCanonical, absoluteFromSite(heroImage));
   const breadcrumbLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -291,7 +297,7 @@ export default async function ProductPage({
               name={product.name}
               basePriceCents={product.priceCents}
               slug={product.slug}
-              imageUrl={product.images?.[0]?.url}
+              imageUrl={heroImage}
             />
 
             <ul className="mt-8 flex flex-col gap-3 border-t border-slate-200/90 pt-6 text-xs text-slate-600 sm:grid sm:grid-cols-2 sm:gap-x-4">
@@ -408,7 +414,7 @@ export default async function ProductPage({
         name={product.name}
         basePriceCents={product.priceCents}
         slug={product.slug}
-        imageUrl={product.images?.[0]?.url}
+        imageUrl={heroImage}
       />
       </div>
     </ProductVariantProvider>

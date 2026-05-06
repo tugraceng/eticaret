@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { memo, type JSX } from "react";
 import { WishlistButton } from "@/app/(site)/shop/[slug]/ui";
+import { apiAssetUrl } from "@/lib/api";
 
 export type ProductCardData = {
   id: string;
@@ -49,8 +50,8 @@ function priceFmt(cents: number) {
 }
 
 function ProductCardInner({ product }: { product: ProductCardData }) {
-  const cover = product.images?.[0]?.url;
-  const second = product.images?.[1]?.url;
+  const cover = apiAssetUrl(product.images?.[0]?.url) ?? undefined;
+  const second = apiAssetUrl(product.images?.[1]?.url) ?? undefined;
   const alt = product.images?.[0]?.alt ?? product.name;
   const alt2 = product.images?.[1]?.alt ?? alt;
   const onSale =
