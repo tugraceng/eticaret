@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { HomeHeroArrows } from "@/components/home/HomeHeroArrows";
 import { HomeHeroBackdrop } from "@/components/home/HomeHeroBackdrop";
+import { apiAssetUrl } from "@/lib/api";
 import type { HomeSection, SiteSettings } from "@/lib/settings";
 import { defaultHeroSlides, parseHeroSlides, type HomeHeroSlide } from "@/components/home/homeHeroDefaults";
 
@@ -16,9 +17,29 @@ type Props = {
 export function HomeCmsHero({ section, settings }: Props) {
   const slides = useMemo((): HomeHeroSlide[] => {
     const fromConfig = parseHeroSlides(section.config?.slides);
-    if (fromConfig) return fromConfig;
+    if (fromConfig) {
+      return fromConfig.map((slide) => ({
+        ...slide,
+        image: apiAssetUrl(slide.image) ?? slide.image,
+      }));
+    }
+    const hasHeroFields = Boolean(section.title?.trim() || section.mediaUrl?.trim());
+    if (hasHeroFields) {
+      return [
+        {
+          eyebrow: section.subtitle?.trim() ?? "",
+          title: section.title?.trim() || settings.siteName,
+          body: section.body?.trim() || settings.defaultMetaDesc?.trim() || "",
+          cta: section.ctaHref?.trim() || "/shop",
+          ctaLabel: section.ctaLabel?.trim() || "Keşfet",
+          secondaryHref: "/shop",
+          secondaryLabel: "Tümü",
+          image: apiAssetUrl(section.mediaUrl) ?? "",
+        },
+      ];
+    }
     return defaultHeroSlides(settings);
-  }, [section.config?.slides, settings]);
+  }, [section, settings]);
 
   const [index, setIndex] = useState(0);
   const reduceMotion = useReducedMotion();

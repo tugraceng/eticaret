@@ -2,8 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+import { apiUrl } from "@/lib/api";
 
 export function AnalyticsBeacon() {
   const pathname = usePathname();
@@ -13,7 +12,7 @@ export function AnalyticsBeacon() {
     if (!pathname) return;
     if (last.current === pathname) return;
     last.current = pathname;
-    void fetch(`${API}/analytics/events`, {
+    void fetch(apiUrl("/analytics/events"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ event: "page_view", path: pathname }),

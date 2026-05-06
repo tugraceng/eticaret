@@ -225,7 +225,7 @@ export function HomeEditor({ token }: { token: string }) {
         mediaUrl: draft.mediaUrl.trim() || null,
         ctaLabel: draft.ctaLabel.trim() || null,
         ctaHref: draft.ctaHref.trim() || null,
-        config: buildConfig(draft),
+        config: Object.keys(buildConfig(draft)).length > 0 ? buildConfig(draft) : undefined,
         isVisible: draft.isVisible,
         sortOrder: draft.sortOrder,
       };

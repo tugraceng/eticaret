@@ -119,9 +119,10 @@ export default async function HomePage({
       {!filtering && visible.length === 0 ? (
         <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
           <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
-            <p className="text-2xl font-semibold text-slate-900">Henüz ürün eklenmedi</p>
-            <p className="mt-2 text-sm text-slate-600">Ana sayfa bolumleri su an bos. Admin panelinden bolum ekleyin.</p>
-            <p className="mt-1 text-sm text-slate-500">Kategori ekleyin ve urunleri yayinlayin.</p>
+            <p className="text-2xl font-semibold text-slate-900">Henüz vitrin içeriği eklenmedi</p>
+            <p className="mt-2 text-sm text-slate-600">
+              Admin panelden hero, kategori ve ürün ekleyin.
+            </p>
           </div>
         </section>
       ) : null}

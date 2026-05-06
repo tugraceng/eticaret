@@ -49,6 +49,23 @@ export function apiUrl(path: string): string {
   return `${b}${normalizedPath}`;
 }
 
+function apiOriginBase(): string {
+  const b = base();
+  return b.endsWith("/api") ? b.slice(0, -4) : b;
+}
+
+export function apiAssetUrl(pathOrUrl: string | null | undefined): string | null {
+  const raw = pathOrUrl?.trim();
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const normalized = raw.startsWith("/") ? raw : `/${raw}`;
+  try {
+    return new URL(normalized, `${apiOriginBase()}/`).toString();
+  } catch {
+    return normalized;
+  }
+}
+
 const STATUS_MESSAGES_TR: Partial<Record<number, string>> = {
   400: "Geçersiz istek",
   401: "Oturum geçersiz veya süresi doldu. Lütfen yeniden giriş yapın.",
