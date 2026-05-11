@@ -144,6 +144,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   const [editCompareAtTry, setEditCompareAtTry] = useState("");
   const [editSku, setEditSku] = useState("");
   const [editTrackStock, setEditTrackStock] = useState(true);
+  const [editShowPublicStockCount, setEditShowPublicStockCount] = useState(true);
 
   const [imgAlt, setImgAlt] = useState("");
 
@@ -710,6 +711,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     );
     setEditSku(p.sku ?? "");
     setEditTrackStock(p.trackStock ?? true);
+    setEditShowPublicStockCount(p.showPublicStockCount !== false);
     setEditStock(String(p.stock));
     setEditPublished(p.isPublished);
     setEditCategoryId(p.categoryId ?? "");
@@ -755,6 +757,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
           stock: st,
           isPublished: editPublished,
           categoryId: editCategoryId || null,
+          showPublicStockCount: editShowPublicStockCount,
           isFeatured: editFeatured,
           isNew: editNew,
         }),
@@ -779,6 +782,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     editCompareAtTry,
     editSku,
     editTrackStock,
+    editShowPublicStockCount,
     editStock,
     editPublished,
     editCategoryId,
@@ -1075,6 +1079,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               editCompareAtTry={editCompareAtTry}
               editSku={editSku}
               editTrackStock={editTrackStock}
+              editShowPublicStockCount={editShowPublicStockCount}
               editStock={editStock}
               editPublished={editPublished}
               editCategoryId={editCategoryId}
@@ -1091,6 +1096,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               setEditCompareAtTry={setEditCompareAtTry}
               setEditSku={setEditSku}
               setEditTrackStock={setEditTrackStock}
+              setEditShowPublicStockCount={setEditShowPublicStockCount}
               setEditStock={setEditStock}
               setEditPublished={setEditPublished}
               setEditCategoryId={setEditCategoryId}

@@ -13,6 +13,8 @@ export type ProductRow = {
   sku?: string | null;
   trackStock?: boolean;
   stock: number;
+  /** Mağaza ürün sayfasında stok adedi gösterilsin mi */
+  showPublicStockCount?: boolean;
   isPublished: boolean;
   isFeatured?: boolean;
   isNew?: boolean;

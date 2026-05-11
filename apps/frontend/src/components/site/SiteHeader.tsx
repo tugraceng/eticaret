@@ -18,6 +18,7 @@ import type { SiteSettings } from "@/lib/settings";
 import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
 import { selectCartTotalQty, useCartStore } from "@/stores/cart-store";
 import { selectWishlistCount, useWishlistStore } from "@/stores/wishlist-store";
+import { cn } from "@/lib/cn";
 
 function HeartIcon({ className = "" }: { className?: string }) {
   return (
@@ -222,6 +223,8 @@ export function SiteHeader({
   const pathname = usePathname() ?? "/";
   const isHome = pathname === "/";
   const [open, setOpen] = useState(false);
+  /** Mobil menüde alt kategori satırları hangi kök kategoriler için açık */
+  const [mobileSubcatsOpen, setMobileSubcatsOpen] = useState<Set<string>>(new Set());
   const cartCount = useCartStore(selectCartTotalQty);
   const openMiniCart = useCartStore((s) => s.openMiniCart);
   const wishCount = useWishlistStore(selectWishlistCount);
@@ -240,6 +243,19 @@ export function SiteHeader({
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!open) setMobileSubcatsOpen(new Set());
+  }, [open]);
+
+  const toggleMobileSubcats = useCallback((categoryId: string) => {
+    setMobileSubcatsOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) next.delete(categoryId);
+      else next.add(categoryId);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     const readToken = () => {
@@ -410,9 +426,10 @@ export function SiteHeader({
 
       <nav
         aria-label="Kategori ve bağlantılar"
-        className="hidden shrink-0 border-t border-slate-100/90 bg-gradient-to-b from-slate-50/95 to-slate-50/25 md:block"
+        className="relative z-0 hidden shrink-0 border-t border-slate-100/90 bg-gradient-to-b from-slate-50/95 to-slate-50/25 md:block"
       >
-        <div className="mx-auto flex max-w-7xl items-center gap-x-1 gap-y-2 overflow-x-auto overscroll-x-contain px-4 py-3 text-[13px] font-medium tracking-tight sm:gap-x-2 sm:px-6 lg:px-8">
+        {/* overflow-x-auto burada alt menüyü dikeyde kırpar (hero ile “çakışır”). Çok kategori için satır kırılır. */}
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-1 gap-y-2 px-4 py-3 text-[13px] font-medium tracking-tight sm:gap-x-2 sm:px-6 lg:px-8">
           {categoryNav.length === 0 ? (
             <Link
               href="/shop"
@@ -422,7 +439,7 @@ export function SiteHeader({
             </Link>
           ) : null}
           {categoryNav.map((cat) => (
-            <div key={cat.id} className="group relative">
+            <div key={cat.id} className="group relative z-10">
               <Link
                 href={shopCategoryHref(cat.id)}
                 className="inline-flex items-center gap-0.5 rounded-full px-3 py-1.5 whitespace-nowrap text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
@@ -434,21 +451,25 @@ export function SiteHeader({
               </Link>
               {cat.children.length > 0 ? (
                 <div
-                  className={`invisible absolute left-0 top-[calc(100%+0.35rem)] z-50 rounded-2xl border border-slate-200/80 bg-white/95 opacity-0 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/[0.04] backdrop-blur-md transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 ${
-                    cat.children.length > 4
-                      ? "grid min-w-[min(100vw-2rem,520px)] max-w-[90vw] grid-cols-2 gap-0.5 p-3 sm:grid-cols-2"
-                      : "min-w-[220px] p-2"
-                  }`}
+                  className="invisible absolute left-0 top-full z-50 pt-1.5 opacity-0 transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
                 >
-                  {cat.children.map((sub) => (
-                    <Link
-                      key={sub.id}
-                      href={shopCategoryHref(sub.id)}
-                      className="block rounded-xl px-3 py-2.5 text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950"
-                    >
-                      {sub.name}
-                    </Link>
-                  ))}
+                  <div
+                    className={`rounded-2xl border border-slate-200/80 bg-white/95 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/[0.04] backdrop-blur-md ${
+                      cat.children.length > 4
+                        ? "grid min-w-[min(100vw-2rem,520px)] max-w-[90vw] grid-cols-2 gap-0.5 p-3 sm:grid-cols-2"
+                        : "min-w-[220px] p-2"
+                    }`}
+                  >
+                    {cat.children.map((sub) => (
+                      <Link
+                        key={sub.id}
+                        href={shopCategoryHref(sub.id)}
+                        className="block rounded-xl px-3 py-2.5 text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                      >
+                        {sub.name}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -484,31 +505,66 @@ export function SiteHeader({
                 Ürünler
               </Link>
             ) : null}
-            {categoryNav.map((cat) => (
-              <div key={cat.id} className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                <Link
-                  href={shopCategoryHref(cat.id)}
-                  className="text-sm font-semibold text-slate-900 hover:text-slate-700"
-                  onClick={() => setOpen(false)}
-                >
-                  {cat.name}
-                </Link>
-                {cat.children.length > 0 ? (
-                  <div className="mt-2 flex flex-wrap gap-1.5 border-t border-slate-100 pt-2">
-                    {cat.children.map((sub) => (
-                      <Link
-                        key={sub.id}
-                        href={shopCategoryHref(sub.id)}
-                        className="rounded-lg bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100"
-                        onClick={() => setOpen(false)}
+            {categoryNav.map((cat) => {
+              const hasSubs = cat.children.length > 0;
+              const subsExpanded = mobileSubcatsOpen.has(cat.id);
+              return (
+                <div key={cat.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <div className="flex min-h-[2.75rem] items-stretch">
+                    <Link
+                      href={shopCategoryHref(cat.id)}
+                      className="flex flex-1 items-center px-3 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50 hover:text-slate-700"
+                      onClick={() => setOpen(false)}
+                    >
+                      {cat.name}
+                    </Link>
+                    {hasSubs ? (
+                      <button
+                        type="button"
+                        className="flex w-12 shrink-0 items-center justify-center border-l border-slate-100 bg-slate-50/90 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        aria-expanded={subsExpanded}
+                        aria-controls={`mobile-subcats-${cat.id}`}
+                        aria-label={subsExpanded ? `${cat.name} alt kategorilerini gizle` : `${cat.name} alt kategorilerini göster`}
+                        onClick={() => toggleMobileSubcats(cat.id)}
                       >
-                        {sub.name}
-                      </Link>
-                    ))}
+                        <DownIcon
+                          className={cn(
+                            "h-4 w-4 text-slate-500 transition-transform duration-200",
+                            subsExpanded && "-rotate-180",
+                          )}
+                        />
+                      </button>
+                    ) : null}
                   </div>
-                ) : null}
-              </div>
-            ))}
+                  {hasSubs ? (
+                    <div
+                      id={`mobile-subcats-${cat.id}`}
+                      role="region"
+                      aria-label={`${cat.name} alt kategorileri`}
+                      className={cn(
+                        "grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none",
+                        subsExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                      )}
+                    >
+                      <div className="min-h-0 overflow-hidden">
+                        <div className="flex flex-wrap gap-1.5 border-t border-slate-100 bg-slate-50/60 px-3 py-2.5">
+                          {cat.children.map((sub) => (
+                            <Link
+                              key={sub.id}
+                              href={shopCategoryHref(sub.id)}
+                              className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                              onClick={() => setOpen(false)}
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
             <div className="grid grid-cols-2 gap-2">
               {tailNav.map((item) => (
                 <Link

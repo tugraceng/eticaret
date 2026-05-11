@@ -17,6 +17,7 @@ type Ctx = {
   selected: ProductVariantDto | null;
   effectivePriceCents: (basePriceCents: number) => number;
   allVariantsSoldOut: boolean;
+  showPublicStockCount: boolean;
 };
 
 const EMPTY: Ctx = {
@@ -26,6 +27,7 @@ const EMPTY: Ctx = {
   selected: null,
   effectivePriceCents: (b) => b,
   allVariantsSoldOut: false,
+  showPublicStockCount: true,
 };
 
 const ProductVariantContext = createContext<Ctx | null>(null);
@@ -34,10 +36,13 @@ export function ProductVariantProvider({
   children,
   variants,
   defaultSelectedId,
+  showPublicStockCount = true,
 }: {
   children: ReactNode;
   variants: ProductVariantDto[];
   defaultSelectedId?: string | null;
+  /** false iken varyant etiketlerinde stok adedi gösterilmez */
+  showPublicStockCount?: boolean;
 }) {
   const [selectedId, setSelectedIdState] = useState<string | null>(() => {
     if (defaultSelectedId && variants.some((v) => v.id === defaultSelectedId)) {
@@ -76,8 +81,9 @@ export function ProductVariantProvider({
       selected,
       effectivePriceCents,
       allVariantsSoldOut,
+      showPublicStockCount,
     }),
-    [variants, selectedId, setSelectedId, selected, effectivePriceCents, allVariantsSoldOut],
+    [variants, selectedId, setSelectedId, selected, effectivePriceCents, allVariantsSoldOut, showPublicStockCount],
   );
 
   return <ProductVariantContext.Provider value={value}>{children}</ProductVariantContext.Provider>;

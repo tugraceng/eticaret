@@ -117,6 +117,21 @@ export class ProductsService {
     featuredOnly?: boolean;
     newOnly?: boolean;
   }) {
+    const qTrimmed = input?.q?.trim();
+    const categoryTrimmed = input?.categoryId?.trim();
+    if (!categoryTrimmed && !qTrimmed) {
+      const { page, limit } = this.normalizePaging(input?.page, input?.limit);
+      return {
+        items: [],
+        page,
+        limit,
+        total: 0,
+        totalPages: 1,
+        hasPrev: false,
+        hasNext: false,
+      };
+    }
+
     let minRatingProductIds: string[] | undefined;
     if (
       typeof input?.minAvgRating === "number" &&
@@ -606,6 +621,7 @@ export class ProductsService {
     stock?: number;
     categoryId?: string;
     isPublished?: boolean;
+    showPublicStockCount?: boolean;
     isFeatured?: boolean;
     isNew?: boolean;
   }) {
@@ -624,6 +640,7 @@ export class ProductsService {
         stock: data.stock ?? 0,
         categoryId: data.categoryId,
         isPublished: data.isPublished ?? false,
+        showPublicStockCount: data.showPublicStockCount ?? true,
         isFeatured: data.isFeatured ?? false,
         isNew: data.isNew ?? false,
       },
@@ -648,6 +665,7 @@ export class ProductsService {
       stock: number;
       categoryId: string | null;
       isPublished: boolean;
+      showPublicStockCount: boolean;
       isFeatured: boolean;
       isNew: boolean;
     }>,

@@ -29,7 +29,14 @@ export function HomeRetailSection({
     href: `/shop?categoryId=${encodeURIComponent(c.id)}`,
     products: products.filter((p) => p.category?.slug === c.slug).slice(0, 5),
   }));
-  const fallbackRail = { title: "Öne çıkan seri", href: "/shop", products: products.slice(0, 5) };
+  const firstShopCategory = categories[0];
+  const fallbackRail = {
+    title: "Öne çıkan seri",
+    href: firstShopCategory
+      ? `/shop?categoryId=${encodeURIComponent(firstShopCategory.id)}`
+      : "/shop",
+    products: products.slice(0, 5),
+  };
 
   if (filtering) {
     const title = activeCategoryName

@@ -6,7 +6,7 @@ import { useProductVariants } from "./ProductVariantContext";
 
 /** Sunucudan gelen variant listesi — chips. */
 export const ProductVariantSelector = memo(function ProductVariantSelector() {
-  const { variants, selectedId, setSelectedId, allVariantsSoldOut } = useProductVariants();
+  const { variants, selectedId, setSelectedId, allVariantsSoldOut, showPublicStockCount } = useProductVariants();
 
   if (variants.length === 0) return null;
 
@@ -38,7 +38,7 @@ export const ProductVariantSelector = memo(function ProductVariantSelector() {
               aria-pressed={active}
             >
               {v.label}
-              {v.trackStock && v.stock > 0 && v.stock <= 5 ? (
+              {showPublicStockCount && v.trackStock && v.stock > 0 && v.stock <= 5 ? (
                 <span className="ml-1.5 text-[10px] font-normal opacity-90">({v.stock})</span>
               ) : null}
               {soldOut ? <span className="ml-1 text-[10px] font-medium">· Tükendi</span> : null}

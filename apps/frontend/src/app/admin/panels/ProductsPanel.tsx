@@ -21,6 +21,7 @@ export function ProductsPanel({
   editCompareAtTry,
   editSku,
   editTrackStock,
+  editShowPublicStockCount,
   editStock,
   editPublished,
   editCategoryId,
@@ -37,6 +38,7 @@ export function ProductsPanel({
   setEditCompareAtTry,
   setEditSku,
   setEditTrackStock,
+  setEditShowPublicStockCount,
   setEditStock,
   setEditPublished,
   setEditCategoryId,
@@ -87,6 +89,7 @@ export function ProductsPanel({
   editCompareAtTry: string;
   editSku: string;
   editTrackStock: boolean;
+  editShowPublicStockCount: boolean;
   editStock: string;
   editPublished: boolean;
   editCategoryId: string;
@@ -103,6 +106,7 @@ export function ProductsPanel({
   setEditCompareAtTry: Dispatch<SetStateAction<string>>;
   setEditSku: Dispatch<SetStateAction<string>>;
   setEditTrackStock: Dispatch<SetStateAction<boolean>>;
+  setEditShowPublicStockCount: Dispatch<SetStateAction<boolean>>;
   setEditStock: Dispatch<SetStateAction<string>>;
   setEditPublished: Dispatch<SetStateAction<boolean>>;
   setEditCategoryId: Dispatch<SetStateAction<string>>;
@@ -346,6 +350,20 @@ export function ProductsPanel({
                 className="h-4 w-4 rounded border-slate-300"
               />
               Stok takibi (satışta stok düşsün)
+            </label>
+            <label className="flex items-start gap-2 text-sm text-slate-700 md:col-span-2">
+              <input
+                type="checkbox"
+                checked={editShowPublicStockCount}
+                onChange={(e) => setEditShowPublicStockCount(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300"
+              />
+              <span>
+                Mağazada stok <strong className="font-semibold text-slate-800">adedini</strong> göster
+                <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                  Kapalıyken müşteri yalnızca “Stokta” / “Stokta yok” görür; düşük stok uyarısı ve varyant adetleri gizlenir.
+                </span>
+              </span>
             </label>
           </div>
 

@@ -101,7 +101,7 @@ export default async function ContactPage() {
             <label className="text-xs font-semibold uppercase tracking-widest text-slate-500" htmlFor="name">
               Ad Soyad
             </label>
-            <input id="name" name="name" className="input-soft mt-2" placeholder="Örnek: Ayşe Yılmaz" />
+            <input id="name" name="name" className="input-soft mt-2" placeholder="Adınız ve soyadınız" />
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-widest text-slate-500" htmlFor="email">
@@ -112,7 +112,7 @@ export default async function ContactPage() {
               name="email"
               type="email"
               className="input-soft mt-2"
-              placeholder="siz@sirketiniz.com"
+              placeholder="E-posta adresiniz"
             />
           </div>
           <div>

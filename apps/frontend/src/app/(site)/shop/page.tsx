@@ -3,6 +3,18 @@ import type { CategoryApiRow } from "@/lib/category-nav";
 import type { CatalogPayload } from "./ShopCatalogGrid";
 import { ShopPageClient } from "@/components/store/ShopPageClient";
 
+function emptyCatalogPayload(page: number, limit: number): CatalogPayload {
+  return {
+    items: [],
+    page,
+    limit,
+    total: 0,
+    totalPages: 1,
+    hasPrev: false,
+    hasNext: false,
+  };
+}
+
 export const dynamic = "force-dynamic";
 type SortKey = "newest" | "price_asc" | "price_desc" | "popular" | "bestseller";
 
@@ -83,6 +95,8 @@ export default async function ShopPage({
   const newOnly = sp.newProduct === "1";
   const view: "grid" | "list" = sp.view === "list" ? "list" : "grid";
 
+  const hubMode = !categoryId && !q;
+
   const catalogQs = buildCatalogQueryString({
     q,
     categoryId,
@@ -96,16 +110,19 @@ export default async function ShopPage({
     newOnly,
   });
 
+  const limit = 12;
   const [categories, catalog] = await Promise.all([
     apiJson<CategoryApiRow[]>("/categories"),
-    apiJson<CatalogPayload>(`/products/catalog?${catalogQs}&page=${page}`),
+    hubMode
+      ? Promise.resolve(emptyCatalogPayload(page, limit))
+      : apiJson<CatalogPayload>(`/products/catalog?${catalogQs}&page=${page}`),
   ]);
 
   const titleBits = [
     q ? `"${q}"` : null,
     categoryId ? categories.find((c) => c.id === categoryId)?.name ?? "Kategori" : null,
   ].filter(Boolean);
-  const title = titleBits.length ? `${titleBits.join(" · ")} sonuçları` : "Tüm ürünler";
+  const title = hubMode ? "Mağaza" : titleBits.length ? `${titleBits.join(" · ")} sonuçları` : "Mağaza";
 
   const baseParams = {
     q,
@@ -124,6 +141,7 @@ export default async function ShopPage({
   return (
     <ShopPageClient
       title={title}
+      hubMode={hubMode}
       categories={categories}
       catalog={catalog}
       catalogQs={catalogQs}

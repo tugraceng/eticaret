@@ -460,7 +460,7 @@ export async function HomeSectionRenderer({
           section={section}
           products={ctx.catalog.popular}
           defaultTitle="Trend / popüler"
-          defaultHref="/shop?sort=popular"
+          defaultHref="/shop"
         />
       );
     case "RAIL_NEWEST":
@@ -469,7 +469,7 @@ export async function HomeSectionRenderer({
           section={section}
           products={ctx.catalog.newest}
           defaultTitle="Yeni gelenler"
-          defaultHref="/shop?sort=newest"
+          defaultHref="/shop"
         />
       );
     case "STORY_STRIP": {

@@ -13,8 +13,8 @@ import { ProductStickyAtcBar } from "./ProductStickyAtcBar";
 import { ProductVariantProvider, type ProductVariantDto } from "./ProductVariantContext";
 import { ProductVariantSelector } from "./ProductVariantSelector";
 import { ProductViewTracker } from "./ProductViewTracker";
-import { ProductSocialProof } from "./ProductSocialProof";
 import { ProductTrustStrip } from "./ProductTrustStrip";
+import { ProductDetailTabs } from "./ProductDetailTabs";
 
 type ProductImage = { url: string; alt: string | null };
 type ProductVariantApi = {
@@ -35,6 +35,8 @@ type Product = {
   seoKeywords?: string | null;
   isFeatured?: boolean;
   isNew?: boolean;
+  /** Mağazada stok adedi / düşük stok uyarısı gösterilsin mi */
+  showPublicStockCount?: boolean;
   priceCents: number;
   compareAtCents?: number | null;
   stock?: number;
@@ -195,9 +197,10 @@ export default async function ProductPage({
   }));
 
   const hasVariantOptions = variantDtos.length > 0;
+  const showStockCount = product.showPublicStockCount !== false;
 
   return (
-    <ProductVariantProvider variants={variantDtos}>
+    <ProductVariantProvider variants={variantDtos} showPublicStockCount={showStockCount}>
       <div className="bg-slate-50/80">
       <script
         type="application/ld+json"
@@ -256,7 +259,8 @@ export default async function ProductPage({
               compareAtCents={product.compareAtCents}
             />
 
-            {!hasVariantOptions &&
+            {showStockCount &&
+              !hasVariantOptions &&
               typeof product.stock === "number" &&
               product.stock > 0 &&
               product.stock <= 5 && (
@@ -276,15 +280,11 @@ export default async function ProductPage({
                     product.stock > 0 ? "bg-emerald-500" : "bg-rose-500"
                   }`}
                 />
-                {product.stock > 0 ? `Stokta (${product.stock})` : "Stokta yok"}
-              </p>
-            )}
-
-            <ProductSocialProof slug={product.slug} />
-
-            {product.description && (
-              <p className="mt-6 text-sm leading-relaxed text-slate-600 [text-wrap:pretty]">
-                {product.description}
+                {product.stock > 0
+                  ? showStockCount
+                    ? `Stokta (${product.stock})`
+                    : "Stokta"
+                  : "Stokta yok"}
               </p>
             )}
 
@@ -299,85 +299,10 @@ export default async function ProductPage({
               slug={product.slug}
               imageUrl={heroImage}
             />
-
-            <ul className="mt-8 flex flex-col gap-3 border-t border-slate-200/90 pt-6 text-xs text-slate-600 sm:grid sm:grid-cols-2 sm:gap-x-4">
-              <li className="flex items-center gap-2.5">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-500">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-                    <path d="M3 9l9-5 9 5v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z" />
-                    <path d="M9 11V3M15 11V3" />
-                  </svg>
-                </span>
-                <span>2.000 TL ve üzeri alışverişlerde <strong className="font-semibold text-slate-800">kargo</strong> koşullarımız</span>
-              </li>
-              <li className="flex items-center gap-2.5">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-500">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-                    <path d="M12 2l1.8 3.2h3.6L16.6 7.8l1.1 3.1L12 8.4 6.3 10.9l1.1-3.1L6.6 5.2h3.6L12 2z" />
-                  </svg>
-                </span>
-                <span>İade ve tüketici haklarınız <strong className="font-semibold text-slate-800">güvence</strong> altındadır</span>
-              </li>
-            </ul>
           </div>
         </div>
 
-        <section className="mt-20 border-t border-slate-200/90 pt-16">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-              Öne çıkan ayrıntılar
-            </h2>
-            <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-600">
-              Seçkin malzemeler ve sade tasarım, günlük kullanımda konfor ve güven.
-            </p>
-          </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            {(
-              [
-                {
-                  t: "Hızlı hazırlık",
-                  d: "Siparişiniz 24-48 saat içinde fatura ve paketleme aşamalarına alınır; kargo aşamasında bilgilendirme yapılır.",
-                  icon: (
-                    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-                      <rect x="1" y="4" width="13" height="9" rx="1" />
-                      <path d="M14 7.5h2.5L19 8.5V12H14V7.5z" />
-                      <circle cx="6" cy="18" r="2" />
-                      <circle cx="17" cy="18" r="2" />
-                    </svg>
-                  ),
-                },
-                {
-                  t: "Güvenli ödeme",
-                  d: "SSL ile şifreli ödeme, havale/EFT ve kart seçenekleri. Faturanız e-posta ile ulaşır.",
-                  icon: (
-                    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-                      <rect x="2" y="6" width="20" height="12" rx="2" />
-                      <path d="M2 10h20" />
-                    </svg>
-                  ),
-                },
-                {
-                  t: "Destek",
-                  d: "Teslimat, iade veya ürünle ilgili tüm sorularınızda iletişim formu ve müşteri hizmetlerimiz yanınızda.",
-                  icon: (
-                    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                    </svg>
-                  ),
-                },
-              ] as const
-            ).map((block) => (
-              <div
-                key={block.t}
-                className="flex flex-col rounded-2xl border border-slate-200/90 bg-white p-6 text-left shadow-sm"
-              >
-                <div className="text-slate-500">{block.icon}</div>
-                <h3 className="mt-4 text-base font-semibold text-slate-900">{block.t}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{block.d}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        <ProductDetailTabs description={product.description} />
 
         <Reviews slug={product.slug} kicker="Müşteriler" heading="Deneyimler" />
 

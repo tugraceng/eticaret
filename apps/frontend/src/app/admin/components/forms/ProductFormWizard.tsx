@@ -42,6 +42,7 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
   const [stockStr, setStockStr] = useState("10");
   const [sku, setSku] = useState("");
   const [trackStock, setTrackStock] = useState(true);
+  const [showPublicStockCount, setShowPublicStockCount] = useState(true);
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -203,6 +204,7 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
           stock: st,
           categoryId: categoryId || undefined,
           isPublished,
+          showPublicStockCount,
           isFeatured,
           isNew,
         }),
@@ -256,6 +258,7 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
       setStockStr("10");
       setSku("");
       setTrackStock(true);
+      setShowPublicStockCount(true);
       setImageFiles([]);
       imagePreviews.forEach((u) => URL.revokeObjectURL(u));
       setImagePreviews([]);
@@ -379,6 +382,17 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
               className="h-4 w-4 rounded border-slate-300"
             />
             Stok takibi açık (satışta stok düşer)
+          </label>
+          <label className="flex items-start gap-2 text-sm text-slate-700 sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={showPublicStockCount}
+              onChange={(e) => setShowPublicStockCount(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300"
+            />
+            <span>
+              Mağazada stok <strong className="font-semibold text-slate-800">adedini</strong> göster
+            </span>
           </label>
         </div>
       ) : null}

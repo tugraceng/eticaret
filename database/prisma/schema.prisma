@@ -263,6 +263,8 @@ model Product {
   trackStock     Boolean        @default(true)
   lowStockThreshold Int?
   isPublished    Boolean        @default(false)
+  /// Mağaza ürün sayfasında stok adedi / “son X ürün” gibi sayıların gösterilmesi (false = yalnızca stokta var/yok).
+  showPublicStockCount Boolean  @default(true)
   isFeatured     Boolean        @default(false)
   isNew          Boolean        @default(false)
   createdAt      DateTime       @default(now())

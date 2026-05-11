@@ -22,10 +22,10 @@ export function HomeMerchandisingRails({ bestsellers, popular, newest }: Props) 
           <HomeProductRail title="En çok satanlar" href="/shop" products={bestsellers} />
         ) : null}
         {popular.length > 0 ? (
-          <HomeProductRail title="Trend / popüler" href="/shop?sort=popular" products={popular} />
+          <HomeProductRail title="Trend / popüler" href="/shop" products={popular} />
         ) : null}
         {newest.length > 0 ? (
-          <HomeProductRail title="Yeni gelenler" href="/shop?sort=newest" products={newest} />
+          <HomeProductRail title="Yeni gelenler" href="/shop" products={newest} />
         ) : null}
       </div>
     </section>

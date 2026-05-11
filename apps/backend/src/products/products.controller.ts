@@ -72,6 +72,10 @@ class CreateProductDto {
   isPublished?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  showPublicStockCount?: boolean;
+
+  @IsOptional()
   @IsString()
   @MaxLength(200)
   metaTitle?: string | null;
@@ -230,6 +234,10 @@ class UpdateProductDto {
   @IsOptional()
   @IsBoolean()
   isPublished?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  showPublicStockCount?: boolean;
 
   @IsOptional()
   @ValidateIf((_, v) => v !== undefined)

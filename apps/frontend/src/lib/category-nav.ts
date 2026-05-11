@@ -62,3 +62,17 @@ export function buildHeaderCategoryNav(rows: CategoryApiRow[]): HeaderNavCategor
 export function shopCategoryHref(categoryId: string) {
   return `/shop?categoryId=${encodeURIComponent(categoryId)}`;
 }
+
+/** Mağazada kategori + sıralama/görünüm parametrelerini koruyarak link üretir. */
+export function shopBrowseHref(args: {
+  categoryId: string;
+  sort?: string;
+  view?: "grid" | "list";
+}) {
+  const p = new URLSearchParams();
+  p.set("categoryId", args.categoryId);
+  if (args.sort && args.sort !== "newest") p.set("sort", args.sort);
+  if (args.view === "list") p.set("view", "list");
+  const qs = p.toString();
+  return `/shop?${qs}`;
+}
