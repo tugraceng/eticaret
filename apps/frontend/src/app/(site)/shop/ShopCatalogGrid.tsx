@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { ProductCard, type ProductCardData } from "@/components/site/ProductCard";
 import { ProductListRow } from "@/components/store/ProductListRow";
@@ -29,6 +29,12 @@ export function ShopCatalogGrid({
   const [page, setPage] = useState(initial.page);
   const [hasNext, setHasNext] = useState(initial.hasNext);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setItems(initial.items);
+    setPage(initial.page);
+    setHasNext(initial.hasNext);
+  }, [initial, queryWithoutPage]);
 
   const loadMore = useCallback(async () => {
     if (!hasNext || loading) return;

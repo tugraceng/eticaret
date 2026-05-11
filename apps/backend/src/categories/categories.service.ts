@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { AppCacheService } from "../common/cache/app-cache.service";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -34,6 +34,10 @@ export class CategoriesService {
     parentId?: string;
     sortOrder?: number;
   }) {
+    if (data.parentId) {
+      const parent = await this.prisma.category.findUnique({ where: { id: data.parentId } });
+      if (!parent) throw new BadRequestException("Üst kategori bulunamadı.");
+    }
     const slug = data.slug.trim().toLowerCase();
     const created = await this.prisma.category.create({
       data: {
@@ -62,6 +66,18 @@ export class CategoriesService {
     const patch = { ...data };
     if (patch.slug) patch.slug = patch.slug.trim().toLowerCase();
     if (patch.name) patch.name = patch.name.trim();
+    if (patch.parentId !== undefined && patch.parentId !== null) {
+      if (patch.parentId === id) throw new BadRequestException("Kategori kendi üst kategorisi olamaz.");
+      const all = await this.prisma.category.findMany({ select: { id: true, parentId: true } });
+      let cur: string | null = patch.parentId;
+      const seen = new Set<string>();
+      while (cur) {
+        if (cur === id) throw new BadRequestException("Döngüsel üst kategori seçilemez.");
+        if (seen.has(cur)) break;
+        seen.add(cur);
+        cur = all.find((x) => x.id === cur)?.parentId ?? null;
+      }
+    }
     const updated = await this.prisma.category.update({ where: { id }, data: patch });
     this.invalidate();
     return updated;

@@ -19,11 +19,6 @@ import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
 import { selectCartTotalQty, useCartStore } from "@/stores/cart-store";
 import { selectWishlistCount, useWishlistStore } from "@/stores/wishlist-store";
 
-const STATIC_TAIL_NAV = [
-  { href: "/services", label: "3D baskı hizmeti" },
-  { href: "/about", label: "Bize ulaşın" },
-] as const;
-
 function HeartIcon({ className = "" }: { className?: string }) {
   return (
     <svg
@@ -213,6 +208,17 @@ export function SiteHeader({
   settings: SiteSettings;
   categoryNav: HeaderNavCategory[];
 }) {
+  const tailNav = useMemo(
+    () =>
+      [
+        { href: "/services", label: "3D baskı hizmeti" },
+        {
+          href: settings.contactNavHref?.trim() || "/contact",
+          label: settings.contactNavLabel?.trim() || "Bize ulaşın",
+        },
+      ] as const,
+    [settings.contactNavHref, settings.contactNavLabel],
+  );
   const pathname = usePathname() ?? "/";
   const isHome = pathname === "/";
   const [open, setOpen] = useState(false);
@@ -447,7 +453,7 @@ export function SiteHeader({
               ) : null}
             </div>
           ))}
-          {STATIC_TAIL_NAV.map((item) => (
+          {tailNav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -504,7 +510,7 @@ export function SiteHeader({
               </div>
             ))}
             <div className="grid grid-cols-2 gap-2">
-              {STATIC_TAIL_NAV.map((item) => (
+              {tailNav.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}

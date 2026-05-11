@@ -69,6 +69,8 @@ type Settings = {
   shopRailRightCtaLabel?: string;
   shopRailRightCtaHref?: string;
   birthdayCouponAutomationEnabled?: boolean;
+  contactNavLabel?: string | null;
+  contactNavHref?: string | null;
 };
 
 const SOCIAL_KEYS = ["instagram", "facebook", "x", "youtube", "linkedin", "tiktok"] as const;
@@ -142,6 +144,8 @@ export function SettingsEditor({ token }: { token: string }) {
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [contactNavLabel, setContactNavLabel] = useState("");
+  const [contactNavHref, setContactNavHref] = useState("");
   const [social, setSocial] = useState<Record<string, string>>({});
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDesc, setMetaDesc] = useState("");
@@ -212,6 +216,8 @@ export function SettingsEditor({ token }: { token: string }) {
       setContactEmail(s.contactEmail ?? "");
       setContactPhone(s.contactPhone ?? "");
       setAddress(s.address ?? "");
+      setContactNavLabel(s.contactNavLabel ?? "");
+      setContactNavHref(s.contactNavHref ?? "");
       setSocial((s.socialLinks ?? {}) as Record<string, string>);
       setMetaTitle(s.defaultMetaTitle ?? "");
       setMetaDesc(s.defaultMetaDesc ?? "");
@@ -295,6 +301,8 @@ export function SettingsEditor({ token }: { token: string }) {
         contactEmail: contactEmail.trim() || null,
         contactPhone: contactPhone.trim() || null,
         address: address.trim() || null,
+        contactNavLabel: contactNavLabel.trim() || null,
+        contactNavHref: contactNavHref.trim() || null,
         socialLinks: Object.fromEntries(
           Object.entries(social).filter(
             ([, v]) => typeof v === "string" && v.trim().length > 0,
@@ -379,6 +387,8 @@ export function SettingsEditor({ token }: { token: string }) {
     contactEmail,
     contactPhone,
     address,
+    contactNavLabel,
+    contactNavHref,
     social,
     metaTitle,
     metaDesc,
@@ -561,6 +571,30 @@ export function SettingsEditor({ token }: { token: string }) {
             onChange={(e) => setAddress(e.target.value)}
           />
         </Field>
+      </AdminCard>
+
+      <AdminCard
+        title="Menü: Bize ulaşın"
+        description="Üst menü ve footer’daki iletişim bağlantısı. Boş bırakırsanız varsayılan metin ve /contact kullanılır."
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="Bağlantı metni" hint="Örn. Bize ulaşın, İletişim">
+            <input
+              className="input-soft"
+              value={contactNavLabel}
+              onChange={(e) => setContactNavLabel(e.target.value)}
+              placeholder="Bize ulaşın"
+            />
+          </Field>
+          <Field label="Bağlantı adresi" hint="Site içi yol veya tam URL. Örn. /contact veya /about">
+            <input
+              className="input-soft font-mono text-sm"
+              value={contactNavHref}
+              onChange={(e) => setContactNavHref(e.target.value)}
+              placeholder="/contact"
+            />
+          </Field>
+        </div>
       </AdminCard>
 
       <AdminCard title="Sosyal medya" description="Boş bırakılan alanlar gösterilmez.">

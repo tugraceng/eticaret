@@ -28,6 +28,23 @@ export class ProductsService {
     this.cache.delPrefix("products:");
   }
 
+  /** Seçilen kategori + tüm alt kategorilerindeki ürünler (tek seviye veya derin ağaç). */
+  private async categoryIdsIncludingDescendants(rootId: string): Promise<string[]> {
+    const rows = await this.prisma.category.findMany({ select: { id: true, parentId: true } });
+    const ids = new Set<string>([rootId]);
+    const queue = [rootId];
+    while (queue.length) {
+      const id = queue.shift()!;
+      for (const r of rows) {
+        if (r.parentId === id && !ids.has(r.id)) {
+          ids.add(r.id);
+          queue.push(r.id);
+        }
+      }
+    }
+    return [...ids];
+  }
+
   private normalizePaging(pageRaw?: number, limitRaw?: number) {
     const page = Number.isFinite(pageRaw) && (pageRaw ?? 0) > 0 ? Math.floor(pageRaw as number) : 1;
     const limitBase =
@@ -61,10 +78,11 @@ export class ProductsService {
     const cacheable = !q; // arama yoksa cache'leyebiliriz
     const key = `products:list:q=${q ?? ""}|cat=${categoryId ?? ""}`;
     const loader = async () => {
+      const catIds = categoryId ? await this.categoryIdsIncludingDescendants(categoryId) : undefined;
       const products = await this.prisma.product.findMany({
         where: {
           isPublished: true,
-          ...(categoryId ? { categoryId } : {}),
+          ...(catIds?.length ? { categoryId: { in: catIds } } : {}),
           ...(q
             ? {
                 OR: [
@@ -128,10 +146,13 @@ export class ProductsService {
       }
     }
 
+    const categoryIds =
+      input?.categoryId?.trim() ? await this.categoryIdsIncludingDescendants(input.categoryId.trim()) : null;
+
     const where = {
       isPublished: true,
       ...(minRatingProductIds?.length ? { id: { in: minRatingProductIds } } : {}),
-      ...(input?.categoryId ? { categoryId: input.categoryId } : {}),
+      ...(categoryIds?.length ? { categoryId: { in: categoryIds } } : {}),
       ...(input?.q
         ? {
             OR: [

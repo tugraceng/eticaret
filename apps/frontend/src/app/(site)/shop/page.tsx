@@ -1,10 +1,9 @@
 import { apiJson } from "@/lib/api";
+import type { CategoryApiRow } from "@/lib/category-nav";
 import type { CatalogPayload } from "./ShopCatalogGrid";
 import { ShopPageClient } from "@/components/store/ShopPageClient";
 
 export const dynamic = "force-dynamic";
-
-type ShopCategory = { id: string; name: string; slug: string };
 type SortKey = "newest" | "price_asc" | "price_desc" | "popular" | "bestseller";
 
 const SORTS: Array<{ key: SortKey; label: string }> = [
@@ -98,7 +97,7 @@ export default async function ShopPage({
   });
 
   const [categories, catalog] = await Promise.all([
-    apiJson<ShopCategory[]>("/categories"),
+    apiJson<CategoryApiRow[]>("/categories"),
     apiJson<CatalogPayload>(`/products/catalog?${catalogQs}&page=${page}`),
   ]);
 

@@ -5,8 +5,13 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, memo, useState } from "react";
 import { ShopToolbar } from "@/app/(site)/shop/ShopToolbar";
 import { ShopCatalogGrid, type CatalogPayload } from "@/app/(site)/shop/ShopCatalogGrid";
+import type { CategoryApiRow } from "@/lib/category-nav";
 
-type ShopCategory = { id: string; name: string; slug: string };
+function sortCategories(a: CategoryApiRow, b: CategoryApiRow) {
+  const o = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+  if (o !== 0) return o;
+  return a.name.localeCompare(b.name, "tr");
+}
 export type ShopSortKey = "newest" | "price_asc" | "price_desc" | "popular" | "bestseller";
 
 function toQuery(base: Record<string, string | undefined>) {
@@ -91,7 +96,7 @@ export function ShopPageClient({
   view,
 }: {
   title: string;
-  categories: ShopCategory[];
+  categories: CategoryApiRow[];
   catalog: CatalogPayload;
   catalogQs: string;
   baseParams: Record<string, string | undefined>;
@@ -110,6 +115,12 @@ export function ShopPageClient({
   view: "grid" | "list";
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const rootCategories = categories.filter((c) => !c.parentId).slice().sort(sortCategories);
+  const childCategories = (parentId: string) =>
+    categories.filter((c) => c.parentId === parentId).slice().sort(sortCategories);
+  const orphanCategories = categories.filter(
+    (c) => c.parentId && !categories.some((p) => p.id === c.parentId),
+  );
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
@@ -144,17 +155,46 @@ export function ShopPageClient({
           >
             <p className="text-h3 text-[var(--ds-text)]">Filtreler</p>
             <select
+              key={categoryId ?? "all"}
               name="categoryId"
               defaultValue={categoryId ?? ""}
               className="input-soft min-h-11 w-full !rounded-ds-lg"
               aria-label="Kategori seç"
             >
               <option value="">Tüm kategoriler</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
+              {rootCategories.length > 0 ? (
+                rootCategories.map((r) => {
+                  const children = childCategories(r.id);
+                  return (
+                    <optgroup key={r.id} label={r.name}>
+                      <option value={r.id}>{r.name} — tümü</option>
+                      {children.map((ch) => (
+                        <option key={ch.id} value={ch.id}>
+                          {ch.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })
+              ) : (
+                categories
+                  .slice()
+                  .sort(sortCategories)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))
+              )}
+              {orphanCategories.length > 0 ? (
+                <optgroup label="Diğer">
+                  {orphanCategories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
             </select>
             <select
               name="sort"

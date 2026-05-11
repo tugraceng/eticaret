@@ -57,6 +57,9 @@ export type SiteSettings = {
   shopRailRightCode?: string;
   shopRailRightCtaLabel?: string;
   shopRailRightCtaHref?: string;
+  /** Üst menü ve footer’daki “Bize ulaşın” metni ve adresi (boşsa varsayılan) */
+  contactNavLabel?: string | null;
+  contactNavHref?: string | null;
 };
 
 export type HomeSectionKind =
@@ -147,6 +150,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   shopRailRightCode: "",
   shopRailRightCtaLabel: "Detaylar",
   shopRailRightCtaHref: "/teslimat-iade",
+  contactNavLabel: null,
+  contactNavHref: null,
 };
 
 export const getSiteSettings = cache(async (): Promise<SiteSettings> => {

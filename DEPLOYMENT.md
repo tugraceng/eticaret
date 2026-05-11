@@ -38,10 +38,20 @@ Notes:
 
 Use:
 
+Yükleme (ürün / hero görseli) için Nginx varsayılanında **413 Request Entity Too Large** hatası oluşabilir. `server` bloğuna (veya ilgili `location` içine) şunu ekleyin:
+
+```nginx
+client_max_body_size 25m;
+```
+
+Örnek tam yapı:
+
 ```nginx
 server {
   listen 80;
   server_name _;
+
+  client_max_body_size 25m;
 
   location /api/ {
     proxy_pass http://localhost:4000/;

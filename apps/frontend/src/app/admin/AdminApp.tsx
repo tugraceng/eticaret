@@ -102,6 +102,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
 
   const [catName, setCatName] = useState("");
   const [catSlug, setCatSlug] = useState("");
+  const [catParentId, setCatParentId] = useState("");
 
   const [blogSlug, setBlogSlug] = useState("");
   const [blogTitle, setBlogTitle] = useState("");
@@ -370,10 +371,15 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     try {
       await adminFetch("/categories", token, {
         method: "POST",
-        body: JSON.stringify({ name: catName.trim(), slug: catSlug.trim().toLowerCase() }),
+        body: JSON.stringify({
+          name: catName.trim(),
+          slug: catSlug.trim().toLowerCase(),
+          ...(catParentId.trim() ? { parentId: catParentId.trim() } : {}),
+        }),
       });
       setCatName("");
       setCatSlug("");
+      setCatParentId("");
       await loadCategories();
     } catch (e) {
       if (!(e instanceof AdminSessionTerminated)) {
@@ -382,7 +388,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     } finally {
       setBusy(false);
     }
-  }, [token, catName, catSlug, loadCategories]);
+  }, [token, catName, catSlug, catParentId, loadCategories]);
 
   const deleteCategory = useCallback(
     async (id: string, name: string) => {
@@ -409,7 +415,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   );
 
   const updateCategory = useCallback(
-    async (id: string, payload: { name: string; slug: string }) => {
+    async (id: string, payload: { name: string; slug: string; parentId: string | null }) => {
       if (!token) return;
       setBusy(true);
       setError(null);
@@ -419,6 +425,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
           body: JSON.stringify({
             name: payload.name.trim(),
             slug: payload.slug.trim().toLowerCase(),
+            parentId: payload.parentId,
           }),
         });
         await loadCategories();
@@ -1036,8 +1043,10 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               categories={categories}
               catName={catName}
               catSlug={catSlug}
+              catParentId={catParentId}
               setCatName={setCatName}
               setCatSlug={setCatSlug}
+              setCatParentId={setCatParentId}
               createCategory={createCategory}
               deleteCategory={deleteCategory}
               updateCategory={updateCategory}

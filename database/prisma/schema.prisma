@@ -195,6 +195,9 @@ model SiteSettings {
   shopRailRightCtaHref  String   @default("")
   /// Doğum günü otomatik kupon e-postası (ileride cron ile)
   birthdayCouponAutomationEnabled Boolean @default(false)
+  /// Üst menü + footer’daki “Bize ulaşın” bağlantısı (boşsa varsayılan metin ve /contact kullanılır)
+  contactNavLabel String?
+  contactNavHref  String?
   updatedAt        DateTime @updatedAt
 }
 

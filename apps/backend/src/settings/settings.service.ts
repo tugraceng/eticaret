@@ -120,6 +120,8 @@ export class SettingsService {
       shopRailRightCtaLabel: string;
       shopRailRightCtaHref: string;
       birthdayCouponAutomationEnabled: boolean;
+      contactNavLabel: string | null;
+      contactNavHref: string | null;
     }>,
   ) {
     const current = await this.getSettings();

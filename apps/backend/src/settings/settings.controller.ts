@@ -279,6 +279,14 @@ class UpdateSettingsDto {
   @IsOptional()
   @IsBoolean()
   birthdayCouponAutomationEnabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  contactNavLabel?: string | null;
+
+  @IsOptional()
+  @IsString()
+  contactNavHref?: string | null;
 }
 
 class CreateHomeSectionDto {

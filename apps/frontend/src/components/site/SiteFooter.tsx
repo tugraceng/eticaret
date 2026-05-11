@@ -12,36 +12,41 @@ const socialLabels: Record<string, string> = {
   tiktok: "TikTok",
 };
 
-const columns = {
-  Kurumsal: [
-    { href: "/about", label: "Hakkımızda" },
-    { href: "/services", label: "Hizmetler" },
-    { href: "/projects", label: "Projeler" },
-    { href: "/blog", label: "Blog" },
-    { href: "/contact", label: "Bize ulaşın" },
-  ],
-  Mağaza: [
-    { href: "/shop", label: "Ürünler" },
-    { href: "/#urunler", label: "Öne çıkanlar" },
-    { href: "/cart", label: "Sepet" },
-    { href: "/favoriler", label: "Favoriler" },
-    { href: "/checkout", label: "Ödeme" },
-    { href: "/hesap", label: "Hesabım" },
-  ],
-  Destek: [
-    { href: "/contact", label: "Destek" },
-    { href: "/teslimat-iade", label: "Kargo ve iade" },
-    { href: "/hesap/iadeler", label: "İadelerim" },
-  ],
-  Yasal: [
-    { href: "/kvkk", label: "KVKK" },
-    { href: "/mesafeli-satis-sozlesmesi", label: "Mesafeli satış" },
-    { href: "/gizlilik", label: "Gizlilik" },
-    { href: "/teslimat-iade", label: "Teslimat şartları" },
-  ],
-};
+function footerColumns(settings: SiteSettings) {
+  const contactHref = settings.contactNavHref?.trim() || "/contact";
+  const contactLabel = settings.contactNavLabel?.trim() || "Bize ulaşın";
+  return {
+    Kurumsal: [
+      { href: "/about", label: "Hakkımızda" },
+      { href: "/services", label: "Hizmetler" },
+      { href: "/projects", label: "Projeler" },
+      { href: "/blog", label: "Blog" },
+      { href: contactHref, label: contactLabel },
+    ],
+    Mağaza: [
+      { href: "/shop", label: "Ürünler" },
+      { href: "/#urunler", label: "Öne çıkanlar" },
+      { href: "/cart", label: "Sepet" },
+      { href: "/favoriler", label: "Favoriler" },
+      { href: "/checkout", label: "Ödeme" },
+      { href: "/hesap", label: "Hesabım" },
+    ],
+    Destek: [
+      { href: contactHref, label: "Destek" },
+      { href: "/teslimat-iade", label: "Kargo ve iade" },
+      { href: "/hesap/iadeler", label: "İadelerim" },
+    ],
+    Yasal: [
+      { href: "/kvkk", label: "KVKK" },
+      { href: "/mesafeli-satis-sozlesmesi", label: "Mesafeli satış" },
+      { href: "/gizlilik", label: "Gizlilik" },
+      { href: "/teslimat-iade", label: "Teslimat şartları" },
+    ],
+  };
+}
 
 export function SiteFooter({ settings }: { settings: SiteSettings }) {
+  const columns = footerColumns(settings);
   const social = Object.entries(settings.socialLinks ?? {}).filter(
     ([, href]) => typeof href === "string" && href.trim().length > 0,
   );
