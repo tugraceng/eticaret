@@ -117,9 +117,9 @@ export function ProductsPanel({
   setEditFeatured: Dispatch<SetStateAction<boolean>>;
   setEditNew: Dispatch<SetStateAction<boolean>>;
   setImgAlt: Dispatch<SetStateAction<string>>;
-  addProductImageFromFile: (fileOrFiles: File | File[]) => Promise<void>;
+  addProductImageFromFile: (fileOrFiles: File | File[], productIdOverride?: string | null) => Promise<void>;
   deleteProductImage: (productId: string, imageId: string) => Promise<void>;
-  saveProductEdit: () => Promise<void>;
+  saveProductEdit: (pendingImages?: File[]) => Promise<void>;
   setEditingProductId: Dispatch<SetStateAction<string | null>>;
   products: ProductRow[];
   openProductEdit: (product: ProductRow) => void;
@@ -160,6 +160,23 @@ export function ProductsPanel({
   bulkDeleteProducts: (ids: string[]) => Promise<void>;
 }) {
   const productImgFileRef = useRef<HTMLInputElement>(null);
+  /** «Görsel» hızlı işlem: dosya penceresi açılmadan önce state bazen gecikir; hedef ürün id burada tutulur. */
+  const imageUploadTargetIdRef = useRef<string | null>(null);
+  /** Tablo «Görsel» kısayolu: dosya seçilince anında API (Kaydet beklemeden). */
+  const imageQuickUploadRef = useRef(false);
+
+  const [stagedEditImages, setStagedEditImages] = useState<File[]>([]);
+
+  useEffect(() => {
+    setStagedEditImages([]);
+  }, [editingProductId]);
+
+  const openEditClearImageTarget = (p: ProductRow) => {
+    imageUploadTargetIdRef.current = null;
+    imageQuickUploadRef.current = false;
+    setStagedEditImages([]);
+    openProductEdit(p);
+  };
   const editingProduct = editingProductId ? products.find((p) => p.id === editingProductId) : null;
   const editProductImages = editingProduct?.images ?? [];
   const variantBasePriceCents = editingProduct?.priceCents ?? 0;
@@ -436,9 +453,28 @@ export function ProductsPanel({
             )}
             <p className="mt-4 text-[11px] font-semibold uppercase tracking-widest text-amber-800">Görsel ekle</p>
             <p className="mt-1 text-xs text-slate-500">
-              Dosya API&apos;ye yüklenir; adres otomatik ürüne eklenir (en fazla ~6 MB, JPG/PNG/WebP/GIF/SVG/ICO).
-              Birden fazla dosya seçebilirsiniz; ilk görsele alt metin alanı uygulanır.
+              Dosyaları seçtikten sonra <strong className="font-semibold text-slate-700">Kaydet</strong> ile birlikte
+              sunucuya giderler. (Tablodaki «Görsel» kısayolu dosyayı hemen yükler.)
             </p>
+            {stagedEditImages.length > 0 ? (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-950">
+                <p className="font-semibold">Kayıtta {stagedEditImages.length} dosya — Kaydet ile yüklenecek</p>
+                <ul className="mt-1.5 list-inside list-disc text-amber-900/90">
+                  {stagedEditImages.map((f, i) => (
+                    <li key={`${f.name}-${i}`} className="truncate">
+                      {f.name}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  className="mt-2 text-[11px] font-semibold text-amber-900 underline hover:no-underline"
+                  onClick={() => setStagedEditImages([])}
+                >
+                  Seçimi temizle
+                </button>
+              </div>
+            ) : null}
             <div className="mt-3 flex flex-wrap items-end gap-3">
               <input
                 ref={productImgFileRef}
@@ -449,7 +485,17 @@ export function ProductsPanel({
                 onChange={(e) => {
                   const list = e.target.files;
                   e.target.value = "";
-                  if (list?.length) void addProductImageFromFile(Array.from(list));
+                  if (!list?.length) return;
+                  const files = Array.from(list);
+                  const pid = imageUploadTargetIdRef.current ?? editingProductId;
+                  const quick = imageQuickUploadRef.current;
+                  imageQuickUploadRef.current = false;
+                  imageUploadTargetIdRef.current = null;
+                  if (quick) {
+                    void addProductImageFromFile(files, pid ?? undefined);
+                    return;
+                  }
+                  setStagedEditImages((prev) => [...prev, ...files]);
                 }}
               />
               <button
@@ -573,12 +619,20 @@ export function ProductsPanel({
             <button
               type="button"
               disabled={busy}
-              onClick={() => void saveProductEdit()}
+              onClick={() => void saveProductEdit(stagedEditImages)}
               className="btn-primary disabled:opacity-50"
             >
               <Icon.Check /> Kaydet
             </button>
-            <button type="button" onClick={() => setEditingProductId(null)} className="btn-ghost">
+            <button
+              type="button"
+              onClick={() => {
+                imageUploadTargetIdRef.current = null;
+                setStagedEditImages([]);
+                setEditingProductId(null);
+              }}
+              className="btn-ghost"
+            >
               İptal
             </button>
           </div>
@@ -758,7 +812,7 @@ export function ProductsPanel({
                       <div className="flex flex-wrap justify-end gap-1">
                         <button
                           type="button"
-                          onClick={() => openProductEdit(p)}
+                          onClick={() => openEditClearImageTarget(p)}
                           className="rounded-lg px-2 py-1 text-[11px] font-semibold text-sky-800 hover:bg-sky-50"
                         >
                           Düzenle
@@ -773,8 +827,10 @@ export function ProductsPanel({
                         <button
                           type="button"
                           onClick={() => {
+                            imageUploadTargetIdRef.current = p.id;
+                            imageQuickUploadRef.current = true;
                             openProductEdit(p);
-                            window.setTimeout(() => productImgFileRef.current?.click(), 100);
+                            window.setTimeout(() => productImgFileRef.current?.click(), 400);
                           }}
                           className="rounded-lg px-2 py-1 text-[11px] font-semibold text-amber-800 hover:bg-amber-50"
                         >
@@ -836,7 +892,7 @@ export function ProductsPanel({
                   <p className="mt-1 text-lg font-bold text-slate-900">{priceFmt(p.priceCents)}</p>
                   <p className="text-xs text-slate-500">Stok: {p.stock}</p>
                   <div className="mt-3 flex flex-wrap gap-1">
-                    <button type="button" className="btn-ghost !py-1 !px-2 text-xs" onClick={() => openProductEdit(p)}>
+                    <button type="button" className="btn-ghost !py-1 !px-2 text-xs" onClick={() => openEditClearImageTarget(p)}>
                       Düzenle
                     </button>
                     <button

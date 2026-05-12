@@ -467,16 +467,27 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   );
 
   const addProductImageFromFile = useCallback(
-    async (fileOrFiles: File | File[]) => {
+    async (fileOrFiles: File | File[], productIdOverride?: string | null) => {
       const files = (Array.isArray(fileOrFiles) ? fileOrFiles : [fileOrFiles]).filter(Boolean);
-      if (!token || !editingProductId || files.length === 0) return;
+      const pid =
+        (typeof productIdOverride === "string" && productIdOverride.trim()
+          ? productIdOverride.trim()
+          : editingProductId?.trim()) ?? "";
+      if (!token || !pid || files.length === 0) {
+        if (files.length > 0 && !pid) {
+          setError(
+            "Görsel yüklenemedi: ürün kimliği bulunamadı. Listede «Düzenle» ile formu açın veya birkaç saniye sonra tekrar deneyin.",
+          );
+        }
+        return;
+      }
       setBusy(true);
       setError(null);
       try {
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
           const { url } = await adminUploadFile(token, file);
-          await adminFetch(`/products/${editingProductId}/images`, token, {
+          await adminFetch(`/products/${pid}/images`, token, {
             method: "POST",
             body: JSON.stringify({
               url,
@@ -485,7 +496,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
           });
         }
         await loadProducts();
-        if (files.length > 1) setSuccessToast(`${files.length} görsel eklendi.`);
+        setSuccessToast(files.length > 1 ? `${files.length} görsel eklendi.` : "Görsel eklendi.");
       } catch (e) {
         if (!(e instanceof AdminSessionTerminated)) {
           setError(e instanceof Error ? e.message : String(e));
@@ -758,69 +769,92 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const saveProductEdit = useCallback(async () => {
-    if (!token || !editingProductId) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const priceCents = Math.round(parseFloat(editPriceTry.replace(",", ".")) * 100);
-      if (!Number.isFinite(priceCents) || priceCents < 0) throw new Error("Geçerli fiyat girin");
-      const compareParsed = parseTryToCentsOptional(editCompareAtTry);
-      if (!compareParsed.ok) throw new Error(compareParsed.message);
-      const st = parseInt(editStock, 10);
-      if (!Number.isFinite(st) || st < 0) throw new Error("Stok miktarı negatif olamaz.");
-      await adminFetch(`/products/${editingProductId}`, token, {
-        method: "PATCH",
-        body: JSON.stringify({
-          name: editName.trim(),
-          slug: editSlug.trim(),
-          description: editDescription.trim() || null,
-          metaTitle: editMetaTitle.trim() || null,
-          metaDescription: editMetaDescription.trim() || null,
-          seoKeywords: editSeoKeywords.trim() || null,
-          priceCents,
-          compareAtCents: compareParsed.cents,
-          sku: editSku.trim() || null,
-          trackStock: editTrackStock,
-          stock: st,
-          isPublished: editPublished,
-          categoryId: editCategoryId || null,
-          showPublicStockCount: editShowPublicStockCount,
-          isFeatured: editFeatured,
-          isNew: editNew,
-        }),
-      });
-      setEditingProductId(null);
-      await loadProducts();
-      setSuccessToast("Ürün güncellendi.");
-    } catch (e) {
-      if (!(e instanceof AdminSessionTerminated)) {
-        setError(e instanceof Error ? e.message : String(e));
+  const saveProductEdit = useCallback(
+    async (pendingImageFiles?: File[]) => {
+      if (!token || !editingProductId) return;
+      const pid = editingProductId;
+      setBusy(true);
+      setError(null);
+      try {
+        const priceCents = Math.round(parseFloat(editPriceTry.replace(",", ".")) * 100);
+        if (!Number.isFinite(priceCents) || priceCents < 0) throw new Error("Geçerli fiyat girin");
+        const compareParsed = parseTryToCentsOptional(editCompareAtTry);
+        if (!compareParsed.ok) throw new Error(compareParsed.message);
+        const st = parseInt(editStock, 10);
+        if (!Number.isFinite(st) || st < 0) throw new Error("Stok miktarı negatif olamaz.");
+
+        const files = (pendingImageFiles ?? []).filter(Boolean);
+        if (files.length > 0) {
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const { url } = await adminUploadFile(token, file);
+            await adminFetch(`/products/${pid}/images`, token, {
+              method: "POST",
+              body: JSON.stringify({
+                url,
+                alt: i === 0 && imgAlt.trim() ? imgAlt.trim() : undefined,
+              }),
+            });
+          }
+        }
+
+        await adminFetch(`/products/${pid}`, token, {
+          method: "PATCH",
+          body: JSON.stringify({
+            name: editName.trim(),
+            slug: editSlug.trim(),
+            description: editDescription.trim() || null,
+            metaTitle: editMetaTitle.trim() || null,
+            metaDescription: editMetaDescription.trim() || null,
+            seoKeywords: editSeoKeywords.trim() || null,
+            priceCents,
+            compareAtCents: compareParsed.cents,
+            sku: editSku.trim() || null,
+            trackStock: editTrackStock,
+            stock: st,
+            isPublished: editPublished,
+            categoryId: editCategoryId || null,
+            showPublicStockCount: editShowPublicStockCount,
+            isFeatured: editFeatured,
+            isNew: editNew,
+          }),
+        });
+        setEditingProductId(null);
+        await loadProducts();
+        setSuccessToast(
+          files.length > 0 ? `Ürün güncellendi; ${files.length} görsel eklendi.` : "Ürün güncellendi.",
+        );
+      } catch (e) {
+        if (!(e instanceof AdminSessionTerminated)) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+      } finally {
+        setBusy(false);
       }
-    } finally {
-      setBusy(false);
-    }
-  }, [
-    token,
-    editingProductId,
-    editName,
-    editSlug,
-    editDescription,
-    editPriceTry,
-    editCompareAtTry,
-    editSku,
-    editTrackStock,
-    editShowPublicStockCount,
-    editStock,
-    editPublished,
-    editCategoryId,
-    editMetaTitle,
-    editMetaDescription,
-    editSeoKeywords,
-    editFeatured,
-    editNew,
-    loadProducts,
-  ]);
+    },
+    [
+      token,
+      editingProductId,
+      editName,
+      editSlug,
+      editDescription,
+      editPriceTry,
+      editCompareAtTry,
+      editSku,
+      editTrackStock,
+      editShowPublicStockCount,
+      editStock,
+      editPublished,
+      editCategoryId,
+      editMetaTitle,
+      editMetaDescription,
+      editSeoKeywords,
+      editFeatured,
+      editNew,
+      imgAlt,
+      loadProducts,
+    ],
+  );
 
   const deleteProduct = useCallback(
     async (id: string, name: string) => {

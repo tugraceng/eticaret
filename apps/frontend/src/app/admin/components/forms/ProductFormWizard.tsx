@@ -208,13 +208,16 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
           isFeatured,
           isNew,
         }),
-      })) as { id: string; slug?: string };
+      })) as Record<string, unknown>;
 
-      const id = created?.id;
-      if (!id) throw new Error("Ürün oluşturulamadı.");
+      const idRaw = created?.id;
+      const id = typeof idRaw === "string" && idRaw.trim() ? idRaw.trim() : null;
+      if (!id) throw new Error("Ürün oluşturulamadı (sunucu yanıtında ürün kimliği yok).");
 
       const requestedSlug = slug.trim().toLowerCase();
-      const finalSlug = (created.slug ?? requestedSlug).trim();
+      const slugRaw = created.slug;
+      const finalSlug =
+        typeof slugRaw === "string" && slugRaw.trim() ? slugRaw.trim() : requestedSlug;
 
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
