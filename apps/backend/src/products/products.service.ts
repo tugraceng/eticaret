@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { AppCacheService } from "../common/cache/app-cache.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -26,6 +26,24 @@ export class ProductsService {
   /** Ürünle ilgili her mutation'dan sonra çağrılır; ürün listelerini / detay cache'ini temizler. */
   invalidate() {
     this.cache.delPrefix("products:");
+  }
+
+  private normalizeProductSlug(raw: string): string {
+    const s = raw.trim().toLowerCase();
+    return s.length >= 2 ? s : "urun";
+  }
+
+  /** Yeni ürün: istenen slug doluysa `-2`, `-3` … ile benzersiz adres üretir. */
+  private async allocateUniqueProductSlug(desired: string): Promise<string> {
+    const base = this.normalizeProductSlug(desired);
+    const taken = async (slug: string) =>
+      (await this.prisma.product.findUnique({ where: { slug }, select: { id: true } })) != null;
+    if (!(await taken(base))) return base;
+    for (let n = 2; n < 1000; n++) {
+      const candidate = `${base}-${n}`;
+      if (!(await taken(candidate))) return candidate;
+    }
+    throw new ConflictException("Ürün adresi (slug) için benzersiz bir değer üretilemedi.");
   }
 
   /** Seçilen kategori + tüm alt kategorilerindeki ürünler (tek seviye veya derin ağaç). */
@@ -625,10 +643,11 @@ export class ProductsService {
     isFeatured?: boolean;
     isNew?: boolean;
   }) {
+    const slug = await this.allocateUniqueProductSlug(data.slug);
     const created = await this.prisma.product.create({
       data: {
         name: data.name,
-        slug: data.slug,
+        slug,
         description: data.description,
         metaTitle: data.metaTitle?.trim() ? data.metaTitle.trim() : null,
         metaDescription: data.metaDescription?.trim() ? data.metaDescription.trim() : null,
@@ -671,8 +690,27 @@ export class ProductsService {
     }>,
   ) {
     await this.ensure(id);
-    const { metaTitle, metaDescription, seoKeywords, ...rest } = data;
+    const { metaTitle, metaDescription, seoKeywords, slug: slugIn, ...rest } = data;
     const patch: Prisma.ProductUpdateInput = { ...rest };
+    if (slugIn !== undefined) {
+      const normalized = this.normalizeProductSlug(slugIn);
+      const current = await this.prisma.product.findUnique({
+        where: { id },
+        select: { slug: true },
+      });
+      if (current && normalized !== current.slug) {
+        const clash = await this.prisma.product.findUnique({
+          where: { slug: normalized },
+          select: { id: true },
+        });
+        if (clash && clash.id !== id) {
+          throw new ConflictException(
+            "Bu adres (slug) başka bir üründe kullanılıyor; farklı bir adres seçin.",
+          );
+        }
+      }
+      patch.slug = normalized;
+    }
     if (metaTitle !== undefined) {
       patch.metaTitle = metaTitle?.trim() ? metaTitle.trim() : null;
     }

@@ -208,10 +208,13 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
           isFeatured,
           isNew,
         }),
-      })) as { id: string };
+      })) as { id: string; slug?: string };
 
       const id = created?.id;
       if (!id) throw new Error("Ürün oluşturulamadı.");
+
+      const requestedSlug = slug.trim().toLowerCase();
+      const finalSlug = (created.slug ?? requestedSlug).trim();
 
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
@@ -246,7 +249,11 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
         });
       }
 
-      onSuccess("Ürün başarıyla oluşturuldu.");
+      onSuccess(
+        finalSlug !== requestedSlug
+          ? `Ürün oluşturuldu. Adres (slug) dolu olduğu için mağazada "${finalSlug}" olarak kaydedildi.`
+          : "Ürün başarıyla oluşturuldu.",
+      );
       slugTouched.current = false;
       setStep(1);
       setName("");

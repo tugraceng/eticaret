@@ -352,7 +352,7 @@ export function SiteHeader({
           </div>
 
           <div className="relative z-20 ml-auto flex shrink-0 items-center gap-2 sm:gap-3 md:ml-0">
-            <div className="flex items-center gap-1 rounded-xl border border-slate-200/90 bg-white p-1 shadow-sm ring-1 ring-slate-900/[0.04]">
+            <div className="hidden items-center gap-1 rounded-xl border border-slate-200/90 bg-white p-1 shadow-sm ring-1 ring-slate-900/[0.04] md:flex">
               <Link
                 href="/favoriler"
                 className="relative grid h-10 w-10 place-items-center rounded-lg text-slate-600 transition-colors hover:bg-slate-50 hover:text-rose-600"
@@ -427,12 +427,6 @@ export function SiteHeader({
               <MenuIcon open={open} className="h-5 w-5 text-slate-900" />
             </button>
           </div>
-        </div>
-
-        <div className="min-w-0 md:hidden">
-          <Suspense fallback={<div className="h-10 w-full rounded-xl bg-slate-50" aria-hidden />}>
-            <SiteHeaderSearch variant="mobile" searchPlaceholder="Koleksiyonlarda ara…" />
-          </Suspense>
         </div>
       </div>
 
