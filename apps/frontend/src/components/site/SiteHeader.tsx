@@ -14,6 +14,7 @@ import {
 } from "react";
 import { SiteHeaderSearch } from "@/components/site/SiteHeaderSearch";
 import { shopCategoryHref, type HeaderNavCategory } from "@/lib/category-nav";
+import { parseHeaderNav, type HeaderNavLink } from "@/lib/header-nav";
 import type { SiteSettings } from "@/lib/settings";
 import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
 import { selectCartTotalQty, useCartStore } from "@/stores/cart-store";
@@ -212,18 +213,19 @@ export function SiteHeader({
   settings: SiteSettings;
   categoryNav: HeaderNavCategory[];
 }) {
-  const tailNav = useMemo(
-    () =>
-      [
-        { href: "/services", label: "3D baskı hizmeti" },
-        {
-          href: settings.contactNavHref?.trim() || "/contact",
-          label: settings.contactNavLabel?.trim() || "Bize ulaşın",
-        },
-      ] as const,
+  const pathname = usePathname() ?? "/";
+  const headerNav = useMemo(() => parseHeaderNav(settings.headerNav), [settings.headerNav]);
+  const contactNavItem = useMemo(
+    (): HeaderNavLink => ({
+      href: settings.contactNavHref?.trim() || "/contact",
+      label: settings.contactNavLabel?.trim() || "Bize ulaşın",
+      muted: false,
+    }),
     [settings.contactNavHref, settings.contactNavLabel],
   );
-  const pathname = usePathname() ?? "/";
+  const contactNavActive =
+    pathname === contactNavItem.href ||
+    (contactNavItem.href.startsWith("/") && pathname.startsWith(`${contactNavItem.href}/`));
   const searchParams = useSearchParams();
   const activeShopCategoryId = pathname.startsWith("/shop") ? searchParams.get("categoryId") : null;
   const isHome = pathname === "/";
@@ -291,7 +293,6 @@ export function SiteHeader({
 
   const logoSrc = settings.logoUrl?.trim() || DEFAULT_HEADER_LOGO;
   const accent = settings.secondaryColor?.trim() || "#0ea5e9";
-  const ink = settings.primaryColor?.trim() || "#0f172a";
 
   const topPromoLines = [
     settings.topPromoLine1,
@@ -323,14 +324,14 @@ export function SiteHeader({
         <div className="flex min-w-0 flex-1 items-center gap-3 md:contents">
           <Link
             href="/"
-            className="group relative z-20 flex shrink-0 flex-col justify-center outline-none focus-visible:ring-2 focus-visible:ring-sky-500/35 focus-visible:ring-offset-2"
+            className="relative z-20 flex shrink-0 flex-col justify-center outline-none focus-visible:ring-2 focus-visible:ring-sky-500/35 focus-visible:ring-offset-2"
             aria-label={settings.siteName}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={logoSrc}
               alt={settings.siteName}
-              className="h-[2.65rem] w-auto max-w-[200px] object-contain object-left sm:h-[2.85rem] md:h-[3.15rem] md:max-w-[230px]"
+              className="h-14 w-auto max-h-[4.75rem] max-w-[min(72vw,320px)] object-contain object-left sm:h-16 sm:max-w-[340px] md:h-[4.5rem] md:max-w-[380px] lg:h-[4.75rem] lg:max-w-[420px]"
             />
           </Link>
 
@@ -351,63 +352,65 @@ export function SiteHeader({
           </div>
 
           <div className="relative z-20 ml-auto flex shrink-0 items-center gap-2 sm:gap-3 md:ml-0">
-            <div className="flex items-center gap-0.5 rounded-full border border-slate-200/90 bg-slate-50/90 p-1">
+            <div className="flex items-center gap-1 rounded-xl border border-slate-200/90 bg-white p-1 shadow-sm ring-1 ring-slate-900/[0.04]">
               <Link
                 href="/favoriler"
-                className="relative grid h-9 w-9 place-items-center rounded-full text-slate-600 transition-colors hover:bg-white hover:text-rose-500"
+                className="relative grid h-10 w-10 place-items-center rounded-lg text-slate-600 transition-colors hover:bg-slate-50 hover:text-rose-600"
                 aria-label="Favoriler"
               >
-                <HeartIcon className="h-[1.15rem] w-[1.15rem]" />
+                <HeartIcon className="h-5 w-5" />
                 {wishCount > 0 && (
                   <span
-                    className="absolute -right-0.5 -top-0.5 inline-flex min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white"
+                    className="absolute right-0 top-0 inline-flex min-h-[1.125rem] min-w-[1.125rem] translate-x-0.5 -translate-y-0.5 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white"
                     style={{ background: accent }}
                   >
-                    {wishCount}
+                    {wishCount > 99 ? "99+" : wishCount}
                   </span>
                 )}
               </Link>
+              <span className="w-px self-stretch bg-slate-200/90" aria-hidden />
               <button
                 type="button"
                 onClick={() => openMiniCart()}
-                className="relative grid h-9 w-9 place-items-center rounded-full text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
+                className="relative grid h-10 w-10 place-items-center rounded-lg text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
                 aria-label="Sepeti aç"
                 aria-haspopup="dialog"
                 aria-controls="mini-cart-panel"
               >
-                <CartIcon className="h-[1.15rem] w-[1.15rem]" />
+                <CartIcon className="h-5 w-5" />
                 {cartCount > 0 && (
                   <span
-                    className="absolute -right-0.5 -top-0.5 inline-flex min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white"
+                    className="absolute right-0 top-0 inline-flex min-h-[1.125rem] min-w-[1.125rem] translate-x-0.5 -translate-y-0.5 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white"
                     style={{ background: accent }}
                   >
-                    {cartCount}
+                    {cartCount > 99 ? "99+" : cartCount}
                   </span>
                 )}
               </button>
             </div>
 
-            <div className="hidden h-9 w-px shrink-0 bg-slate-200 sm:block" aria-hidden />
+            {headerNav.beforeCategories[0] ? (
+              <Link
+                href={headerNav.beforeCategories[0].href}
+                className="shrink-0 rounded-lg px-2.5 py-2 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 md:hidden"
+              >
+                {headerNav.beforeCategories[0].label}
+              </Link>
+            ) : null}
 
-            <div className="hidden items-center gap-3 sm:flex">
+            <div className="hidden h-10 w-px shrink-0 bg-slate-200 sm:block" aria-hidden />
+
+            <div className="hidden items-center gap-2 sm:flex">
               {loggedIn ? (
                 <Link href="/hesap" className="header-auth-solid">
                   Hesabım
                 </Link>
               ) : (
                 <>
-                  <Link
-                    href="/hesap/giris"
-                    className="whitespace-nowrap text-sm font-semibold underline-offset-4 transition hover:underline"
-                    style={{ color: ink }}
-                  >
+                  <Link href="/hesap/giris" className="header-auth-outline">
                     Giriş yap
                   </Link>
-                  <Link
-                    href="/hesap/kayit"
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 bg-white px-4 py-2 text-sm font-semibold shadow-sm transition hover:bg-slate-50"
-                    style={{ borderColor: accent, color: accent }}
-                  >
+                  <Link href="/hesap/kayit" className="header-auth-solid">
                     Üye ol
                   </Link>
                 </>
@@ -438,6 +441,24 @@ export function SiteHeader({
         className="relative z-0 hidden shrink-0 border-t border-slate-100 bg-white md:block"
       >
         <div className="mx-auto flex max-w-7xl flex-wrap items-end gap-x-0.5 gap-y-0 px-4 sm:px-6 lg:px-8">
+          {headerNav.beforeCategories.map((item) => {
+            const isInternal = item.href.startsWith("/");
+            const tailActive =
+              pathname === item.href || (isInternal && pathname.startsWith(`${item.href}/`));
+            return (
+              <Link
+                key={`before-${item.href}-${item.label}`}
+                href={item.href}
+                className={cn(
+                  "border-b-2 border-transparent px-2.5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:text-slate-900",
+                  item.muted && !tailActive ? "text-slate-400" : "text-slate-600",
+                  tailActive && "border-sky-600 text-slate-900",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
           {categoryNav.length === 0 ? (
             <Link
               href="/shop"
@@ -491,16 +512,17 @@ export function SiteHeader({
             </div>
             );
           })}
-          {tailNav.map((item) => {
-            const muted = item.href === "/services";
-            const tailActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          {headerNav.afterCategories.map((item) => {
+            const isInternal = item.href.startsWith("/");
+            const tailActive =
+              pathname === item.href || (isInternal && pathname.startsWith(`${item.href}/`));
             return (
               <Link
-                key={item.href}
+                key={`after-${item.href}-${item.label}`}
                 href={item.href}
                 className={cn(
                   "border-b-2 border-transparent px-2.5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:text-slate-900",
-                  muted && !tailActive ? "text-slate-400" : "text-slate-600",
+                  item.muted && !tailActive ? "text-slate-400" : "text-slate-600",
                   tailActive && "border-sky-600 text-slate-900",
                 )}
               >
@@ -508,6 +530,15 @@ export function SiteHeader({
               </Link>
             );
           })}
+          <Link
+            href={contactNavItem.href}
+            className={cn(
+              "border-b-2 border-transparent px-2.5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:text-slate-900",
+              contactNavActive ? "border-sky-600 text-slate-900" : "text-slate-600",
+            )}
+          >
+            {contactNavItem.label}
+          </Link>
         </div>
       </nav>
 
@@ -518,6 +549,16 @@ export function SiteHeader({
       >
         <div className="mx-auto flex max-w-7xl flex-col border-t border-slate-200/60 bg-white/98 px-4 py-4 shadow-[0_24px_50px_-24px_rgba(15,23,42,0.2)] backdrop-blur-lg sm:px-6">
           <div className="flex max-h-[52vh] flex-col gap-2 overflow-y-auto pr-1">
+            {headerNav.beforeCategories.map((item) => (
+              <Link
+                key={`mob-before-${item.href}-${item.label}`}
+                href={item.href}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
             {categoryNav.length === 0 ? (
               <Link
                 href="/shop"
@@ -588,9 +629,9 @@ export function SiteHeader({
               );
             })}
             <div className="grid grid-cols-2 gap-2">
-              {tailNav.map((item) => (
+              {[...headerNav.afterCategories, contactNavItem].map((item) => (
                 <Link
-                  key={item.href}
+                  key={`mob-tail-${item.href}-${item.label}`}
                   href={item.href}
                   className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-medium text-slate-800 hover:bg-slate-50"
                   onClick={() => setOpen(false)}

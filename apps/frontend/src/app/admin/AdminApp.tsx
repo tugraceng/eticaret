@@ -110,7 +110,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   const [blogBody, setBlogBody] = useState("");
   const [blogPublish, setBlogPublish] = useState(true);
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
-  const [cmsTab, setCmsTab] = useState<"blog" | "services" | "projects" | "list">("blog");
+  const [cmsTab, setCmsTab] = useState<"blog" | "services" | "projects" | "list" | "pages">("blog");
 
   const [svcSlug, setSvcSlug] = useState("");
   const [svcTitle, setSvcTitle] = useState("");

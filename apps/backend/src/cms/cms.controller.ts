@@ -165,6 +165,12 @@ export class CmsController {
     return this.cms.listPages();
   }
 
+  @Get("admin/pages/:slug")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  pageAdminBySlug(@Param("slug") slug: string) {
+    return this.cms.pageAdminBySlug(slug);
+  }
+
   @Get("pages/:slug")
   pageBySlug(@Param("slug") slug: string) {
     return this.cms.pageBySlug(slug);

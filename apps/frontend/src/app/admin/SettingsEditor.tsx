@@ -5,6 +5,7 @@ import { AdminImageUpload } from "./AdminImageUpload";
 import { adminFetch } from "./api";
 import { formatAdminCaughtError } from "./admin-api-error";
 import { AdminCard, Field, Icon, Toast } from "./ui";
+import { parseHeaderNavForEditor, type HeaderNavLink } from "@/lib/header-nav";
 
 type Settings = {
   id: string;
@@ -71,6 +72,7 @@ type Settings = {
   birthdayCouponAutomationEnabled?: boolean;
   contactNavLabel?: string | null;
   contactNavHref?: string | null;
+  headerNav?: unknown;
 };
 
 const SOCIAL_KEYS = ["instagram", "facebook", "x", "youtube", "linkedin", "tiktok"] as const;
@@ -133,6 +135,96 @@ function ColorField({
   );
 }
 
+function NavLinkRowsEditor({
+  title,
+  hint,
+  rows,
+  onChange,
+}: {
+  title: string;
+  hint: string;
+  rows: HeaderNavLink[];
+  onChange: (next: HeaderNavLink[]) => void;
+}) {
+  const add = () => onChange([...rows, { label: "", href: "", muted: false }]);
+  const remove = (i: number) => onChange(rows.filter((_, j) => j !== i));
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= rows.length) return;
+    const next = [...rows];
+    const a = next[i];
+    const b = next[j];
+    if (!a || !b) return;
+    next[i] = b;
+    next[j] = a;
+    onChange(next);
+  };
+  const patch = (i: number, p: Partial<HeaderNavLink>) =>
+    onChange(rows.map((r, j) => (j === i ? { ...r, ...p } : r)));
+  return (
+    <div className="mt-4 space-y-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+      <div>
+        <p className="text-sm font-semibold text-slate-900">{title}</p>
+        <p className="mt-0.5 text-xs text-slate-500">{hint}</p>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-xs text-slate-500">Henüz satır yok — «Satır ekle» ile ekleyin.</p>
+      ) : null}
+      {rows.map((row, i) => (
+        <div
+          key={`${i}-${row.href}`}
+          className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:flex-wrap sm:items-end"
+        >
+          <Field label="Etiket" className="min-w-[8rem] flex-1">
+            <input className="input-soft" value={row.label} onChange={(e) => patch(i, { label: e.target.value })} />
+          </Field>
+          <Field label="Adres (yol veya URL)" className="min-w-[10rem] flex-[1.2]">
+            <input
+              className="input-soft font-mono text-xs"
+              value={row.href}
+              onChange={(e) => patch(i, { href: e.target.value })}
+              placeholder="/about"
+            />
+          </Field>
+          <label className="flex items-center gap-2 text-xs text-slate-600 sm:pb-2">
+            <input
+              type="checkbox"
+              checked={Boolean(row.muted)}
+              onChange={(e) => patch(i, { muted: e.target.checked })}
+              className="h-4 w-4 rounded border-slate-300"
+            />
+            Soluk stil
+          </label>
+          <div className="flex gap-1 sm:ml-auto">
+            <button
+              type="button"
+              className="btn-ghost px-2 py-1 text-xs disabled:opacity-40"
+              onClick={() => move(i, -1)}
+              disabled={i === 0}
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              className="btn-ghost px-2 py-1 text-xs disabled:opacity-40"
+              onClick={() => move(i, 1)}
+              disabled={i === rows.length - 1}
+            >
+              ↓
+            </button>
+            <button type="button" className="btn-ghost px-2 py-1 text-xs text-rose-700" onClick={() => remove(i)}>
+              Sil
+            </button>
+          </div>
+        </div>
+      ))}
+      <button type="button" onClick={add} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50">
+        + Satır ekle
+      </button>
+    </div>
+  );
+}
+
 export function SettingsEditor({ token }: { token: string }) {
   const [siteName, setSiteName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
@@ -146,6 +238,8 @@ export function SettingsEditor({ token }: { token: string }) {
   const [address, setAddress] = useState("");
   const [contactNavLabel, setContactNavLabel] = useState("");
   const [contactNavHref, setContactNavHref] = useState("");
+  const [headerNavBefore, setHeaderNavBefore] = useState<HeaderNavLink[]>([]);
+  const [headerNavAfter, setHeaderNavAfter] = useState<HeaderNavLink[]>([]);
   const [social, setSocial] = useState<Record<string, string>>({});
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDesc, setMetaDesc] = useState("");
@@ -218,6 +312,9 @@ export function SettingsEditor({ token }: { token: string }) {
       setAddress(s.address ?? "");
       setContactNavLabel(s.contactNavLabel ?? "");
       setContactNavHref(s.contactNavHref ?? "");
+      const hn = parseHeaderNavForEditor(s.headerNav);
+      setHeaderNavBefore(hn.beforeCategories);
+      setHeaderNavAfter(hn.afterCategories);
       setSocial((s.socialLinks ?? {}) as Record<string, string>);
       setMetaTitle(s.defaultMetaTitle ?? "");
       setMetaDesc(s.defaultMetaDesc ?? "");
@@ -363,6 +460,10 @@ export function SettingsEditor({ token }: { token: string }) {
         authPanelGradientFrom: authPanelGradientFrom.trim() || "#334155",
         authPanelGradientTo: authPanelGradientTo.trim() || "#020617",
         authPanelTextColor: authPanelTextColor.trim() || "#ffffff",
+        headerNav: {
+          beforeCategories: headerNavBefore.filter((r) => r.label.trim() && r.href.trim()),
+          afterCategories: headerNavAfter.filter((r) => r.label.trim() && r.href.trim()),
+        },
       };
       await adminFetch("/settings", token, {
         method: "PATCH",
@@ -440,6 +541,8 @@ export function SettingsEditor({ token }: { token: string }) {
     authPanelGradientFrom,
     authPanelGradientTo,
     authPanelTextColor,
+    headerNavBefore,
+    headerNavAfter,
     token,
   ]);
 
@@ -571,6 +674,24 @@ export function SettingsEditor({ token }: { token: string }) {
             onChange={(e) => setAddress(e.target.value)}
           />
         </Field>
+      </AdminCard>
+
+      <AdminCard
+        title="Üst menü bağlantıları"
+        description="Kategori şeridinde: soldaki ve sağdaki ek bağlantılar. «Bize ulaşın» satırı her zaman en sonda ve aşağıdaki alandan yönetilir."
+      >
+        <NavLinkRowsEditor
+          title="Kategorilerden önce"
+          hint="Örn. Hakkımızda — vitrin kategorilerinin solunda listelenir."
+          rows={headerNavBefore}
+          onChange={setHeaderNavBefore}
+        />
+        <NavLinkRowsEditor
+          title="Kategorilerden sonra"
+          hint="Örn. 3D baskı hizmeti — iletişim satırından önce; sırayı oklarla değiştirin."
+          rows={headerNavAfter}
+          onChange={setHeaderNavAfter}
+        />
       </AdminCard>
 
       <AdminCard

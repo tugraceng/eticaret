@@ -3,9 +3,7 @@ import { apiJsonSafe } from "@/lib/api";
 
 type CmsPage = { title: string; content: unknown };
 
-export const metadata = { title: "Hakkımızda" };
-
-const pillars = [
+const defaultPillars = [
   {
     icon: "🎯",
     title: "Misyon",
@@ -23,8 +21,39 @@ const pillars = [
   },
 ];
 
+function contentRecord(content: unknown): Record<string, unknown> | null {
+  if (content && typeof content === "object" && !Array.isArray(content)) {
+    return content as Record<string, unknown>;
+  }
+  return null;
+}
+
+function readPillars(raw: unknown): typeof defaultPillars {
+  if (!Array.isArray(raw)) return defaultPillars;
+  const out: typeof defaultPillars = [];
+  for (const p of raw) {
+    if (!p || typeof p !== "object" || Array.isArray(p)) continue;
+    const o = p as Record<string, unknown>;
+    const icon = typeof o.icon === "string" ? o.icon : "•";
+    const title = typeof o.title === "string" ? o.title : "";
+    const body = typeof o.body === "string" ? o.body : "";
+    if (!title.trim() || !body.trim()) continue;
+    out.push({ icon, title: title.trim(), body: body.trim() });
+  }
+  return out.length > 0 ? (out as typeof defaultPillars) : defaultPillars;
+}
+
+export const metadata = { title: "Hakkımızda" };
+
 export default async function AboutPage() {
   const page = await apiJsonSafe<CmsPage>("/cms/pages/about");
+  const c = contentRecord(page?.content);
+  const lead =
+    typeof c?.lead === "string" && c.lead.trim()
+      ? c.lead.trim()
+      : "Küçük ve orta ölçekli işletmeler için modern e-ticaret ve kurumsal vitrin çözümü sunuyoruz. Amacımız, markanızı güçlü bir dijital hikâyeye dönüştürmek.";
+  const pillars = readPillars(c?.pillars);
+  const body = typeof c?.body === "string" && c.body.trim() ? c.body.trim() : null;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
@@ -35,10 +64,7 @@ export default async function AboutPage() {
         <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
           {page?.title ?? "Hakkımızda"}
         </h1>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600">
-          Küçük ve orta ölçekli işletmeler için modern e-ticaret ve kurumsal vitrin çözümü sunuyoruz.
-          Amacımız, markanızı güçlü bir dijital hikâyeye dönüştürmek.
-        </p>
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600">{lead}</p>
       </div>
 
       <section
@@ -69,12 +95,10 @@ export default async function AboutPage() {
         ))}
       </ul>
 
-      {page?.content ? (
+      {body ? (
         <article className="fade-up mt-14 card-soft p-6">
           <h2 className="text-lg font-semibold text-slate-900">Detaylar</h2>
-          <pre className="mt-4 overflow-auto rounded-xl bg-slate-50 p-4 text-xs text-slate-700">
-            {JSON.stringify(page.content, null, 2)}
-          </pre>
+          <div className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{body}</div>
         </article>
       ) : (
         <div

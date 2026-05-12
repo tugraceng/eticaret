@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, type Dispatch, type SetStateAction } from "react";
-import { adminUploadFile } from "../api";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { adminFetch, adminUploadFile } from "../api";
 import { formatAdminCaughtError } from "../admin-api-error";
 import { AdminCard, Field, Icon } from "../ui";
 import type { BlogPostRow } from "../types";
@@ -50,8 +50,8 @@ export function CmsPanel({
 }: {
   token: string;
   busy: boolean;
-  cmsTab: "blog" | "services" | "projects" | "list";
-  setCmsTab: Dispatch<SetStateAction<"blog" | "services" | "projects" | "list">>;
+  cmsTab: "blog" | "services" | "projects" | "list" | "pages";
+  setCmsTab: Dispatch<SetStateAction<"blog" | "services" | "projects" | "list" | "pages">>;
   editingBlogId: string | null;
   blogSlug: string;
   blogTitle: string;
@@ -91,6 +91,82 @@ export function CmsPanel({
 }) {
   const projGalFileRef = useRef<HTMLInputElement>(null);
 
+  type StaticPageKey = "about" | "services-index";
+  const [staticPageKey, setStaticPageKey] = useState<StaticPageKey>("about");
+  const [pageBusy, setPageBusy] = useState(false);
+  const [pageTitle, setPageTitle] = useState("");
+  const [pagePublish, setPagePublish] = useState(true);
+  const [aboutLead, setAboutLead] = useState("");
+  const [aboutBody, setAboutBody] = useState("");
+  const [svcEyebrow, setSvcEyebrow] = useState("");
+  const [svcIntro, setSvcIntro] = useState("");
+
+  useEffect(() => {
+    if (cmsTab !== "pages" || !token) return;
+    let cancelled = false;
+    setPageBusy(true);
+    void (async () => {
+      try {
+        const slug = staticPageKey;
+        const raw = (await adminFetch(`/cms/admin/pages/${slug}`, token)) as {
+          title?: string;
+          isPublished?: boolean;
+          content?: unknown;
+        } | null;
+        if (cancelled) return;
+        setPageTitle(raw?.title ?? (slug === "about" ? "Hakkımızda" : "Hizmetler"));
+        setPagePublish(raw?.isPublished !== false);
+        const cr =
+          raw?.content && typeof raw.content === "object" && !Array.isArray(raw.content)
+            ? (raw.content as Record<string, unknown>)
+            : {};
+        if (slug === "about") {
+          setAboutLead(typeof cr.lead === "string" ? cr.lead : "");
+          setAboutBody(typeof cr.body === "string" ? cr.body : "");
+        } else {
+          setSvcEyebrow(typeof cr.eyebrow === "string" ? cr.eyebrow : "");
+          setSvcIntro(typeof cr.intro === "string" ? cr.intro : "");
+        }
+      } catch (e) {
+        if (!cancelled) {
+          const msg = formatAdminCaughtError(e, "Sayfa yüklenemedi");
+          if (msg) window.alert(msg);
+        }
+      } finally {
+        if (!cancelled) setPageBusy(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [cmsTab, staticPageKey, token]);
+
+  const saveStaticPage = async () => {
+    setPageBusy(true);
+    try {
+      const slug = staticPageKey;
+      const content =
+        slug === "about"
+          ? { lead: aboutLead.trim(), body: aboutBody.trim() }
+          : { eyebrow: svcEyebrow.trim(), intro: svcIntro.trim() };
+      await adminFetch(`/cms/pages/${slug}`, token, {
+        method: "PUT",
+        body: JSON.stringify({
+          slug,
+          title: pageTitle.trim() || (slug === "about" ? "Hakkımızda" : "Hizmetler"),
+          content,
+          isPublished: pagePublish,
+        }),
+      });
+      window.alert("Sayfa kaydedildi.");
+    } catch (e) {
+      const msg = formatAdminCaughtError(e, "Kayıt başarısız");
+      if (msg) window.alert(msg);
+    } finally {
+      setPageBusy(false);
+    }
+  };
+
   const tabBtn = (id: typeof cmsTab, label: string) => (
     <button
       key={id}
@@ -111,12 +187,13 @@ export function CmsPanel({
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <p className="text-sm font-semibold text-slate-900">Ne eklemek istiyorsunuz?</p>
         <p className="mt-1 text-xs text-slate-500">
-          Önce türü seçin; aşağıda yalnızca o form görünür. Blog listesini görmek için son sekmeye geçin.
+          Önce türü seçin; aşağıda yalnızca o form görünür. Sabit sayfalar: Hakkımızda ve hizmetler vitrin metni.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {tabBtn("blog", "Blog yazısı")}
           {tabBtn("services", "Hizmet sayfası")}
           {tabBtn("projects", "Proje / portföy")}
+          {tabBtn("pages", "Sabit sayfalar")}
           {tabBtn("list", "Kayıtlı blog yazıları")}
         </div>
       </div>
@@ -286,6 +363,94 @@ export function CmsPanel({
               className="btn-primary disabled:opacity-50"
             >
               <Icon.Plus /> Projeyi oluştur
+            </button>
+          </div>
+        </AdminCard>
+      ) : null}
+
+      {cmsTab === "pages" ? (
+        <AdminCard
+          title="Sabit sayfalar"
+          description="Hakkımızda ve /hizmetler liste sayfasının üst metni buradan yönetilir. Yayında değilse ziyaretçiler varsayılan metni görür."
+        >
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setStaticPageKey("about")}
+              className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+                staticPageKey === "about"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              Hakkımızda
+            </button>
+            <button
+              type="button"
+              onClick={() => setStaticPageKey("services-index")}
+              className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+                staticPageKey === "services-index"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              Hizmetler / 3D vitrin
+            </button>
+          </div>
+          <Field label="Sayfa başlığı" className="mt-4">
+            <input className="input-soft" value={pageTitle} onChange={(e) => setPageTitle(e.target.value)} />
+          </Field>
+          <label className="mt-3 inline-flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={pagePublish}
+              onChange={(e) => setPagePublish(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300"
+            />
+            Yayında
+          </label>
+          {staticPageKey === "about" ? (
+            <>
+              <Field label="Giriş paragrafı" className="mt-3" hint="Ana başlığın altındaki metin.">
+                <textarea
+                  className="input-soft resize-y"
+                  rows={4}
+                  value={aboutLead}
+                  onChange={(e) => setAboutLead(e.target.value)}
+                />
+              </Field>
+              <Field label="Detay metni" className="mt-3" hint="Boş bırakırsanız altta iletişim kartı gösterilir.">
+                <textarea
+                  className="input-soft resize-y"
+                  rows={6}
+                  value={aboutBody}
+                  onChange={(e) => setAboutBody(e.target.value)}
+                />
+              </Field>
+            </>
+          ) : (
+            <>
+              <Field label="Üst etiket" className="mt-3" hint="Örn. Ne sunuyoruz">
+                <input className="input-soft" value={svcEyebrow} onChange={(e) => setSvcEyebrow(e.target.value)} />
+              </Field>
+              <Field label="Giriş paragrafı" className="mt-3" hint="Başlığın altındaki kısa açıklama.">
+                <textarea
+                  className="input-soft resize-y"
+                  rows={4}
+                  value={svcIntro}
+                  onChange={(e) => setSvcIntro(e.target.value)}
+                />
+              </Field>
+            </>
+          )}
+          <div className="mt-4">
+            <button
+              type="button"
+              disabled={busy || pageBusy || !pageTitle.trim()}
+              onClick={() => void saveStaticPage()}
+              className="btn-primary disabled:opacity-50"
+            >
+              <Icon.Check /> Kaydet
             </button>
           </div>
         </AdminCard>

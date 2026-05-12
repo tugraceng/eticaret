@@ -60,6 +60,8 @@ export type SiteSettings = {
   /** Üst menü ve footer’daki “Bize ulaşın” metni ve adresi (boşsa varsayılan) */
   contactNavLabel?: string | null;
   contactNavHref?: string | null;
+  /** Üst menü: kategorilerden önce / sonra ek bağlantılar (parseHeaderNav ile okunur) */
+  headerNav?: unknown;
 };
 
 export type HomeSectionKind =

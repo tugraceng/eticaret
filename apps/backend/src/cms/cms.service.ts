@@ -192,6 +192,11 @@ export class CmsService {
     return p;
   }
 
+  /** Yönetim paneli: taslak dahil tek kayıt (yoksa null). */
+  async pageAdminBySlug(slug: string) {
+    return this.prisma.page.findUnique({ where: { slug } });
+  }
+
   async upsertPage(data: { slug: string; title: string; content?: unknown; isPublished?: boolean }) {
     const result = await this.prisma.page.upsert({
       where: { slug: data.slug },

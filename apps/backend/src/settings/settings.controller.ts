@@ -287,6 +287,10 @@ class UpdateSettingsDto {
   @IsOptional()
   @IsString()
   contactNavHref?: string | null;
+
+  @IsOptional()
+  @Allow()
+  headerNav?: unknown;
 }
 
 class CreateHomeSectionDto {

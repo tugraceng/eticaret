@@ -122,14 +122,17 @@ export class SettingsService {
       birthdayCouponAutomationEnabled: boolean;
       contactNavLabel: string | null;
       contactNavHref: string | null;
+      headerNav: unknown;
     }>,
   ) {
     const current = await this.getSettings();
+    const { socialLinks, headerNav, ...rest } = data;
     const updated = await this.prisma.siteSettings.update({
       where: { id: current.id },
       data: {
-        ...data,
-        socialLinks: data.socialLinks as Prisma.InputJsonValue | undefined,
+        ...rest,
+        ...(socialLinks !== undefined ? { socialLinks: socialLinks as Prisma.InputJsonValue } : {}),
+        ...(headerNav !== undefined ? { headerNav: headerNav as Prisma.InputJsonValue } : {}),
       },
     });
     this.invalidateSettings();

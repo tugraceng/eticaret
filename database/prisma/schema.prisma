@@ -198,6 +198,8 @@ model SiteSettings {
   /// Üst menü + footer’daki “Bize ulaşın” bağlantısı (boşsa varsayılan metin ve /contact kullanılır)
   contactNavLabel String?
   contactNavHref  String?
+  /// JSON: { "beforeCategories": [{ "label", "href", "muted?" }], "afterCategories": [...] }. Boşsa varsayılan üst menü kullanılır; iletişim satırı her zaman sonda (contactNav*).
+  headerNav       Json?
   updatedAt        DateTime @updatedAt
 }
 
