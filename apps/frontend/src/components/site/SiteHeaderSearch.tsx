@@ -13,9 +13,16 @@ type Props = {
   onNavigate?: () => void;
   /** Ana sayfa hero üstü: açık renk çerçeve / metin */
   heroOverlay?: boolean;
+  /** Arama kutusu yer tutucu metni */
+  searchPlaceholder?: string;
 };
 
-export function SiteHeaderSearch({ variant = "desktop", onNavigate, heroOverlay = false }: Props) {
+export function SiteHeaderSearch({
+  variant = "desktop",
+  onNavigate,
+  heroOverlay = false,
+  searchPlaceholder = "Ürün ara…",
+}: Props) {
   const router = useRouter();
   const pathname = usePathname() ?? "/";
   const sp = useSearchParams();
@@ -111,7 +118,7 @@ export function SiteHeaderSearch({ variant = "desktop", onNavigate, heroOverlay 
             isDesktop
               ? heroOverlay
                 ? "flex min-h-[2.5rem] items-center gap-2 rounded-full border border-white/30 bg-black/20 px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md"
-                : "flex min-h-[2.5rem] items-center gap-2 rounded-full border border-slate-200/90 bg-white px-4 py-2 shadow-sm ring-1 ring-slate-900/[0.04] transition-shadow focus-within:border-slate-300 focus-within:ring-2 focus-within:ring-slate-900/10"
+                : "flex min-h-[2.75rem] items-center gap-2.5 rounded-xl border border-slate-200/80 bg-slate-50 px-4 py-2 shadow-sm ring-1 ring-slate-900/[0.03] transition-shadow focus-within:border-slate-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-sky-500/15"
               : isSheet
                 ? "flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"
                 : "flex items-center gap-2"
@@ -139,7 +146,7 @@ export function SiteHeaderSearch({ variant = "desktop", onNavigate, heroOverlay 
               setOpen(true);
             }}
             onFocus={() => termOk && setOpen(true)}
-            placeholder="Ürün ara…"
+            placeholder={searchPlaceholder}
             autoComplete="off"
             className={
               isDesktop || isSheet

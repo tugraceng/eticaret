@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   Suspense,
   useCallback,
@@ -96,6 +96,9 @@ const TOP_PROMO_GAP = "w-10 md:w-16";
 const topPromoLineKey = (lines: string[]) => lines.join("\0");
 
 const TOP_PROMO_MAX_SEGMENTS = 32;
+
+/** Admin’de logo yoksa vitrin örneği (STONEIRON3D) — `settings.logoUrl` ile her zaman geçersiz kılınabilir. */
+const DEFAULT_HEADER_LOGO = "/brand/default-header-logo.png";
 
 function TopPromoMarqueeBar({
   lines,
@@ -221,6 +224,8 @@ export function SiteHeader({
     [settings.contactNavHref, settings.contactNavLabel],
   );
   const pathname = usePathname() ?? "/";
+  const searchParams = useSearchParams();
+  const activeShopCategoryId = pathname.startsWith("/shop") ? searchParams.get("categoryId") : null;
   const isHome = pathname === "/";
   const [open, setOpen] = useState(false);
   /** Mobil menüde alt kategori satırları hangi kök kategoriler için açık */
@@ -279,10 +284,14 @@ export function SiteHeader({
   }, [pathname]);
 
   const headerSurface = isHome
-    ? "border-b border-slate-200/80 bg-white/85 text-slate-900 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.18)] backdrop-blur-xl backdrop-saturate-150"
-    : "border-b border-slate-200/85 bg-white/92 shadow-[0_10px_40px_-20px_rgba(15,23,42,0.14)] backdrop-blur-lg backdrop-saturate-150";
+    ? "border-b border-slate-200/80 bg-white text-slate-900 shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)]"
+    : "border-b border-slate-200/90 bg-white text-slate-900 shadow-[0_6px_24px_-16px_rgba(15,23,42,0.1)]";
 
   const headerPosition = isHome ? "fixed inset-x-0 top-0" : "sticky top-0";
+
+  const logoSrc = settings.logoUrl?.trim() || DEFAULT_HEADER_LOGO;
+  const accent = settings.secondaryColor?.trim() || "#0ea5e9";
+  const ink = settings.primaryColor?.trim() || "#0f172a";
 
   const topPromoLines = [
     settings.topPromoLine1,
@@ -304,151 +313,158 @@ export function SiteHeader({
   return (
     <header
       style={style}
-      className={`${headerPosition} z-50 flex flex-col transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ${headerSurface}`}
+      className={`${headerPosition} z-50 flex flex-col transition-[background-color,box-shadow] duration-300 ${headerSurface}`}
     >
       {topPromoLines.length > 0 ? (
         <TopPromoMarqueeBar lines={topPromoLines} style={topPromoBarStyle} />
       ) : null}
 
-      <div className="mx-auto flex w-full max-w-7xl min-w-0 shrink-0 items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="group relative z-20 flex min-w-0 max-w-[min(42vw,200px)] shrink-0 items-center gap-2.5 text-base font-semibold tracking-tight sm:max-w-[min(38vw,240px)] md:max-w-[280px]"
-          style={{ color: "var(--brand)" }}
-        >
-          {settings.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
+      <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8 md:flex-row md:items-center md:gap-6 md:py-3.5">
+        <div className="flex min-w-0 flex-1 items-center gap-3 md:contents">
+          <Link
+            href="/"
+            className="group relative z-20 flex shrink-0 flex-col justify-center outline-none focus-visible:ring-2 focus-visible:ring-sky-500/35 focus-visible:ring-offset-2"
+            aria-label={settings.siteName}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={settings.logoUrl}
+              src={logoSrc}
               alt={settings.siteName}
-              className="h-8 w-auto max-h-8 min-h-[2rem] max-w-[120px] shrink-0 object-contain transition-transform duration-300 ease-smooth group-hover:scale-[1.03] sm:max-w-[160px]"
+              className="h-[2.65rem] w-auto max-w-[200px] object-contain object-left sm:h-[2.85rem] md:h-[3.15rem] md:max-w-[230px]"
             />
-          ) : (
-            <span
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl text-sm font-bold text-white shadow-md transition-transform duration-300 ease-spring group-hover:rotate-3 group-hover:scale-105"
-              style={{ backgroundImage: "linear-gradient(145deg, var(--brand), var(--brand-2))" }}
-              aria-hidden
-            >
-              {settings.siteName.slice(0, 1).toUpperCase()}
-            </span>
-          )}
-          <span className="hidden min-w-0 truncate text-[15px] font-semibold leading-tight text-slate-900 sm:inline">
-            {settings.siteName}
-          </span>
-        </Link>
+          </Link>
 
-        <div className="relative z-10 min-w-0 flex-1 px-0 sm:px-1">
-          <div className="mx-auto w-full max-w-xl min-w-0 lg:max-w-2xl">
-            <Suspense
-              fallback={
-                <div className="hidden min-h-[2.5rem] w-full rounded-full border border-slate-100 bg-slate-50/80 md:block" aria-hidden />
-              }
+          <div className="relative z-10 hidden min-w-0 flex-1 justify-center px-2 md:flex lg:px-10">
+            <div className="w-full max-w-2xl min-w-0 lg:max-w-3xl">
+              <Suspense
+                fallback={
+                  <div className="min-h-[2.75rem] w-full rounded-xl border border-slate-200/90 bg-slate-50" aria-hidden />
+                }
+              >
+                <SiteHeaderSearch
+                  variant="desktop"
+                  heroOverlay={false}
+                  searchPlaceholder="Koleksiyonlarda ara…"
+                />
+              </Suspense>
+            </div>
+          </div>
+
+          <div className="relative z-20 ml-auto flex shrink-0 items-center gap-2 sm:gap-3 md:ml-0">
+            <div className="flex items-center gap-0.5 rounded-full border border-slate-200/90 bg-slate-50/90 p-1">
+              <Link
+                href="/favoriler"
+                className="relative grid h-9 w-9 place-items-center rounded-full text-slate-600 transition-colors hover:bg-white hover:text-rose-500"
+                aria-label="Favoriler"
+              >
+                <HeartIcon className="h-[1.15rem] w-[1.15rem]" />
+                {wishCount > 0 && (
+                  <span
+                    className="absolute -right-0.5 -top-0.5 inline-flex min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white"
+                    style={{ background: accent }}
+                  >
+                    {wishCount}
+                  </span>
+                )}
+              </Link>
+              <button
+                type="button"
+                onClick={() => openMiniCart()}
+                className="relative grid h-9 w-9 place-items-center rounded-full text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
+                aria-label="Sepeti aç"
+                aria-haspopup="dialog"
+                aria-controls="mini-cart-panel"
+              >
+                <CartIcon className="h-[1.15rem] w-[1.15rem]" />
+                {cartCount > 0 && (
+                  <span
+                    className="absolute -right-0.5 -top-0.5 inline-flex min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white"
+                    style={{ background: accent }}
+                  >
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            <div className="hidden h-9 w-px shrink-0 bg-slate-200 sm:block" aria-hidden />
+
+            <div className="hidden items-center gap-3 sm:flex">
+              {loggedIn ? (
+                <Link href="/hesap" className="header-auth-solid">
+                  Hesabım
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/hesap/giris"
+                    className="whitespace-nowrap text-sm font-semibold underline-offset-4 transition hover:underline"
+                    style={{ color: ink }}
+                  >
+                    Giriş yap
+                  </Link>
+                  <Link
+                    href="/hesap/kayit"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 bg-white px-4 py-2 text-sm font-semibold shadow-sm transition hover:bg-slate-50"
+                    style={{ borderColor: accent, color: accent }}
+                  >
+                    Üye ol
+                  </Link>
+                </>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setOpen((o) => !o)}
+              className="grid h-9 w-9 place-items-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm hover:bg-slate-50 md:hidden"
+              aria-label="Menü"
+              aria-expanded={open}
             >
-              <SiteHeaderSearch variant="desktop" heroOverlay={false} />
-            </Suspense>
+              <MenuIcon open={open} className="h-5 w-5 text-slate-900" />
+            </button>
           </div>
         </div>
 
-        <div className="relative z-20 flex shrink-0 items-center gap-2 sm:gap-2.5">
-          <div className="flex items-center gap-0.5 rounded-full border border-slate-200/80 bg-slate-100/65 p-1 shadow-inner">
-            <Link
-              href="/favoriler"
-              className="relative hidden h-9 w-9 place-items-center rounded-full text-slate-600 hover:bg-white hover:text-rose-500 sm:grid"
-              aria-label="Favoriler"
-            >
-              <HeartIcon className="h-[1.15rem] w-[1.15rem]" />
-              {wishCount > 0 && (
-                <span
-                  className="absolute -right-0.5 -top-0.5 inline-flex min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white"
-                  style={{ background: "var(--brand-2)" }}
-                >
-                  {wishCount}
-                </span>
-              )}
-            </Link>
-            <button
-              type="button"
-              onClick={() => openMiniCart()}
-              className="relative hidden h-9 w-9 place-items-center rounded-full text-slate-600 hover:bg-white hover:text-slate-900 md:grid"
-              aria-label="Sepeti aç"
-              aria-haspopup="dialog"
-              aria-controls="mini-cart-panel"
-            >
-              <CartIcon className="h-[1.15rem] w-[1.15rem]" />
-              {cartCount > 0 && (
-                <span
-                  className="absolute -right-0.5 -top-0.5 inline-flex min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white"
-                  style={{ background: "var(--brand-2)" }}
-                >
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          </div>
-
-          <div className="hidden items-center gap-2 sm:flex">
-            {loggedIn ? (
-              <Link
-                href="/hesap"
-                className="header-auth-solid"
-              >
-                Hesabım
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/hesap/giris"
-                  className="header-auth-outline"
-                >
-                  Üye girişi
-                </Link>
-                <Link
-                  href="/hesap/kayit"
-                  className="header-auth-solid"
-                >
-                  Üye ol
-                </Link>
-              </>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setOpen((o) => !o)}
-            className="grid h-9 w-9 place-items-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm hover:bg-slate-50 md:hidden"
-            aria-label="Menü"
-            aria-expanded={open}
-          >
-            <MenuIcon open={open} className="h-5 w-5 text-slate-900" />
-          </button>
+        <div className="min-w-0 md:hidden">
+          <Suspense fallback={<div className="h-10 w-full rounded-xl bg-slate-50" aria-hidden />}>
+            <SiteHeaderSearch variant="mobile" searchPlaceholder="Koleksiyonlarda ara…" />
+          </Suspense>
         </div>
       </div>
 
       <nav
         aria-label="Kategori ve bağlantılar"
-        className="relative z-0 hidden shrink-0 border-t border-slate-100/90 bg-gradient-to-b from-slate-50/95 to-slate-50/25 md:block"
+        className="relative z-0 hidden shrink-0 border-t border-slate-100 bg-white md:block"
       >
-        {/* overflow-x-auto burada alt menüyü dikeyde kırpar (hero ile “çakışır”). Çok kategori için satır kırılır. */}
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-1 gap-y-2 px-4 py-3 text-[13px] font-medium tracking-tight sm:gap-x-2 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-end gap-x-0.5 gap-y-0 px-4 sm:px-6 lg:px-8">
           {categoryNav.length === 0 ? (
             <Link
               href="/shop"
-              className="rounded-full px-3 py-1.5 whitespace-nowrap text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
+              className={cn(
+                "border-b-2 border-transparent px-2.5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600 transition-colors hover:text-slate-900",
+                pathname.startsWith("/shop") && "border-sky-600 text-slate-900",
+              )}
             >
               Ürünler
             </Link>
           ) : null}
-          {categoryNav.map((cat) => (
-            <div key={cat.id} className="group relative z-10">
-              <Link
-                href={shopCategoryHref(cat.id)}
-                className="inline-flex items-center gap-0.5 rounded-full px-3 py-1.5 whitespace-nowrap text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
-              >
-                {cat.name}
-                {cat.children.length > 0 ? (
-                  <DownIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                ) : null}
-              </Link>
+          {categoryNav.map((cat) => {
+            const catActive = activeShopCategoryId === cat.id;
+            return (
+              <div key={cat.id} className="group relative z-10">
+                <Link
+                  href={shopCategoryHref(cat.id)}
+                  className={cn(
+                    "inline-flex items-center gap-1 border-b-2 border-transparent px-2.5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:text-slate-900",
+                    catActive ? "border-sky-600 text-slate-900" : "text-slate-600",
+                  )}
+                >
+                  {cat.name}
+                  {cat.children.length > 0 ? (
+                    <DownIcon className="h-3 w-3 shrink-0 text-slate-400 group-hover:text-slate-600" />
+                  ) : null}
+                </Link>
               {cat.children.length > 0 ? (
                 <div
                   className="invisible absolute left-0 top-full z-50 pt-1.5 opacity-0 transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
@@ -473,16 +489,25 @@ export function SiteHeader({
                 </div>
               ) : null}
             </div>
-          ))}
-          {tailNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-full px-3 py-1.5 whitespace-nowrap text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
-            >
-              {item.label}
-            </Link>
-          ))}
+            );
+          })}
+          {tailNav.map((item) => {
+            const muted = item.href === "/services";
+            const tailActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "border-b-2 border-transparent px-2.5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:text-slate-900",
+                  muted && !tailActive ? "text-slate-400" : "text-slate-600",
+                  tailActive && "border-sky-600 text-slate-900",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
       </nav>
 
@@ -492,9 +517,6 @@ export function SiteHeader({
         }`}
       >
         <div className="mx-auto flex max-w-7xl flex-col border-t border-slate-200/60 bg-white/98 px-4 py-4 shadow-[0_24px_50px_-24px_rgba(15,23,42,0.2)] backdrop-blur-lg sm:px-6">
-          <Suspense fallback={null}>
-            <SiteHeaderSearch variant="mobile" />
-          </Suspense>
           <div className="flex max-h-[52vh] flex-col gap-2 overflow-y-auto pr-1">
             {categoryNav.length === 0 ? (
               <Link

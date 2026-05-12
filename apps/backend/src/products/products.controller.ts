@@ -364,6 +364,12 @@ export class ProductsController {
     return this.products.addImage(id, dto.url, dto.alt);
   }
 
+  @Delete(":id/images/:imageId")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  removeImage(@Param("id") productId: string, @Param("imageId") imageId: string) {
+    return this.products.removeImage(productId, imageId);
+  }
+
   @Post(":id/variants")
   @UseGuards(JwtAuthGuard, AdminGuard)
   createVariant(@Param("id") id: string, @Body() dto: CreateProductVariantDto) {

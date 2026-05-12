@@ -467,17 +467,25 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   );
 
   const addProductImageFromFile = useCallback(
-    async (file: File) => {
-      if (!token || !editingProductId) return;
+    async (fileOrFiles: File | File[]) => {
+      const files = (Array.isArray(fileOrFiles) ? fileOrFiles : [fileOrFiles]).filter(Boolean);
+      if (!token || !editingProductId || files.length === 0) return;
       setBusy(true);
       setError(null);
       try {
-        const { url } = await adminUploadFile(token, file);
-        await adminFetch(`/products/${editingProductId}/images`, token, {
-          method: "POST",
-          body: JSON.stringify({ url, alt: imgAlt.trim() || undefined }),
-        });
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const { url } = await adminUploadFile(token, file);
+          await adminFetch(`/products/${editingProductId}/images`, token, {
+            method: "POST",
+            body: JSON.stringify({
+              url,
+              alt: i === 0 && imgAlt.trim() ? imgAlt.trim() : undefined,
+            }),
+          });
+        }
         await loadProducts();
+        if (files.length > 1) setSuccessToast(`${files.length} görsel eklendi.`);
       } catch (e) {
         if (!(e instanceof AdminSessionTerminated)) {
           setError(e instanceof Error ? e.message : String(e));
@@ -487,6 +495,26 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
       }
     },
     [token, editingProductId, imgAlt, loadProducts],
+  );
+
+  const deleteProductImage = useCallback(
+    async (productId: string, imageId: string) => {
+      if (!token) return;
+      setBusy(true);
+      setError(null);
+      try {
+        await adminFetch(`/products/${productId}/images/${imageId}`, token, { method: "DELETE" });
+        await loadProducts();
+        setSuccessToast("Görsel silindi.");
+      } catch (e) {
+        if (!(e instanceof AdminSessionTerminated)) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token, loadProducts],
   );
 
   const markNotificationRead = useCallback(
@@ -1107,6 +1135,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               setEditNew={setEditNew}
               setImgAlt={setImgAlt}
               addProductImageFromFile={addProductImageFromFile}
+              deleteProductImage={deleteProductImage}
               saveProductEdit={saveProductEdit}
               setEditingProductId={setEditingProductId}
               products={products}

@@ -49,6 +49,7 @@ export function ProductsPanel({
   setEditNew,
   setImgAlt,
   addProductImageFromFile,
+  deleteProductImage,
   saveProductEdit,
   setEditingProductId,
   products,
@@ -116,7 +117,8 @@ export function ProductsPanel({
   setEditFeatured: Dispatch<SetStateAction<boolean>>;
   setEditNew: Dispatch<SetStateAction<boolean>>;
   setImgAlt: Dispatch<SetStateAction<string>>;
-  addProductImageFromFile: (file: File) => Promise<void>;
+  addProductImageFromFile: (fileOrFiles: File | File[]) => Promise<void>;
+  deleteProductImage: (productId: string, imageId: string) => Promise<void>;
   saveProductEdit: () => Promise<void>;
   setEditingProductId: Dispatch<SetStateAction<string | null>>;
   products: ProductRow[];
@@ -159,6 +161,7 @@ export function ProductsPanel({
 }) {
   const productImgFileRef = useRef<HTMLInputElement>(null);
   const editingProduct = editingProductId ? products.find((p) => p.id === editingProductId) : null;
+  const editProductImages = editingProduct?.images ?? [];
   const variantBasePriceCents = editingProduct?.priceCents ?? 0;
 
   const [productQ, setProductQ] = useState("");
@@ -398,20 +401,55 @@ export function ProductsPanel({
           </div>
 
           <div className="mt-5 rounded-2xl border border-amber-200 bg-white/70 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-800">Görsel ekle</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-800">Ürün görselleri</p>
+            {editProductImages.length > 0 ? (
+              <div className="mt-3">
+                <p className="text-xs font-medium text-slate-700">
+                  Mevcut görseller ({editProductImages.length}) — sıra vitrinde de bu sırayı izler.
+                </p>
+                <ul className="mt-3 flex flex-wrap gap-3">
+                  {editProductImages.map((img) => (
+                    <li key={img.id} className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={img.url}
+                        alt={img.alt ?? ""}
+                        className="h-24 w-24 rounded-xl object-cover ring-1 ring-slate-200"
+                      />
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-rose-600 text-xs font-bold text-white shadow disabled:opacity-50"
+                        aria-label="Görseli sil"
+                        onClick={() =>
+                          editingProductId ? void deleteProductImage(editingProductId, img.id) : undefined
+                        }
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-slate-500">Henüz görsel yok — aşağıdan ekleyin.</p>
+            )}
+            <p className="mt-4 text-[11px] font-semibold uppercase tracking-widest text-amber-800">Görsel ekle</p>
             <p className="mt-1 text-xs text-slate-500">
               Dosya API&apos;ye yüklenir; adres otomatik ürüne eklenir (en fazla ~6 MB, JPG/PNG/WebP/GIF/SVG/ICO).
+              Birden fazla dosya seçebilirsiniz; ilk görsele alt metin alanı uygulanır.
             </p>
             <div className="mt-3 flex flex-wrap items-end gap-3">
               <input
                 ref={productImgFileRef}
                 type="file"
+                multiple
                 accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,.ico,image/x-icon,image/vnd.microsoft.icon"
                 className="hidden"
                 onChange={(e) => {
-                  const f = e.target.files?.[0];
+                  const list = e.target.files;
                   e.target.value = "";
-                  if (f) void addProductImageFromFile(f);
+                  if (list?.length) void addProductImageFromFile(Array.from(list));
                 }}
               />
               <button
@@ -420,7 +458,7 @@ export function ProductsPanel({
                 onClick={() => productImgFileRef.current?.click()}
                 className="btn-ghost disabled:opacity-50"
               >
-                <Icon.Plus /> Dosya seç ve ekle
+                <Icon.Plus /> Dosya seç (çoklu)
               </button>
               <div className="min-w-[200px] flex-1">
                 <Field label="Alt metin (isteğe bağlı)">

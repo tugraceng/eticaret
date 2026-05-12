@@ -708,6 +708,17 @@ export class ProductsService {
     return img;
   }
 
+  async removeImage(productId: string, imageId: string) {
+    await this.ensure(productId);
+    const img = await this.prisma.productImage.findFirst({
+      where: { id: imageId, productId },
+    });
+    if (!img) throw new NotFoundException();
+    await this.prisma.productImage.delete({ where: { id: imageId } });
+    this.invalidate();
+    return { ok: true };
+  }
+
   private async ensure(id: string) {
     const p = await this.prisma.product.findUnique({ where: { id } });
     if (!p) throw new NotFoundException();

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import {
   lineKeyFor,
@@ -312,6 +312,19 @@ function CheckoutInner() {
     setLines(next);
     writeCart(next);
   };
+
+  const moveLine = useCallback(
+    (index: number, dir: -1 | 1) => {
+      const to = index + dir;
+      if (to < 0 || to >= lines.length) return;
+      const next = [...lines];
+      const [row] = next.splice(index, 1);
+      next.splice(to, 0, row);
+      setLines(next);
+      writeCart(next);
+    },
+    [lines],
+  );
 
   const totalQty = lines.reduce((s, l) => s + l.quantity, 0);
   const subtotal = useMemo(
@@ -1188,15 +1201,85 @@ function CheckoutInner() {
 
       <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
         <div className="surface-soft p-6">
-          <h2 className="text-lg font-semibold text-slate-900">Özet</h2>
-          <ul className="mt-4 max-h-64 space-y-3 overflow-auto pr-1">
-            {lines.map((l) => (
-              <li key={l.lineKey} className="flex items-start gap-2 text-xs">
-                <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
-                  {l.quantity}×
-                </span>
-                <p className="flex-1 truncate text-slate-700">{l.title}</p>
-                <p className="text-slate-500">{priceFmt((l.priceCents ?? 0) * l.quantity)}</p>
+          <section className="rounded-xl border border-slate-100 bg-slate-50/90 p-4" aria-labelledby="checkout-about-heading">
+            <h3 id="checkout-about-heading" className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Hakkımda
+            </h3>
+            {loggedIn ? (
+              <div className="mt-2">
+                <p className="text-sm font-semibold text-slate-900">
+                  {[name, surname].filter(Boolean).join(" ").trim() || "Hesabınız"}
+                </p>
+                {email.trim() ? (
+                  <p className="mt-1 break-all text-xs text-slate-600">{email.trim()}</p>
+                ) : null}
+                <Link
+                  href="/hesap"
+                  className="mt-2 inline-flex text-xs font-semibold text-sky-800 underline-offset-2 hover:underline"
+                >
+                  Profilimi görüntüle
+                </Link>
+              </div>
+            ) : (
+              <div className="mt-2">
+                <p className="text-sm text-slate-800">Misafir olarak ödeme yapıyorsunuz.</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                  Teslimat ve fatura bilgileri siparişinizle birlikte kullanılır; hesap oluşturmadan devam edebilirsiniz.
+                </p>
+              </div>
+            )}
+          </section>
+
+          <div className="mt-5 flex items-start justify-between gap-3 border-t border-slate-100 pt-5">
+            <h2 className="text-lg font-semibold text-slate-900">Özet</h2>
+            <Link
+              href="/cart"
+              className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50"
+            >
+              Sepeti düzenle
+            </Link>
+          </div>
+          <ul className="mt-4 max-h-[min(22rem,50vh)] space-y-3 overflow-auto pr-1">
+            {lines.map((l, idx) => (
+              <li key={l.lineKey} className="flex gap-2 text-xs">
+                <div className="flex shrink-0 flex-col gap-0.5 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => moveLine(idx, -1)}
+                    disabled={idx === 0}
+                    className="grid h-6 w-6 place-items-center rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+                    aria-label={`${l.title} satırını yukarı taşı`}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveLine(idx, 1)}
+                    disabled={idx === lines.length - 1}
+                    className="grid h-6 w-6 place-items-center rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+                    aria-label={`${l.title} satırını aşağı taşı`}
+                  >
+                    ↓
+                  </button>
+                </div>
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                  {l.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- harici yükleme URL'leri (S3 vb.)
+                    <img src={l.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  ) : (
+                    <span className="absolute inset-0 grid place-items-center text-[10px] font-semibold text-slate-400">
+                      —
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-2 font-medium leading-snug text-slate-800">{l.title}</p>
+                  <p className="mt-0.5 text-[11px] text-slate-500">
+                    <span className="rounded bg-slate-100 px-1 py-0.5 font-semibold text-slate-600">{l.quantity}×</span>{" "}
+                    {typeof l.priceCents === "number" ? priceFmt(l.priceCents) : "—"} birim
+                  </p>
+                </div>
+                <p className="shrink-0 self-start font-medium text-slate-700">{priceFmt((l.priceCents ?? 0) * l.quantity)}</p>
               </li>
             ))}
           </ul>
@@ -1216,26 +1299,6 @@ function CheckoutInner() {
                 <dd>− {priceFmt(applied.discountCents)}</dd>
               </div>
             )}
-            <div className="flex justify-between text-slate-600">
-              <dt>Kargo</dt>
-              <dd>
-                {shippingCents === 0 ? (
-                  <span className="font-semibold text-emerald-700">Ücretsiz</span>
-                ) : (
-                  priceFmt(shippingCents)
-                )}
-              </dd>
-            </div>
-            {shippingSettings &&
-              shippingSettings.freeShippingThresholdCents > 0 &&
-              shippingCents > 0 && (
-                <p className="text-[11px] text-slate-500">
-                  {priceFmt(
-                    shippingSettings.freeShippingThresholdCents - (subtotal - (applied?.discountCents ?? 0)),
-                  )}{" "}
-                  daha eklerseniz kargo ücretsiz.
-                </p>
-              )}
             {taxCents > 0 && (
               <div className="flex justify-between text-slate-600">
                 <dt>
@@ -1247,6 +1310,26 @@ function CheckoutInner() {
                 <dd>{priceFmt(taxCents)}</dd>
               </div>
             )}
+            {shippingSettings &&
+              shippingSettings.freeShippingThresholdCents > 0 &&
+              shippingCents > 0 && (
+                <p className="text-[11px] text-slate-500">
+                  {priceFmt(
+                    shippingSettings.freeShippingThresholdCents - (subtotal - (applied?.discountCents ?? 0)),
+                  )}{" "}
+                  daha eklerseniz kargo ücretsiz.
+                </p>
+              )}
+            <div className="flex justify-between text-slate-600">
+              <dt>Kargo</dt>
+              <dd>
+                {shippingCents === 0 ? (
+                  <span className="font-semibold text-emerald-700">Ücretsiz</span>
+                ) : (
+                  priceFmt(shippingCents)
+                )}
+              </dd>
+            </div>
             <div className="mt-2 flex justify-between border-t border-slate-100 pt-3 text-base font-semibold text-slate-900">
               <dt>Toplam</dt>
               <dd>{priceFmt(total)}</dd>
