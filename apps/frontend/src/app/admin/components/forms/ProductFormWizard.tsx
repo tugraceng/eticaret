@@ -113,6 +113,30 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
     });
   };
 
+  const moveWizardImage = (from: number, delta: -1 | 1) => {
+    const to = from + delta;
+    setImageFiles((files) => {
+      if (to < 0 || to >= files.length) return files;
+      const next = [...files];
+      const a = next[from];
+      const b = next[to];
+      if (a === undefined || b === undefined) return files;
+      next[from] = b;
+      next[to] = a;
+      return next;
+    });
+    setImagePreviews((prev) => {
+      if (to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      const a = next[from];
+      const b = next[to];
+      if (a === undefined || b === undefined) return prev;
+      next[from] = b;
+      next[to] = a;
+      return next;
+    });
+  };
+
   const addVariantRow = () => {
     if (!variantLabel.trim()) {
       onError("Varyant için en az etiket girin (örn. renk veya beden).");
@@ -410,7 +434,8 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
       {step === 3 ? (
         <div className="space-y-4">
           <p className="text-sm text-slate-600">
-            Görselleri sürükleyip bırakın veya dosya seçin. İlk görsel vitrinde öne çıkar; ilk görsel için alt metin önerilir.
+            Görselleri sürükleyip bırakın veya dosya seçin. İlk görsel vitrinde öne çıkar; sırayı oklarla
+            değiştirebilirsiniz.
           </p>
           <div
             className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/80 px-4 py-8 text-center"
@@ -430,8 +455,10 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
               className="hidden"
               id="wiz-img"
               onChange={(e) => {
-                if (e.target.files?.length) addFiles(e.target.files);
-                e.target.value = "";
+                const input = e.target as HTMLInputElement;
+                const picked = input.files?.length ? Array.from(input.files) : [];
+                input.value = "";
+                if (picked.length) addFiles(picked);
               }}
             />
             <label htmlFor="wiz-img" className="cursor-pointer text-sm font-semibold text-sky-800 hover:underline">
@@ -442,17 +469,40 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
           {imagePreviews.length > 0 ? (
             <ul className="flex flex-wrap gap-3">
               {imagePreviews.map((src, idx) => (
-                <li key={src} className="relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="h-24 w-24 rounded-xl object-cover ring-1 ring-slate-200" />
-                  <button
-                    type="button"
-                    className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-rose-600 text-xs text-white shadow"
-                    onClick={() => removeImageAt(idx)}
-                    aria-label="Kaldır"
-                  >
-                    ×
-                  </button>
+                <li key={src} className="flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white px-0.5 py-0.5 shadow-sm">
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={() => moveWizardImage(idx, -1)}
+                      className="grid h-7 w-7 place-items-center rounded-md text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-30"
+                      aria-label="Öne al"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      disabled={idx >= imagePreviews.length - 1}
+                      onClick={() => moveWizardImage(idx, 1)}
+                      className="grid h-7 w-7 place-items-center rounded-md text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-30"
+                      aria-label="Arkaya al"
+                    >
+                      ↓
+                    </button>
+                    <span className="min-w-[1.25rem] text-center text-[10px] font-bold text-slate-400">{idx + 1}</span>
+                  </div>
+                  <div className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt="" className="h-24 w-24 rounded-xl object-cover ring-1 ring-slate-200" />
+                    <button
+                      type="button"
+                      className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-rose-600 text-xs text-white shadow"
+                      onClick={() => removeImageAt(idx)}
+                      aria-label="Kaldır"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>

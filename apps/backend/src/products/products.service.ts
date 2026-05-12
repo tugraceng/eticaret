@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { AppCacheService } from "../common/cache/app-cache.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -753,6 +753,28 @@ export class ProductsService {
     });
     if (!img) throw new NotFoundException();
     await this.prisma.productImage.delete({ where: { id: imageId } });
+    this.invalidate();
+    return { ok: true };
+  }
+
+  async reorderProductImages(productId: string, orderedIds: string[]) {
+    await this.ensure(productId);
+    const rows = await this.prisma.productImage.findMany({
+      where: { productId },
+      select: { id: true },
+    });
+    const existing = new Set(rows.map((r) => r.id));
+    if (orderedIds.length !== existing.size || orderedIds.some((id) => !existing.has(id))) {
+      throw new BadRequestException("Görsel sırası: tüm görsel kimlikleri ve yalnızca bu ürüne ait olanlar gönderilmelidir.");
+    }
+    await this.prisma.$transaction(
+      orderedIds.map((imageId, index) =>
+        this.prisma.productImage.update({
+          where: { id: imageId },
+          data: { sortOrder: index },
+        }),
+      ),
+    );
     this.invalidate();
     return { ok: true };
   }

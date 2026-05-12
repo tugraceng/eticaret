@@ -528,6 +528,29 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     [token, loadProducts],
   );
 
+  const reorderProductImages = useCallback(
+    async (productId: string, imageIds: string[]) => {
+      if (!token || !productId.trim() || imageIds.length === 0) return;
+      setBusy(true);
+      setError(null);
+      try {
+        await adminFetch(`/products/${productId}/images/reorder`, token, {
+          method: "PATCH",
+          body: JSON.stringify({ ids: imageIds }),
+        });
+        await loadProducts();
+        setSuccessToast("Görsel sırası güncellendi.");
+      } catch (e) {
+        if (!(e instanceof AdminSessionTerminated)) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token, loadProducts],
+  );
+
   const markNotificationRead = useCallback(
     async (id: string) => {
       if (!token) return;
@@ -1170,6 +1193,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               setImgAlt={setImgAlt}
               addProductImageFromFile={addProductImageFromFile}
               deleteProductImage={deleteProductImage}
+              reorderProductImages={reorderProductImages}
               saveProductEdit={saveProductEdit}
               setEditingProductId={setEditingProductId}
               products={products}

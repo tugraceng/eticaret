@@ -50,6 +50,7 @@ export function ProductsPanel({
   setImgAlt,
   addProductImageFromFile,
   deleteProductImage,
+  reorderProductImages,
   saveProductEdit,
   setEditingProductId,
   products,
@@ -119,6 +120,7 @@ export function ProductsPanel({
   setImgAlt: Dispatch<SetStateAction<string>>;
   addProductImageFromFile: (fileOrFiles: File | File[], productIdOverride?: string | null) => Promise<void>;
   deleteProductImage: (productId: string, imageId: string) => Promise<void>;
+  reorderProductImages: (productId: string, imageIds: string[]) => Promise<void>;
   saveProductEdit: (pendingImages?: File[]) => Promise<void>;
   setEditingProductId: Dispatch<SetStateAction<string | null>>;
   products: ProductRow[];
@@ -167,6 +169,17 @@ export function ProductsPanel({
 
   const [stagedEditImages, setStagedEditImages] = useState<File[]>([]);
 
+  const stagedObjectUrls = useMemo(
+    () => stagedEditImages.map((f) => ({ file: f, url: URL.createObjectURL(f) })),
+    [stagedEditImages],
+  );
+
+  useEffect(() => {
+    return () => {
+      for (const { url } of stagedObjectUrls) URL.revokeObjectURL(url);
+    };
+  }, [stagedObjectUrls]);
+
   useEffect(() => {
     setStagedEditImages([]);
   }, [editingProductId]);
@@ -180,6 +193,37 @@ export function ProductsPanel({
   const editingProduct = editingProductId ? products.find((p) => p.id === editingProductId) : null;
   const editProductImages = editingProduct?.images ?? [];
   const variantBasePriceCents = editingProduct?.priceCents ?? 0;
+
+  const moveSavedImageOrder = (fromIndex: number, delta: -1 | 1) => {
+    if (!editingProductId) return;
+    const list = editProductImages;
+    const to = fromIndex + delta;
+    if (to < 0 || to >= list.length) return;
+    const next = [...list];
+    const a = next[fromIndex];
+    const b = next[to];
+    if (!a || !b) return;
+    next[fromIndex] = b;
+    next[to] = a;
+    void reorderProductImages(
+      editingProductId,
+      next.map((im) => im.id),
+    );
+  };
+
+  const moveStagedImageOrder = (fromIndex: number, delta: -1 | 1) => {
+    setStagedEditImages((prev) => {
+      const to = fromIndex + delta;
+      if (to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      const a = next[fromIndex];
+      const b = next[to];
+      if (a === undefined || b === undefined) return prev;
+      next[fromIndex] = b;
+      next[to] = a;
+      return next;
+    });
+  };
 
   const [productQ, setProductQ] = useState("");
   const [catFilter, setCatFilter] = useState("");
@@ -422,28 +466,56 @@ export function ProductsPanel({
             {editProductImages.length > 0 ? (
               <div className="mt-3">
                 <p className="text-xs font-medium text-slate-700">
-                  Mevcut görseller ({editProductImages.length}) — sıra vitrinde de bu sırayı izler.
+                  Mevcut görseller ({editProductImages.length}) — vitrin soldan sağa bu sırayı kullanır. Oklarla
+                  sırayı değiştirin (anında kaydedilir).
                 </p>
                 <ul className="mt-3 flex flex-wrap gap-3">
-                  {editProductImages.map((img) => (
-                    <li key={img.id} className="relative">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={img.url}
-                        alt={img.alt ?? ""}
-                        className="h-24 w-24 rounded-xl object-cover ring-1 ring-slate-200"
-                      />
-                      <button
-                        type="button"
-                        disabled={busy}
-                        className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-rose-600 text-xs font-bold text-white shadow disabled:opacity-50"
-                        aria-label="Görseli sil"
-                        onClick={() =>
-                          editingProductId ? void deleteProductImage(editingProductId, img.id) : undefined
-                        }
-                      >
-                        ×
-                      </button>
+                  {editProductImages.map((img, idx) => (
+                    <li key={img.id} className="flex flex-col items-center gap-1.5">
+                      <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white px-0.5 py-0.5 shadow-sm">
+                        <button
+                          type="button"
+                          disabled={busy || idx === 0}
+                          onClick={() => moveSavedImageOrder(idx, -1)}
+                          className="grid h-7 w-7 place-items-center rounded-md text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-30"
+                          aria-label="Öne al"
+                          title="Öne al"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy || idx >= editProductImages.length - 1}
+                          onClick={() => moveSavedImageOrder(idx, 1)}
+                          className="grid h-7 w-7 place-items-center rounded-md text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-30"
+                          aria-label="Arkaya al"
+                          title="Arkaya al"
+                        >
+                          ↓
+                        </button>
+                        <span className="min-w-[1.25rem] px-0.5 text-center text-[10px] font-bold text-slate-400">
+                          {idx + 1}
+                        </span>
+                      </div>
+                      <div className="relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={img.url}
+                          alt={img.alt ?? ""}
+                          className="h-24 w-24 rounded-xl object-cover ring-1 ring-slate-200"
+                        />
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-rose-600 text-xs font-bold text-white shadow disabled:opacity-50"
+                          aria-label="Görseli sil"
+                          onClick={() =>
+                            editingProductId ? void deleteProductImage(editingProductId, img.id) : undefined
+                          }
+                        >
+                          ×
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -458,10 +530,41 @@ export function ProductsPanel({
             </p>
             {stagedEditImages.length > 0 ? (
               <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-950">
-                <p className="font-semibold">Kayıtta {stagedEditImages.length} dosya — Kaydet ile yüklenecek</p>
+                <p className="font-semibold">Kayıtta {stagedEditImages.length} dosya — Kaydet ile yüklenecek (sıra: oklar)</p>
+                <ul className="mt-2 flex flex-wrap gap-2">
+                  {stagedObjectUrls.map(({ file, url }, i) => (
+                    <li key={url} className="flex flex-col items-center gap-1">
+                      <div className="flex items-center gap-0.5 rounded-lg border border-amber-300/80 bg-white px-0.5 py-0.5">
+                        <button
+                          type="button"
+                          disabled={busy || i === 0}
+                          onClick={() => moveStagedImageOrder(i, -1)}
+                          className="grid h-6 w-6 place-items-center rounded text-[11px] font-bold text-amber-900 hover:bg-amber-100 disabled:opacity-30"
+                          aria-label="Öne al"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy || i >= stagedObjectUrls.length - 1}
+                          onClick={() => moveStagedImageOrder(i, 1)}
+                          className="grid h-6 w-6 place-items-center rounded text-[11px] font-bold text-amber-900 hover:bg-amber-100 disabled:opacity-30"
+                          aria-label="Arkaya al"
+                        >
+                          ↓
+                        </button>
+                        <span className="min-w-[1rem] text-center text-[9px] font-bold text-amber-800/80">{i + 1}</span>
+                      </div>
+                      <div className="relative h-16 w-16 overflow-hidden rounded-lg ring-1 ring-amber-300/80">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
                 <ul className="mt-1.5 list-inside list-disc text-amber-900/90">
                   {stagedEditImages.map((f, i) => (
-                    <li key={`${f.name}-${i}`} className="truncate">
+                    <li key={`${f.name}-${f.size}-${i}`} className="truncate">
                       {f.name}
                     </li>
                   ))}
@@ -483,10 +586,11 @@ export function ProductsPanel({
                 accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,.ico,image/x-icon,image/vnd.microsoft.icon"
                 className="hidden"
                 onChange={(e) => {
-                  const list = e.target.files;
-                  e.target.value = "";
-                  if (!list?.length) return;
-                  const files = Array.from(list);
+                  const input = e.target as HTMLInputElement;
+                  // Önce kopyala: value sıfırlanınca bazı tarayıcılarda FileList anında boşalır.
+                  const files = input.files?.length ? Array.from(input.files) : [];
+                  input.value = "";
+                  if (!files.length) return;
                   const pid = imageUploadTargetIdRef.current ?? editingProductId;
                   const quick = imageQuickUploadRef.current;
                   imageQuickUploadRef.current = false;

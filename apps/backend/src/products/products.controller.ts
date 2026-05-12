@@ -11,6 +11,7 @@ import {
 } from "@nestjs/common";
 import {
   Allow,
+  IsArray,
   IsBoolean,
   IsInt,
   IsOptional,
@@ -115,6 +116,12 @@ class AddProductImageDto {
   @IsOptional()
   @IsString()
   alt?: string;
+}
+
+class ReorderProductImagesDto {
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
 }
 
 class CreateProductVariantDto {
@@ -368,6 +375,12 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   removeImage(@Param("id") productId: string, @Param("imageId") imageId: string) {
     return this.products.removeImage(productId, imageId);
+  }
+
+  @Patch(":id/images/reorder")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  reorderImages(@Param("id") productId: string, @Body() dto: ReorderProductImagesDto) {
+    return this.products.reorderProductImages(productId, dto.ids);
   }
 
   @Post(":id/variants")
