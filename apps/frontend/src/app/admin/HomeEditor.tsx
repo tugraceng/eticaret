@@ -57,7 +57,11 @@ const KIND_META: Record<
     desc: "Ana ürün alanı ve filtreler — tek blok yeterli; sırayı buraya göre ayarlayın.",
   },
   BANNERS: { label: "Afişler", emoji: "🖼️", desc: "Kart/grid kampanya afisleri." },
-  FEATURED_PRODUCTS: { label: "Öne çıkan ürünler", emoji: "📦", desc: "Seçtiğiniz ürünler veya otomatik." },
+  FEATURED_PRODUCTS: {
+    label: "Öne çıkan ürünler",
+    emoji: "📦",
+    desc: "Ürün seçmezseniz mağazada “öne çıkan” işaretli yayınlı ürünler listelenir; seçerseniz sıra editördeki gibidir.",
+  },
   FEATURED_CATEGORIES: {
     label: "Öne çıkan kategoriler",
     emoji: "🗂️",

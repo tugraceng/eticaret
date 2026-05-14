@@ -21,7 +21,7 @@ export function ProductDetailPrice({
 }) {
   const { effectivePriceCents, variants } = useProductVariantsOptional();
   const price = useMemo(
-    () => (variants.length > 0 ? effectivePriceCents(basePriceCents) : basePriceCents),
+    () => (variants.length > 0 ? effectivePriceCents() : basePriceCents),
     [variants.length, effectivePriceCents, basePriceCents],
   );
   const onSale = typeof compareAtCents === "number" && compareAtCents > price;

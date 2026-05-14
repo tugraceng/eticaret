@@ -76,13 +76,13 @@ class CreateOrderDto {
   @MaxLength(300)
   shippingLine2?: string;
 
-  @IsOptional()
   @IsString()
+  @IsNotEmpty({ message: "İlçe zorunlu" })
   @MaxLength(120)
-  shippingDistrict?: string;
+  shippingDistrict!: string;
 
   @IsString()
-  @IsNotEmpty({ message: "Şehir zorunlu" })
+  @IsNotEmpty({ message: "İl zorunlu" })
   @MaxLength(80)
   shippingCity!: string;
 

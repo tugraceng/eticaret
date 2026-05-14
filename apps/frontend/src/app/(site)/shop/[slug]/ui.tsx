@@ -33,7 +33,7 @@ export function AddToCart({
   const unitPrice =
     typeof basePriceCents === "number"
       ? variants.length > 0
-        ? effectivePriceCents(basePriceCents)
+        ? effectivePriceCents()
         : basePriceCents
       : undefined;
 
@@ -128,7 +128,7 @@ export function AddToCart({
           productId={productId}
           slug={slug ?? ""}
           title={name}
-          priceCents={basePriceCents ?? 0}
+          priceCents={variants.length > 0 ? effectivePriceCents() : basePriceCents ?? 0}
           imageUrl={imageUrl}
         />
       </div>

@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { AppCacheService } from "../common/cache/app-cache.service";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -135,10 +135,78 @@ export class CmsService {
     return s;
   }
 
-  async createService(data: { slug: string; title: string; summary?: string; description: string }) {
-    const created = await this.prisma.service.create({ data });
+  async createService(data: {
+    slug: string;
+    title: string;
+    summary?: string;
+    description: string;
+    iconUrl?: string | null;
+    sortOrder?: number;
+  }) {
+    const created = await this.prisma.service.create({
+      data: {
+        slug: data.slug,
+        title: data.title,
+        summary: data.summary ?? null,
+        description: data.description,
+        iconUrl: data.iconUrl?.trim() ? data.iconUrl.trim() : null,
+        sortOrder: typeof data.sortOrder === "number" ? data.sortOrder : 0,
+      },
+    });
     this.cache.delPrefix("cms:services:");
     return created;
+  }
+
+  async serviceByIdAdmin(id: string) {
+    const s = await this.prisma.service.findUnique({ where: { id } });
+    if (!s) throw new NotFoundException();
+    return s;
+  }
+
+  async updateService(
+    id: string,
+    data: {
+      slug?: string;
+      title?: string;
+      summary?: string | null;
+      description?: string;
+      iconUrl?: string | null;
+      sortOrder?: number;
+    },
+  ) {
+    const existing = await this.prisma.service.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException();
+
+    if (data.slug !== undefined && data.slug !== existing.slug) {
+      const clash = await this.prisma.service.findFirst({
+        where: { slug: data.slug, NOT: { id } },
+      });
+      if (clash) throw new ConflictException("Bu adres (slug) başka bir hizmette kullanılıyor.");
+    }
+
+    const updated = await this.prisma.service.update({
+      where: { id },
+      data: {
+        ...(data.slug !== undefined ? { slug: data.slug } : {}),
+        ...(data.title !== undefined ? { title: data.title } : {}),
+        ...(data.summary !== undefined ? { summary: data.summary } : {}),
+        ...(data.description !== undefined ? { description: data.description } : {}),
+        ...(data.iconUrl !== undefined
+          ? { iconUrl: data.iconUrl?.trim() ? data.iconUrl.trim() : null }
+          : {}),
+        ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
+      },
+    });
+    this.cache.delPrefix("cms:services:");
+    return updated;
+  }
+
+  async deleteService(id: string) {
+    const existing = await this.prisma.service.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException();
+    await this.prisma.service.delete({ where: { id } });
+    this.cache.delPrefix("cms:services:");
+    return { ok: true };
   }
 
   // Projects
@@ -162,18 +230,89 @@ export class CmsService {
     summary?: string;
     description: string;
     gallery?: unknown;
+    completedAt?: string | null;
   }) {
+    const completedAt =
+      data.completedAt === undefined
+        ? undefined
+        : data.completedAt === null || data.completedAt === ""
+          ? null
+          : new Date(data.completedAt);
+    if (completedAt !== undefined && completedAt !== null && Number.isNaN(completedAt.getTime())) {
+      throw new BadRequestException("Geçersiz tamamlanma tarihi.");
+    }
     const created = await this.prisma.project.create({
       data: {
         slug: data.slug,
         title: data.title,
-        summary: data.summary,
+        summary: data.summary ?? null,
         description: data.description,
         gallery: (data.gallery ?? []) as object,
+        ...(completedAt !== undefined ? { completedAt } : {}),
       },
     });
     this.cache.delPrefix("cms:projects:");
     return created;
+  }
+
+  async projectByIdAdmin(id: string) {
+    const p = await this.prisma.project.findUnique({ where: { id } });
+    if (!p) throw new NotFoundException();
+    return p;
+  }
+
+  async updateProject(
+    id: string,
+    data: {
+      slug?: string;
+      title?: string;
+      summary?: string | null;
+      description?: string;
+      gallery?: unknown;
+      completedAt?: string | null;
+    },
+  ) {
+    const existing = await this.prisma.project.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException();
+
+    if (data.slug !== undefined && data.slug !== existing.slug) {
+      const clash = await this.prisma.project.findFirst({
+        where: { slug: data.slug, NOT: { id } },
+      });
+      if (clash) throw new ConflictException("Bu adres (slug) başka bir projede kullanılıyor.");
+    }
+
+    let completedAt: Date | null | undefined;
+    if (data.completedAt !== undefined) {
+      if (data.completedAt === null || data.completedAt === "") completedAt = null;
+      else {
+        const d = new Date(data.completedAt);
+        if (Number.isNaN(d.getTime())) throw new BadRequestException("Geçersiz tamamlanma tarihi.");
+        completedAt = d;
+      }
+    }
+
+    const updated = await this.prisma.project.update({
+      where: { id },
+      data: {
+        ...(data.slug !== undefined ? { slug: data.slug } : {}),
+        ...(data.title !== undefined ? { title: data.title } : {}),
+        ...(data.summary !== undefined ? { summary: data.summary } : {}),
+        ...(data.description !== undefined ? { description: data.description } : {}),
+        ...(data.gallery !== undefined ? { gallery: data.gallery as object } : {}),
+        ...(completedAt !== undefined ? { completedAt } : {}),
+      },
+    });
+    this.cache.delPrefix("cms:projects:");
+    return updated;
+  }
+
+  async deleteProject(id: string) {
+    const existing = await this.prisma.project.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException();
+    await this.prisma.project.delete({ where: { id } });
+    this.cache.delPrefix("cms:projects:");
+    return { ok: true };
   }
 
   // Pages

@@ -95,10 +95,10 @@ class AddressDto {
   @MaxLength(300)
   line2?: string;
 
-  @IsOptional()
   @IsString()
+  @MinLength(1, { message: "İlçe zorunlu" })
   @MaxLength(120)
-  district?: string;
+  district!: string;
 
   @IsString()
   @MaxLength(80)

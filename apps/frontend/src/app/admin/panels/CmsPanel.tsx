@@ -4,7 +4,29 @@ import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 
 import { adminFetch, adminUploadFile } from "../api";
 import { formatAdminCaughtError } from "../admin-api-error";
 import { AdminCard, Field, Icon } from "../ui";
-import type { BlogPostRow } from "../types";
+import type { BlogPostRow, CmsProjectRow, CmsServiceRow } from "../types";
+
+const ABOUT_DEFAULT_PILLARS: Array<{ icon: string; title: string; body: string }> = [
+  {
+    icon: "🎯",
+    title: "Misyon",
+    body: "Müşterilerimize kaliteli ürünler sunmak ve üstün bir alışveriş deneyimi yaşatmak.",
+  },
+  {
+    icon: "🌱",
+    title: "Vizyon",
+    body: "Sektörümüzde öncü ve yenilikçi bir marka olarak müşteri memnuniyetini en üst seviyede tutmak.",
+  },
+  {
+    icon: "🤝",
+    title: "Değerler",
+    body: "Şeffaflık, güvenilirlik ve sürekli iyileşme. Her kararı müşteri değeri üzerinden alıyoruz.",
+  },
+];
+
+const ABOUT_DEFAULT_BIZ_TITLE = "Ekibimiz ve yaklaşımımız";
+const ABOUT_DEFAULT_BIZ_BODY =
+  "Deneyimli bir ekiple ürün, tasarım ve operasyonu bir arada düşünüyoruz. Şeffaf iletişim ve ölçülebilir teslimatlarla mağazanızın büyümesine odaklanıyoruz.";
 
 export function CmsPanel({
   token,
@@ -34,24 +56,40 @@ export function CmsPanel({
   setSvcTitle,
   setSvcSummary,
   setSvcDesc,
+  svcIconUrl,
+  svcSortOrder,
+  setSvcIconUrl,
+  setSvcSortOrder,
   createService,
+  editingServiceId,
+  cancelServiceEdit,
+  openServiceEditor,
+  deleteService,
+  cmsServices,
   projSlug,
   projTitle,
   projSummary,
   projDesc,
   projGallery,
+  projCompletedAt,
+  setProjCompletedAt,
   setProjSlug,
   setProjTitle,
   setProjSummary,
   setProjDesc,
   setProjGallery,
   createProject,
+  editingProjectId,
+  cancelProjectEdit,
+  openProjectEditor,
+  deleteProject,
+  cmsProjects,
   blogPosts,
 }: {
   token: string;
   busy: boolean;
-  cmsTab: "blog" | "services" | "projects" | "list" | "pages";
-  setCmsTab: Dispatch<SetStateAction<"blog" | "services" | "projects" | "list" | "pages">>;
+  cmsTab: "blog" | "about" | "services" | "projects" | "list" | "pages";
+  setCmsTab: Dispatch<SetStateAction<"blog" | "about" | "services" | "projects" | "list" | "pages">>;
   editingBlogId: string | null;
   blogSlug: string;
   blogTitle: string;
@@ -71,43 +109,62 @@ export function CmsPanel({
   svcTitle: string;
   svcSummary: string;
   svcDesc: string;
+  svcIconUrl: string;
+  svcSortOrder: string;
   setSvcSlug: Dispatch<SetStateAction<string>>;
   setSvcTitle: Dispatch<SetStateAction<string>>;
   setSvcSummary: Dispatch<SetStateAction<string>>;
   setSvcDesc: Dispatch<SetStateAction<string>>;
+  setSvcIconUrl: Dispatch<SetStateAction<string>>;
+  setSvcSortOrder: Dispatch<SetStateAction<string>>;
   createService: () => Promise<void>;
+  editingServiceId: string | null;
+  cancelServiceEdit: () => void;
+  openServiceEditor: (s: CmsServiceRow) => void;
+  deleteService: (id: string, title: string) => Promise<void>;
+  cmsServices: CmsServiceRow[];
   projSlug: string;
   projTitle: string;
   projSummary: string;
   projDesc: string;
   projGallery: string;
+  projCompletedAt: string;
+  setProjCompletedAt: Dispatch<SetStateAction<string>>;
   setProjSlug: Dispatch<SetStateAction<string>>;
   setProjTitle: Dispatch<SetStateAction<string>>;
   setProjSummary: Dispatch<SetStateAction<string>>;
   setProjDesc: Dispatch<SetStateAction<string>>;
   setProjGallery: Dispatch<SetStateAction<string>>;
   createProject: () => Promise<void>;
+  editingProjectId: string | null;
+  cancelProjectEdit: () => void;
+  openProjectEditor: (p: CmsProjectRow) => void;
+  deleteProject: (id: string, title: string) => Promise<void>;
+  cmsProjects: CmsProjectRow[];
   blogPosts: BlogPostRow[];
 }) {
   const projGalFileRef = useRef<HTMLInputElement>(null);
+  const svcIconFileRef = useRef<HTMLInputElement>(null);
 
-  type StaticPageKey = "about" | "services-index";
-  const [staticPageKey, setStaticPageKey] = useState<StaticPageKey>("about");
   const [pageBusy, setPageBusy] = useState(false);
   const [pageTitle, setPageTitle] = useState("");
   const [pagePublish, setPagePublish] = useState(true);
   const [aboutLead, setAboutLead] = useState("");
   const [aboutBody, setAboutBody] = useState("");
+  const [aboutBizTitle, setAboutBizTitle] = useState(ABOUT_DEFAULT_BIZ_TITLE);
+  const [aboutBizBody, setAboutBizBody] = useState(ABOUT_DEFAULT_BIZ_BODY);
+  const [pillars, setPillars] = useState(() => ABOUT_DEFAULT_PILLARS.map((p) => ({ ...p })));
   const [svcEyebrow, setSvcEyebrow] = useState("");
   const [svcIntro, setSvcIntro] = useState("");
 
   useEffect(() => {
-    if (cmsTab !== "pages" || !token) return;
+    if (!token) return;
+    if (cmsTab !== "about" && cmsTab !== "pages") return;
+    const slug = cmsTab === "about" ? "about" : "services-index";
     let cancelled = false;
     setPageBusy(true);
     void (async () => {
       try {
-        const slug = staticPageKey;
         const raw = (await adminFetch(`/cms/admin/pages/${slug}`, token)) as {
           title?: string;
           isPublished?: boolean;
@@ -123,6 +180,27 @@ export function CmsPanel({
         if (slug === "about") {
           setAboutLead(typeof cr.lead === "string" ? cr.lead : "");
           setAboutBody(typeof cr.body === "string" ? cr.body : "");
+          const biz =
+            cr.bizKimiz && typeof cr.bizKimiz === "object" && !Array.isArray(cr.bizKimiz)
+              ? (cr.bizKimiz as Record<string, unknown>)
+              : {};
+          setAboutBizTitle(typeof biz.title === "string" ? biz.title : ABOUT_DEFAULT_BIZ_TITLE);
+          setAboutBizBody(typeof biz.body === "string" ? biz.body : ABOUT_DEFAULT_BIZ_BODY);
+          const arr = Array.isArray(cr.pillars) ? cr.pillars : [];
+          setPillars(
+            ABOUT_DEFAULT_PILLARS.map((def, i) => {
+              const rawP = arr[i];
+              const o =
+                rawP && typeof rawP === "object" && !Array.isArray(rawP)
+                  ? (rawP as Record<string, unknown>)
+                  : {};
+              return {
+                icon: typeof o.icon === "string" ? o.icon : def.icon,
+                title: typeof o.title === "string" ? o.title : def.title,
+                body: typeof o.body === "string" ? o.body : def.body,
+              };
+            }),
+          );
         } else {
           setSvcEyebrow(typeof cr.eyebrow === "string" ? cr.eyebrow : "");
           setSvcIntro(typeof cr.intro === "string" ? cr.intro : "");
@@ -139,15 +217,26 @@ export function CmsPanel({
     return () => {
       cancelled = true;
     };
-  }, [cmsTab, staticPageKey, token]);
+  }, [cmsTab, token]);
 
-  const saveStaticPage = async () => {
+  const saveStaticPage = async (slug: "about" | "services-index") => {
     setPageBusy(true);
     try {
-      const slug = staticPageKey;
       const content =
         slug === "about"
-          ? { lead: aboutLead.trim(), body: aboutBody.trim() }
+          ? {
+              lead: aboutLead.trim(),
+              body: aboutBody.trim(),
+              bizKimiz: {
+                title: aboutBizTitle.trim(),
+                body: aboutBizBody.trim(),
+              },
+              pillars: pillars.map((p) => ({
+                icon: p.icon.trim(),
+                title: p.title.trim(),
+                body: p.body.trim(),
+              })),
+            }
           : { eyebrow: svcEyebrow.trim(), intro: svcIntro.trim() };
       await adminFetch(`/cms/pages/${slug}`, token, {
         method: "PUT",
@@ -187,13 +276,14 @@ export function CmsPanel({
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <p className="text-sm font-semibold text-slate-900">Ne eklemek istiyorsunuz?</p>
         <p className="mt-1 text-xs text-slate-500">
-          Önce türü seçin; aşağıda yalnızca o form görünür. Sabit sayfalar: Hakkımızda ve hizmetler vitrin metni.
+          Önce türü seçin; aşağıda yalnızca o form görünür. Hakkımızda ve hizmetler vitrin metni ayrı sekmelerdedir.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {tabBtn("blog", "Blog yazısı")}
+          {tabBtn("about", "Hakkımızda")}
           {tabBtn("services", "Hizmet sayfası")}
           {tabBtn("projects", "Proje / portföy")}
-          {tabBtn("pages", "Sabit sayfalar")}
+          {tabBtn("pages", "Hizmetler vitrin metni")}
           {tabBtn("list", "Kayıtlı blog yazıları")}
         </div>
       </div>
@@ -260,109 +350,361 @@ export function CmsPanel({
       ) : null}
 
       {cmsTab === "services" ? (
-        <AdminCard title="Yeni hizmet sayfası" description="Sitedeki /hizmetler bölümünde listelenir; slug kısa ve benzersiz olsun.">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Slug">
-              <input className="input-soft" value={svcSlug} onChange={(e) => setSvcSlug(e.target.value)} />
+        <>
+          <AdminCard
+            title={editingServiceId ? "Hizmeti düzenle" : "Yeni hizmet"}
+            description="Tüm hizmetler sitede tek sayfada alt alta listelenir. Kapak için görsel URL’si veya dosya yükleyin; sıra küçük sayı önce gelir."
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Slug">
+                <input className="input-soft" value={svcSlug} onChange={(e) => setSvcSlug(e.target.value)} />
+              </Field>
+              <Field label="Başlık">
+                <input className="input-soft" value={svcTitle} onChange={(e) => setSvcTitle(e.target.value)} />
+              </Field>
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <Field label="Sıra" hint="Listede önce göstermek için düşük sayı (örn. 0, 10, 20).">
+                <input
+                  className="input-soft"
+                  type="number"
+                  value={svcSortOrder}
+                  onChange={(e) => setSvcSortOrder(e.target.value)}
+                />
+              </Field>
+              <Field label="Kapak / ikon URL" hint="İsteğe bağlı; vitrinde geniş görsel olarak kullanılır.">
+                <input className="input-soft" value={svcIconUrl} onChange={(e) => setSvcIconUrl(e.target.value)} />
+              </Field>
+            </div>
+            <div className="mt-2">
+              <input
+                ref={svcIconFileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,.ico,image/x-icon,image/vnd.microsoft.icon"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!f) return;
+                  void (async () => {
+                    try {
+                      const { url } = await adminUploadFile(token, f);
+                      setSvcIconUrl(url);
+                    } catch (err) {
+                      const msg = formatAdminCaughtError(err, "Yükleme başarısız");
+                      if (msg) window.alert(msg);
+                    }
+                  })();
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => svcIconFileRef.current?.click()}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                Kapak görseli yükle
+              </button>
+            </div>
+            <Field label="Özet" className="mt-3">
+              <input className="input-soft" value={svcSummary} onChange={(e) => setSvcSummary(e.target.value)} />
             </Field>
-            <Field label="Başlık">
-              <input className="input-soft" value={svcTitle} onChange={(e) => setSvcTitle(e.target.value)} />
+            <Field label="Açıklama" className="mt-3">
+              <textarea
+                className="input-soft resize-y"
+                rows={5}
+                value={svcDesc}
+                onChange={(e) => setSvcDesc(e.target.value)}
+              />
             </Field>
-          </div>
-          <Field label="Özet" className="mt-3">
-            <input className="input-soft" value={svcSummary} onChange={(e) => setSvcSummary(e.target.value)} />
-          </Field>
-          <Field label="Açıklama" className="mt-3">
-            <textarea
-              className="input-soft resize-y"
-              rows={5}
-              value={svcDesc}
-              onChange={(e) => setSvcDesc(e.target.value)}
-            />
-          </Field>
-          <div className="mt-4">
-            <button
-              type="button"
-              disabled={busy || !svcSlug.trim() || !svcTitle.trim() || !svcDesc.trim()}
-              onClick={() => void createService()}
-              className="btn-primary disabled:opacity-50"
-            >
-              <Icon.Plus /> Hizmeti oluştur
-            </button>
-          </div>
-        </AdminCard>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={busy || !svcSlug.trim() || !svcTitle.trim() || !svcDesc.trim()}
+                onClick={() => void createService()}
+                className="btn-primary disabled:opacity-50"
+              >
+                <Icon.Check /> {editingServiceId ? "Değişiklikleri kaydet" : "Hizmeti oluştur"}
+              </button>
+              {editingServiceId ? (
+                <button type="button" disabled={busy} onClick={cancelServiceEdit} className="btn-ghost disabled:opacity-50">
+                  İptal — yeni hizmet
+                </button>
+              ) : null}
+            </div>
+          </AdminCard>
+          <AdminCard
+            title="Kayıtlı hizmetler"
+            description={`${cmsServices.length} kayıt — düzenlemek veya silmek için satırı kullanın.`}
+          >
+            {cmsServices.length === 0 ? (
+              <p className="py-4 text-sm text-slate-500">Henüz hizmet yok.</p>
+            ) : (
+              <ul className="divide-y divide-slate-100 text-sm">
+                {cmsServices.map((s) => (
+                  <li
+                    key={s.id}
+                    className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="font-semibold text-slate-900">{s.title}</span>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-xs text-slate-500">{s.slug}</span>
+                        <span className="text-xs text-slate-400">sıra: {s.sortOrder}</span>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => openServiceEditor(s)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        <Icon.Pencil className="h-3.5 w-3.5" /> Düzenle
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void deleteService(s.id, s.title)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                      >
+                        <Icon.Trash className="h-3.5 w-3.5" /> Sil
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </AdminCard>
+        </>
       ) : null}
 
       {cmsTab === "projects" ? (
+        <>
+          <AdminCard
+            title={editingProjectId ? "Projeyi düzenle" : "Yeni proje"}
+            description="Projeler sitede tek sayfada alt alta, görsellerle gösterilir. Galeri için satır başına bir URL veya dosya yükleyin."
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Slug">
+                <input className="input-soft" value={projSlug} onChange={(e) => setProjSlug(e.target.value)} />
+              </Field>
+              <Field label="Başlık">
+                <input className="input-soft" value={projTitle} onChange={(e) => setProjTitle(e.target.value)} />
+              </Field>
+            </div>
+            <Field label="Tamamlanma tarihi" className="mt-3" hint="İsteğe bağlı; sitede ay/yıl olarak gösterilir.">
+              <input
+                className="input-soft"
+                type="date"
+                value={projCompletedAt}
+                onChange={(e) => setProjCompletedAt(e.target.value)}
+              />
+            </Field>
+            <Field label="Özet" className="mt-3">
+              <input className="input-soft" value={projSummary} onChange={(e) => setProjSummary(e.target.value)} />
+            </Field>
+            <Field label="Açıklama" className="mt-3">
+              <textarea
+                className="input-soft resize-y"
+                rows={5}
+                value={projDesc}
+                onChange={(e) => setProjDesc(e.target.value)}
+              />
+            </Field>
+            <Field label="Galeri URL'leri" className="mt-3">
+              <textarea
+                className="input-soft resize-y font-mono text-xs"
+                rows={3}
+                value={projGallery}
+                onChange={(e) => setProjGallery(e.target.value)}
+                placeholder="Her satıra bir görsel adresi (yüklenen dosyalar otomatik eklenir)"
+              />
+            </Field>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                ref={projGalFileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,.ico,image/x-icon,image/vnd.microsoft.icon"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!f) return;
+                  void (async () => {
+                    try {
+                      const { url } = await adminUploadFile(token, f);
+                      setProjGallery((g) => (g.trim() ? `${g.trim()}\n` : "") + url);
+                    } catch (err) {
+                      const msg = formatAdminCaughtError(err, "Yükleme başarısız");
+                      if (msg) window.alert(msg);
+                    }
+                  })();
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => projGalFileRef.current?.click()}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                Görsel yükle (listeye ekle)
+              </button>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={busy || !projSlug.trim() || !projTitle.trim() || !projDesc.trim()}
+                onClick={() => void createProject()}
+                className="btn-primary disabled:opacity-50"
+              >
+                <Icon.Check /> {editingProjectId ? "Değişiklikleri kaydet" : "Projeyi oluştur"}
+              </button>
+              {editingProjectId ? (
+                <button type="button" disabled={busy} onClick={cancelProjectEdit} className="btn-ghost disabled:opacity-50">
+                  İptal — yeni proje
+                </button>
+              ) : null}
+            </div>
+          </AdminCard>
+          <AdminCard
+            title="Kayıtlı projeler"
+            description={`${cmsProjects.length} kayıt — düzenlemek veya silmek için satırı kullanın.`}
+          >
+            {cmsProjects.length === 0 ? (
+              <p className="py-4 text-sm text-slate-500">Henüz proje yok.</p>
+            ) : (
+              <ul className="divide-y divide-slate-100 text-sm">
+                {cmsProjects.map((p) => (
+                  <li
+                    key={p.id}
+                    className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="font-semibold text-slate-900">{p.title}</span>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-xs text-slate-500">{p.slug}</span>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => openProjectEditor(p)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        <Icon.Pencil className="h-3.5 w-3.5" /> Düzenle
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void deleteProject(p.id, p.title)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                      >
+                        <Icon.Trash className="h-3.5 w-3.5" /> Sil
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </AdminCard>
+        </>
+      ) : null}
+
+      {cmsTab === "about" ? (
         <AdminCard
-          title="Yeni proje"
-          description="Galeri için görsel adreslerini satır satır yazın veya dosya yükleyerek URL ekleyin."
+          title="Hakkımızda"
+          description="/hakkımızda sayfası: giriş, “Biz kimiz” kutusu, üç kart ve detay metni. Yayında değilse ziyaretçiler varsayılan metinleri görür."
         >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Slug">
-              <input className="input-soft" value={projSlug} onChange={(e) => setProjSlug(e.target.value)} />
-            </Field>
-            <Field label="Başlık">
-              <input className="input-soft" value={projTitle} onChange={(e) => setProjTitle(e.target.value)} />
-            </Field>
-          </div>
-          <Field label="Özet" className="mt-3">
-            <input className="input-soft" value={projSummary} onChange={(e) => setProjSummary(e.target.value)} />
+          <Field label="Sayfa başlığı">
+            <input className="input-soft" value={pageTitle} onChange={(e) => setPageTitle(e.target.value)} />
           </Field>
-          <Field label="Açıklama" className="mt-3">
+          <label className="mt-3 inline-flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={pagePublish}
+              onChange={(e) => setPagePublish(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300"
+            />
+            Yayında
+          </label>
+          <Field label="Giriş paragrafı" className="mt-3" hint="Ana başlığın altındaki metin.">
             <textarea
               className="input-soft resize-y"
-              rows={5}
-              value={projDesc}
-              onChange={(e) => setProjDesc(e.target.value)}
+              rows={4}
+              value={aboutLead}
+              onChange={(e) => setAboutLead(e.target.value)}
             />
           </Field>
-          <Field label="Galeri URL'leri" className="mt-3">
+          <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-slate-500">Biz kimiz bölümü</p>
+          <Field label="Alt başlık" className="mt-2" hint="Kutudaki büyük başlık.">
+            <input className="input-soft" value={aboutBizTitle} onChange={(e) => setAboutBizTitle(e.target.value)} />
+          </Field>
+          <Field label="Paragraf" className="mt-3">
             <textarea
-              className="input-soft resize-y font-mono text-xs"
-              rows={3}
-              value={projGallery}
-              onChange={(e) => setProjGallery(e.target.value)}
-              placeholder="Her satıra bir görsel adresi (yüklenen dosyalar otomatik eklenir)"
+              className="input-soft resize-y"
+              rows={4}
+              value={aboutBizBody}
+              onChange={(e) => setAboutBizBody(e.target.value)}
             />
           </Field>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <input
-              ref={projGalFileRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,.ico,image/x-icon,image/vnd.microsoft.icon"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                e.target.value = "";
-                if (!f) return;
-                void (async () => {
-                  try {
-                    const { url } = await adminUploadFile(token, f);
-                    setProjGallery((g) => (g.trim() ? `${g.trim()}\n` : "") + url);
-                  } catch (err) {
-                    const msg = formatAdminCaughtError(err, "Yükleme başarısız");
-                    if (msg) window.alert(msg);
-                  }
-                })();
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => projGalFileRef.current?.click()}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              Görsel yükle (listeye ekle)
-            </button>
+          <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-slate-500">Üç kart (Misyon / Vizyon / Değerler)</p>
+          <div className="mt-3 space-y-5">
+            {pillars.map((p, idx) => (
+              <div key={idx} className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                <p className="text-xs font-semibold text-slate-700">Kart {idx + 1}</p>
+                <Field label="İkon (emoji veya kısa metin)" className="mt-2">
+                  <input
+                    className="input-soft"
+                    value={p.icon}
+                    onChange={(e) =>
+                      setPillars((prev) =>
+                        prev.map((row, i) => (i === idx ? { ...row, icon: e.target.value } : row)),
+                      )
+                    }
+                  />
+                </Field>
+                <Field label="Başlık" className="mt-2">
+                  <input
+                    className="input-soft"
+                    value={p.title}
+                    onChange={(e) =>
+                      setPillars((prev) =>
+                        prev.map((row, i) => (i === idx ? { ...row, title: e.target.value } : row)),
+                      )
+                    }
+                  />
+                </Field>
+                <Field label="Metin" className="mt-2">
+                  <textarea
+                    className="input-soft resize-y"
+                    rows={3}
+                    value={p.body}
+                    onChange={(e) =>
+                      setPillars((prev) =>
+                        prev.map((row, i) => (i === idx ? { ...row, body: e.target.value } : row)),
+                      )
+                    }
+                  />
+                </Field>
+              </div>
+            ))}
           </div>
+          <Field label="Detay metni" className="mt-4" hint="Boş bırakırsanız altta iletişim kartı gösterilir.">
+            <textarea
+              className="input-soft resize-y"
+              rows={6}
+              value={aboutBody}
+              onChange={(e) => setAboutBody(e.target.value)}
+            />
+          </Field>
           <div className="mt-4">
             <button
               type="button"
-              disabled={busy || !projSlug.trim() || !projTitle.trim() || !projDesc.trim()}
-              onClick={() => void createProject()}
+              disabled={busy || pageBusy || !pageTitle.trim()}
+              onClick={() => void saveStaticPage("about")}
               className="btn-primary disabled:opacity-50"
             >
-              <Icon.Plus /> Projeyi oluştur
+              <Icon.Check /> Kaydet
             </button>
           </div>
         </AdminCard>
@@ -370,33 +712,9 @@ export function CmsPanel({
 
       {cmsTab === "pages" ? (
         <AdminCard
-          title="Sabit sayfalar"
-          description="Hakkımızda ve /hizmetler liste sayfasının üst metni buradan yönetilir. Yayında değilse ziyaretçiler varsayılan metni görür."
+          title="Hizmetler vitrin metni"
+          description="/hizmetler liste sayfasının üst metni. Yayında değilse ziyaretçiler varsayılan metni görür."
         >
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setStaticPageKey("about")}
-              className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-                staticPageKey === "about"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-              }`}
-            >
-              Hakkımızda
-            </button>
-            <button
-              type="button"
-              onClick={() => setStaticPageKey("services-index")}
-              className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-                staticPageKey === "services-index"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-              }`}
-            >
-              Hizmetler / 3D vitrin
-            </button>
-          </div>
           <Field label="Sayfa başlığı" className="mt-4">
             <input className="input-soft" value={pageTitle} onChange={(e) => setPageTitle(e.target.value)} />
           </Field>
@@ -409,45 +727,22 @@ export function CmsPanel({
             />
             Yayında
           </label>
-          {staticPageKey === "about" ? (
-            <>
-              <Field label="Giriş paragrafı" className="mt-3" hint="Ana başlığın altındaki metin.">
-                <textarea
-                  className="input-soft resize-y"
-                  rows={4}
-                  value={aboutLead}
-                  onChange={(e) => setAboutLead(e.target.value)}
-                />
-              </Field>
-              <Field label="Detay metni" className="mt-3" hint="Boş bırakırsanız altta iletişim kartı gösterilir.">
-                <textarea
-                  className="input-soft resize-y"
-                  rows={6}
-                  value={aboutBody}
-                  onChange={(e) => setAboutBody(e.target.value)}
-                />
-              </Field>
-            </>
-          ) : (
-            <>
-              <Field label="Üst etiket" className="mt-3" hint="Örn. Ne sunuyoruz">
-                <input className="input-soft" value={svcEyebrow} onChange={(e) => setSvcEyebrow(e.target.value)} />
-              </Field>
-              <Field label="Giriş paragrafı" className="mt-3" hint="Başlığın altındaki kısa açıklama.">
-                <textarea
-                  className="input-soft resize-y"
-                  rows={4}
-                  value={svcIntro}
-                  onChange={(e) => setSvcIntro(e.target.value)}
-                />
-              </Field>
-            </>
-          )}
+          <Field label="Üst etiket" className="mt-3" hint="Örn. Ne sunuyoruz">
+            <input className="input-soft" value={svcEyebrow} onChange={(e) => setSvcEyebrow(e.target.value)} />
+          </Field>
+          <Field label="Giriş paragrafı" className="mt-3" hint="Başlığın altındaki kısa açıklama.">
+            <textarea
+              className="input-soft resize-y"
+              rows={4}
+              value={svcIntro}
+              onChange={(e) => setSvcIntro(e.target.value)}
+            />
+          </Field>
           <div className="mt-4">
             <button
               type="button"
               disabled={busy || pageBusy || !pageTitle.trim()}
-              onClick={() => void saveStaticPage()}
+              onClick={() => void saveStaticPage("services-index")}
               className="btn-primary disabled:opacity-50"
             >
               <Icon.Check /> Kaydet

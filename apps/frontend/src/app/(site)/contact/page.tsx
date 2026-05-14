@@ -4,6 +4,8 @@ export const metadata = { title: "İletişim" };
 
 export default async function ContactPage() {
   const settings = await getSiteSettings();
+  const contactHref = settings.contactNavHref?.trim() || "/contact";
+  const contactLabel = settings.contactNavLabel?.trim() || "Bize ulaşın";
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
@@ -15,85 +17,33 @@ export default async function ContactPage() {
           İletişim
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600">
-          Soru, teklif veya işbirliği talebi için aşağıdaki formu kullanabilir ya da bize doğrudan
-          ulaşabilirsiniz.
+          Soru, teklif veya işbirliği talebi için aşağıdaki formu kullanabilirsiniz. E-posta, telefon, adres ve
+          sosyal medya bağlantıları sayfanın altındaki footer bölümünde yer alır.
         </p>
       </div>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1.2fr]">
         <div className="space-y-4">
-          {settings.contactEmail && (
+          <div className="card-soft space-y-4 p-6">
+            <p className="text-sm leading-relaxed text-slate-600">
+              Güncel iletişim bilgileri ve sosyal hesaplar vitrinin altındaki footer’da, logo ve marka alanının
+              yanında toplanmıştır.
+            </p>
             <a
-              href={`mailto:${settings.contactEmail}`}
-              className="card-soft group flex items-start gap-4 p-5"
+              href="#footer-brand"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-sky-700 underline-offset-4 hover:underline"
             >
-              <span
-                className="grid h-11 w-11 place-items-center rounded-2xl text-white"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))",
-                }}
-                aria-hidden
-              >
-                ✉
-              </span>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                  E-posta
-                </p>
-                <p className="mt-1 font-semibold text-slate-900 group-hover:text-sky-800">
-                  {settings.contactEmail}
-                </p>
-              </div>
+              Footer’daki iletişim ve sosyal bağlantılara git
+              <span aria-hidden>↓</span>
             </a>
-          )}
-          {settings.contactPhone && (
-            <a
-              href={`tel:${settings.contactPhone}`}
-              className="card-soft group flex items-start gap-4 p-5"
-            >
-              <span
-                className="grid h-11 w-11 place-items-center rounded-2xl text-white"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))",
-                }}
-                aria-hidden
-              >
-                ☎
-              </span>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                  Telefon
-                </p>
-                <p className="mt-1 font-semibold text-slate-900 group-hover:text-sky-800">
-                  {settings.contactPhone}
-                </p>
-              </div>
-            </a>
-          )}
-          {settings.address && (
-            <div className="card-soft flex items-start gap-4 p-5">
-              <span
-                className="grid h-11 w-11 place-items-center rounded-2xl text-white"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))",
-                }}
-                aria-hidden
-              >
-                📍
-              </span>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                  Adres
-                </p>
-                <p className="mt-1 whitespace-pre-wrap font-medium text-slate-800">
-                  {settings.address}
-                </p>
-              </div>
-            </div>
-          )}
+            <p className="text-xs text-slate-500">
+              Ayrıca menüden{" "}
+              <a href={contactHref} className="font-medium text-slate-800 hover:underline">
+                {contactLabel}
+              </a>{" "}
+              sayfasına gidebilirsiniz.
+            </p>
+          </div>
         </div>
 
         <form className="card-soft space-y-4 p-6">

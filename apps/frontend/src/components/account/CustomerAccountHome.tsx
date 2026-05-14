@@ -13,6 +13,8 @@ import {
 import { AccountDashboardSidebar } from "@/components/account/AccountDashboardSidebar";
 import { CustomerReturns } from "@/components/account/CustomerReturns";
 import { ConfirmDialog } from "@/components/site/ConfirmDialog";
+import { ProvinceDistrictSelect } from "@/components/forms/ProvinceDistrictSelect";
+import { isTrProvinceDistrictValid } from "@/lib/tr-province-district";
 import { showSiteToast } from "@/lib/site-toast";
 import { isAccountTabId, type AccountTabId } from "@/components/account/account-tab-ids";
 
@@ -659,14 +661,34 @@ function AddressesTab({
     setBusy(true);
     setErr(null);
     try {
+      if (!form.line1.trim()) {
+        setErr("Adres satırı zorunlu.");
+        setBusy(false);
+        return;
+      }
+      if (!form.city.trim()) {
+        setErr("İl seçmelisiniz.");
+        setBusy(false);
+        return;
+      }
+      if (!form.district.trim()) {
+        setErr("İlçe seçmelisiniz.");
+        setBusy(false);
+        return;
+      }
+      if (!isTrProvinceDistrictValid(form.city.trim(), form.district.trim())) {
+        setErr("Geçerli il ve ilçe seçin.");
+        setBusy(false);
+        return;
+      }
       const body = {
         label: form.label || undefined,
         contactName: form.contactName || undefined,
         phone: form.phone || undefined,
-        line1: form.line1,
+        line1: form.line1.trim(),
         line2: form.line2 || undefined,
-        district: form.district || undefined,
-        city: form.city,
+        district: form.district.trim(),
+        city: form.city.trim(),
         postalCode: form.postalCode || undefined,
         isDefault: form.isDefault,
       };
@@ -838,8 +860,14 @@ function AddressesTab({
                   onChange={(v) => setForm({ ...form, line2: v })}
                 />
               </div>
-              <LabelInput label="İlçe" value={form.district} onChange={(v) => setForm({ ...form, district: v })} />
-              <LabelInput label="Şehir" value={form.city} onChange={(v) => setForm({ ...form, city: v })} required />
+              <div className="sm:col-span-2">
+                <ProvinceDistrictSelect
+                  province={form.city}
+                  district={form.district}
+                  onProvinceChange={(v) => setForm((f) => ({ ...f, city: v, district: "" }))}
+                  onDistrictChange={(v) => setForm((f) => ({ ...f, district: v }))}
+                />
+              </div>
             </div>
             <label className="mt-4 inline-flex items-center gap-2 text-sm text-slate-700">
               <input

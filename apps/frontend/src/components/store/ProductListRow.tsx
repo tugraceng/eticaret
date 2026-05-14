@@ -6,6 +6,7 @@ import { memo } from "react";
 import { useCartStore } from "@/stores/cart-store";
 import type { ProductCardData } from "@/components/site/ProductCard";
 import { Button } from "@/components/ui/atoms";
+import { apiAssetUrl } from "@/lib/api";
 
 type Props = { product: ProductCardData };
 
@@ -16,7 +17,7 @@ function priceFmt(cents: number) {
 export const ProductListRow = memo(function ProductListRow({ product }: Props) {
   const addLine = useCartStore((s) => s.addLine);
   const openMini = useCartStore((s) => s.openMiniCart);
-  const cover = product.images?.[0]?.url;
+  const cover = apiAssetUrl(product.images?.[0]?.url) ?? undefined;
   const alt = product.images?.[0]?.alt ?? product.name;
 
   return (

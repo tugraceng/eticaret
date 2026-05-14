@@ -1,7 +1,17 @@
 import Link from "next/link";
-import { apiJsonSafe } from "@/lib/api";
+import { Suspense } from "react";
+import { apiAssetUrl, apiJsonSafe } from "@/lib/api";
+import { CmsAnchorScroll } from "@/components/site/CmsAnchorScroll";
 
-type Service = { id: string; slug: string; title: string; summary: string | null; iconUrl?: string | null };
+type Service = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  description: string;
+  iconUrl?: string | null;
+  sortOrder?: number;
+};
 
 type CmsPage = { title: string; content: unknown };
 
@@ -19,64 +29,78 @@ export default async function ServicesPage() {
     apiJsonSafe<Service[]>("/cms/services"),
     apiJsonSafe<CmsPage>("/cms/pages/services-index"),
   ]);
-  const services = listRaw ?? [];
+  const services = (listRaw ?? []).slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   const c = contentRecord(landing?.content);
   const eyebrow =
     typeof c?.eyebrow === "string" && c.eyebrow.trim() ? c.eyebrow.trim() : "Ne sunuyoruz";
   const intro =
     typeof c?.intro === "string" && c.intro.trim()
       ? c.intro.trim()
-      : "Her hizmet ayrı detay sayfasına yönlenir. İhtiyacınıza göre özel paket hazırlayabiliriz.";
+      : "Aşağıda tüm hizmetlerimizi görsellerle birlikte tek sayfada bulabilirsiniz. Özel paket ve teklif için iletişime geçin.";
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <div className="fade-up">
+    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+      <Suspense fallback={null}>
+        <CmsAnchorScroll />
+      </Suspense>
+
+      <header className="fade-up">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{eyebrow}</p>
         <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
           {landing?.title?.trim() || "Hizmetler"}
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">{intro}</p>
-      </div>
-      <ul className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      </header>
+
+      <div className="mt-14 space-y-20 sm:space-y-24">
         {services.length === 0 && (
-          <li className="col-span-full rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-sm text-slate-500 backdrop-blur">
-            Henüz hizmet yok — yönetim panelinden CMS → Hizmet sayfası ile ekleyin.
-          </li>
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-sm text-slate-500 backdrop-blur">
+            Henüz hizmet yok — yönetim panelinden CMS → Hizmet ile ekleyin.
+          </div>
         )}
-        {services.map((s, i) => (
-          <li key={s.id} className="fade-up" style={{ animationDelay: `${i * 60}ms` }}>
-            <Link href={`/services/${s.slug}`} className="card-soft group flex h-full flex-col p-6">
-              <span
-                className="grid h-11 w-11 place-items-center rounded-2xl text-white shadow-inner"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))",
-                }}
-                aria-hidden
-              >
-                {s.iconUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={s.iconUrl} alt="" className="h-5 w-5" />
-                ) : (
-                  s.title.slice(0, 1).toUpperCase()
-                )}
-              </span>
-              <p className="mt-4 text-lg font-semibold text-slate-900 group-hover:text-sky-800">
-                {s.title}
-              </p>
-              {s.summary && (
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{s.summary}</p>
+        {services.map((s, i) => {
+          const cover = apiAssetUrl(s.iconUrl ?? undefined);
+          return (
+            <section
+              key={s.id}
+              id={s.slug}
+              className="fade-up scroll-mt-28 border-b border-slate-200/80 pb-20 last:border-0 last:pb-0 sm:scroll-mt-32"
+              style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}
+            >
+              {cover ? (
+                <div className="relative aspect-[2/1] max-h-[min(52vw,380px)] w-full overflow-hidden rounded-3xl bg-slate-100 shadow-sm ring-1 ring-slate-200/60 sm:aspect-[21/9]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={cover} alt="" className="h-full w-full object-cover" loading={i === 0 ? "eager" : "lazy"} />
+                </div>
+              ) : (
+                <div
+                  className="flex aspect-[2/1] max-h-[min(40vw,280px)] w-full items-center justify-center rounded-3xl text-4xl font-semibold text-white shadow-inner sm:aspect-[21/9]"
+                  style={{
+                    backgroundImage: "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))",
+                  }}
+                  aria-hidden
+                >
+                  {s.title.slice(0, 1).toUpperCase()}
+                </div>
               )}
-              <p className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-sky-800">
-                Detay
-                <span className="transition-transform duration-300 group-hover:translate-x-1.5" aria-hidden>
-                  →
-                </span>
-              </p>
-            </Link>
-          </li>
-        ))}
-      </ul>
+              <h2 className="mt-8 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{s.title}</h2>
+              {s.summary ? (
+                <p className="mt-3 text-lg leading-relaxed text-slate-600">{s.summary}</p>
+              ) : null}
+              <article className="mt-8 whitespace-pre-wrap text-base leading-[1.75] text-slate-700">{s.description}</article>
+            </section>
+          );
+        })}
+      </div>
+
+      <div className="mt-16 flex flex-wrap gap-3 border-t border-slate-200/80 pt-10">
+        <Link href="/contact" className="btn-primary">
+          Teklif al <span aria-hidden>→</span>
+        </Link>
+        <Link href="/" className="btn-ghost">
+          Ana sayfa
+        </Link>
+      </div>
     </div>
   );
 }

@@ -34,6 +34,8 @@ import type {
   AnalyticsRow,
   BlogPostRow,
   CategoryRow,
+  CmsProjectRow,
+  CmsServiceRow,
   NotificationRow,
   OrderRow,
   ProductRow,
@@ -71,6 +73,8 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   const [orderStatusPick, setOrderStatusPick] = useState<Record<string, string>>({});
   const [analytics, setAnalytics] = useState<AnalyticsRow[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPostRow[]>([]);
+  const [cmsServices, setCmsServices] = useState<CmsServiceRow[]>([]);
+  const [cmsProjects, setCmsProjects] = useState<CmsProjectRow[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [counters, setCounters] = useState<{
@@ -110,18 +114,23 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   const [blogBody, setBlogBody] = useState("");
   const [blogPublish, setBlogPublish] = useState(true);
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
-  const [cmsTab, setCmsTab] = useState<"blog" | "services" | "projects" | "list" | "pages">("blog");
+  const [cmsTab, setCmsTab] = useState<"blog" | "about" | "services" | "projects" | "list" | "pages">("blog");
 
   const [svcSlug, setSvcSlug] = useState("");
   const [svcTitle, setSvcTitle] = useState("");
   const [svcSummary, setSvcSummary] = useState("");
   const [svcDesc, setSvcDesc] = useState("");
+  const [svcIconUrl, setSvcIconUrl] = useState("");
+  const [svcSortOrder, setSvcSortOrder] = useState("0");
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
 
   const [projSlug, setProjSlug] = useState("");
   const [projTitle, setProjTitle] = useState("");
   const [projSummary, setProjSummary] = useState("");
   const [projDesc, setProjDesc] = useState("");
   const [projGallery, setProjGallery] = useState("");
+  const [projCompletedAt, setProjCompletedAt] = useState("");
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
 
   const [expandOrderId, setExpandOrderId] = useState<string | null>(null);
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null);
@@ -310,8 +319,14 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     if (!token) return;
     setBusy(true);
     try {
-      const list = (await adminFetch("/cms/blog/admin", token)) as BlogPostRow[];
-      setBlogPosts(Array.isArray(list) ? list : []);
+      const [posts, svcs, projs] = await Promise.all([
+        adminFetch("/cms/blog/admin", token) as Promise<BlogPostRow[]>,
+        adminFetch("/cms/services", token) as Promise<CmsServiceRow[]>,
+        adminFetch("/cms/projects", token) as Promise<CmsProjectRow[]>,
+      ]);
+      setBlogPosts(Array.isArray(posts) ? posts : []);
+      setCmsServices(Array.isArray(svcs) ? svcs : []);
+      setCmsProjects(Array.isArray(projs) ? projs : []);
     } catch (e) {
       if (!(e instanceof AdminSessionTerminated)) {
         setError(e instanceof Error ? e.message : String(e));
@@ -702,24 +717,77 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     [token, editingBlogId, cancelBlogEdit, loadCmsPosts],
   );
 
+  const cancelServiceEdit = useCallback(() => {
+    setEditingServiceId(null);
+    setSvcSlug("");
+    setSvcTitle("");
+    setSvcSummary("");
+    setSvcDesc("");
+    setSvcIconUrl("");
+    setSvcSortOrder("0");
+  }, []);
+
+  const openServiceEditor = useCallback((s: CmsServiceRow) => {
+    setEditingServiceId(s.id);
+    setSvcSlug(s.slug);
+    setSvcTitle(s.title);
+    setSvcSummary(s.summary ?? "");
+    setSvcDesc(s.description);
+    setSvcIconUrl(s.iconUrl ?? "");
+    setSvcSortOrder(String(typeof s.sortOrder === "number" ? s.sortOrder : 0));
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const deleteService = useCallback(
+    async (id: string, title: string) => {
+      if (!token) return;
+      if (!window.confirm(`"${title}" hizmeti silinsin mi? Bu işlem geri alınamaz.`)) return;
+      setBusy(true);
+      setError(null);
+      try {
+        await adminFetch(`/cms/services/${id}`, token, { method: "DELETE" });
+        if (editingServiceId === id) cancelServiceEdit();
+        await loadCmsPosts();
+      } catch (e) {
+        if (!(e instanceof AdminSessionTerminated)) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token, editingServiceId, cancelServiceEdit, loadCmsPosts],
+  );
+
   const createService = useCallback(async () => {
     if (!token) return;
+    if (!svcSlug.trim() || !svcTitle.trim() || !svcDesc.trim()) return;
     setBusy(true);
     setError(null);
     try {
-      await adminFetch("/cms/services", token, {
-        method: "POST",
-        body: JSON.stringify({
-          slug: svcSlug.trim(),
-          title: svcTitle.trim(),
-          summary: svcSummary.trim() || undefined,
-          description: svcDesc,
-        }),
-      });
-      setSvcSlug("");
-      setSvcTitle("");
-      setSvcSummary("");
-      setSvcDesc("");
+      const sortParsed = parseInt(svcSortOrder, 10);
+      const sortOrder = Number.isFinite(sortParsed) ? sortParsed : 0;
+      const body = {
+        slug: svcSlug.trim(),
+        title: svcTitle.trim(),
+        summary: svcSummary.trim() || undefined,
+        description: svcDesc,
+        iconUrl: svcIconUrl.trim() || undefined,
+        sortOrder,
+      };
+      if (editingServiceId) {
+        await adminFetch(`/cms/services/${editingServiceId}`, token, {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        });
+      } else {
+        await adminFetch("/cms/services", token, {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+      }
+      cancelServiceEdit();
+      await loadCmsPosts();
     } catch (e) {
       if (!(e instanceof AdminSessionTerminated)) {
         setError(e instanceof Error ? e.message : String(e));
@@ -727,10 +795,69 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     } finally {
       setBusy(false);
     }
-  }, [token, svcSlug, svcTitle, svcSummary, svcDesc]);
+  }, [
+    token,
+    svcSlug,
+    svcTitle,
+    svcSummary,
+    svcDesc,
+    svcIconUrl,
+    svcSortOrder,
+    editingServiceId,
+    cancelServiceEdit,
+    loadCmsPosts,
+  ]);
+
+  const cancelProjectEdit = useCallback(() => {
+    setEditingProjectId(null);
+    setProjSlug("");
+    setProjTitle("");
+    setProjSummary("");
+    setProjDesc("");
+    setProjGallery("");
+    setProjCompletedAt("");
+  }, []);
+
+  const openProjectEditor = useCallback((p: CmsProjectRow) => {
+    setEditingProjectId(p.id);
+    setProjSlug(p.slug);
+    setProjTitle(p.title);
+    setProjSummary(p.summary ?? "");
+    setProjDesc(p.description);
+    const urls = Array.isArray(p.gallery)
+      ? (p.gallery as unknown[]).filter((x): x is string => typeof x === "string")
+      : [];
+    setProjGallery(urls.join("\n"));
+    setProjCompletedAt(
+      p.completedAt && typeof p.completedAt === "string" ? p.completedAt.slice(0, 10) : "",
+    );
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const deleteProject = useCallback(
+    async (id: string, title: string) => {
+      if (!token) return;
+      if (!window.confirm(`"${title}" projesi silinsin mi? Bu işlem geri alınamaz.`)) return;
+      setBusy(true);
+      setError(null);
+      try {
+        await adminFetch(`/cms/projects/${id}`, token, { method: "DELETE" });
+        if (editingProjectId === id) cancelProjectEdit();
+        await loadCmsPosts();
+      } catch (e) {
+        if (!(e instanceof AdminSessionTerminated)) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token, editingProjectId, cancelProjectEdit, loadCmsPosts],
+  );
 
   const createProject = useCallback(async () => {
     if (!token) return;
+    if (!projSlug.trim() || !projTitle.trim() || !projDesc.trim()) return;
     setBusy(true);
     setError(null);
     try {
@@ -738,21 +865,29 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
         .split(/[\n,]+/)
         .map((s) => s.trim())
         .filter(Boolean);
-      await adminFetch("/cms/projects", token, {
-        method: "POST",
-        body: JSON.stringify({
-          slug: projSlug.trim(),
-          title: projTitle.trim(),
-          summary: projSummary.trim() || undefined,
-          description: projDesc,
-          gallery: urls.length ? urls : undefined,
-        }),
-      });
-      setProjSlug("");
-      setProjTitle("");
-      setProjSummary("");
-      setProjDesc("");
-      setProjGallery("");
+      const body: Record<string, unknown> = {
+        slug: projSlug.trim(),
+        title: projTitle.trim(),
+        summary: projSummary.trim() || undefined,
+        description: projDesc,
+        gallery: urls,
+      };
+      if (projCompletedAt.trim()) body.completedAt = projCompletedAt.trim();
+      else if (editingProjectId) body.completedAt = null;
+
+      if (editingProjectId) {
+        await adminFetch(`/cms/projects/${editingProjectId}`, token, {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        });
+      } else {
+        await adminFetch("/cms/projects", token, {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+      }
+      cancelProjectEdit();
+      await loadCmsPosts();
     } catch (e) {
       if (!(e instanceof AdminSessionTerminated)) {
         setError(e instanceof Error ? e.message : String(e));
@@ -760,7 +895,18 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     } finally {
       setBusy(false);
     }
-  }, [token, projSlug, projTitle, projSummary, projDesc, projGallery]);
+  }, [
+    token,
+    projSlug,
+    projTitle,
+    projSummary,
+    projDesc,
+    projGallery,
+    projCompletedAt,
+    editingProjectId,
+    cancelProjectEdit,
+    loadCmsPosts,
+  ]);
 
   const openProductEdit = useCallback((p: ProductRow) => {
     setEditingProductId(p.id);
@@ -1250,22 +1396,38 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               svcTitle={svcTitle}
               svcSummary={svcSummary}
               svcDesc={svcDesc}
+              svcIconUrl={svcIconUrl}
+              svcSortOrder={svcSortOrder}
+              setSvcIconUrl={setSvcIconUrl}
+              setSvcSortOrder={setSvcSortOrder}
               setSvcSlug={setSvcSlug}
               setSvcTitle={setSvcTitle}
               setSvcSummary={setSvcSummary}
               setSvcDesc={setSvcDesc}
               createService={createService}
+              editingServiceId={editingServiceId}
+              cancelServiceEdit={cancelServiceEdit}
+              openServiceEditor={openServiceEditor}
+              deleteService={deleteService}
+              cmsServices={cmsServices}
               projSlug={projSlug}
               projTitle={projTitle}
               projSummary={projSummary}
               projDesc={projDesc}
               projGallery={projGallery}
+              projCompletedAt={projCompletedAt}
+              setProjCompletedAt={setProjCompletedAt}
               setProjSlug={setProjSlug}
               setProjTitle={setProjTitle}
               setProjSummary={setProjSummary}
               setProjDesc={setProjDesc}
               setProjGallery={setProjGallery}
               createProject={createProject}
+              editingProjectId={editingProjectId}
+              cancelProjectEdit={cancelProjectEdit}
+              openProjectEditor={openProjectEditor}
+              deleteProject={deleteProject}
+              cmsProjects={cmsProjects}
               blogPosts={blogPosts}
             />
           ) : null}

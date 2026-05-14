@@ -14,7 +14,7 @@ type AddressInput = {
   phone?: string;
   line1: string;
   line2?: string;
-  district?: string;
+  district: string;
   city: string;
   postalCode?: string;
   isDefault?: boolean;
@@ -189,7 +189,7 @@ export class CustomersService {
           phone: data.phone || null,
           line1: data.line1,
           line2: data.line2 || null,
-          district: data.district || null,
+          district: data.district.trim(),
           city: data.city,
           postalCode: data.postalCode || "",
           isDefault: shouldBeDefault,
@@ -217,7 +217,7 @@ export class CustomersService {
           phone: data.phone ?? null,
           line1: data.line1,
           line2: data.line2 ?? null,
-          district: data.district ?? null,
+          district: data.district.trim(),
           city: data.city,
           postalCode: data.postalCode ?? "",
           isDefault: data.isDefault ?? existing.isDefault,

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { SiteSettings } from "@/lib/settings";
 import { SiteFooterNewsletter } from "./SiteFooterNewsletter";
+import { SocialNetworkIcon } from "./SocialNetworkIcon";
 
 const socialLabels: Record<string, string> = {
   instagram: "Instagram",
@@ -47,13 +48,18 @@ function footerColumns(settings: SiteSettings) {
 
 export function SiteFooter({ settings }: { settings: SiteSettings }) {
   const columns = footerColumns(settings);
+  const contactHref = settings.contactNavHref?.trim() || "/contact";
+  const contactLabel = settings.contactNavLabel?.trim() || "Bize ulaşın";
   const social = Object.entries(settings.socialLinks ?? {}).filter(
     ([, href]) => typeof href === "string" && href.trim().length > 0,
   );
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto border-t border-neutral-200 bg-white text-neutral-900">
+    <footer
+      id="site-footer"
+      className="mt-auto border-t border-neutral-200 bg-white pb-[calc(4.75rem+env(safe-area-inset-bottom))] text-neutral-900 md:pb-0"
+    >
       <div className="mx-auto max-w-[1400px] px-4 py-14 sm:px-8 md:px-12 lg:px-16">
         <div className="flex flex-col gap-10 border-b border-neutral-200 pb-12 md:flex-row md:items-start md:justify-between md:gap-16">
           <div className="max-w-md">
@@ -72,46 +78,76 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
         </p>
 
         <div className="mt-16 grid gap-12 md:grid-cols-12">
-          <div className="md:col-span-5">
-            <Link href="/" className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight text-neutral-900">
-              {settings.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={settings.logoUrl} alt={settings.siteName} className="h-8 w-auto object-contain" />
-              ) : (
-                <span className="text-xl font-semibold uppercase tracking-[0.12em]">{settings.siteName}</span>
-              )}
-            </Link>
-            {settings.defaultMetaDesc ? (
-              <p className="mt-5 max-w-sm text-sm leading-relaxed text-neutral-500">{settings.defaultMetaDesc}</p>
-            ) : null}
-            <div className="mt-5 space-y-1 text-sm text-neutral-500">
-              {settings.contactEmail ? (
-                <p>
-                  <a className="hover:text-neutral-900" href={`mailto:${settings.contactEmail}`}>
-                    {settings.contactEmail}
-                  </a>
-                </p>
+          <div id="footer-brand" className="scroll-mt-28 md:col-span-5">
+            <div className="rounded-2xl border border-neutral-200/90 bg-neutral-50/70 p-6 sm:p-7">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight text-neutral-900"
+              >
+                {settings.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={settings.logoUrl} alt={settings.siteName} className="h-11 w-auto object-contain sm:h-12" />
+                ) : (
+                  <span className="text-xl font-semibold uppercase tracking-[0.12em]">{settings.siteName}</span>
+                )}
+              </Link>
+              {settings.defaultMetaDesc ? (
+                <p className="mt-4 max-w-sm text-sm leading-relaxed text-neutral-600">{settings.defaultMetaDesc}</p>
               ) : null}
-              {settings.contactPhone ? (
-                <p>
-                  <a className="hover:text-neutral-900" href={`tel:${settings.contactPhone}`}>
-                    {settings.contactPhone}
-                  </a>
-                </p>
+
+              <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">İletişim</p>
+              {settings.contactEmail || settings.contactPhone || settings.address?.trim() ? (
+                <div className="mt-2 space-y-2 text-sm text-neutral-600">
+                  {settings.contactEmail ? (
+                    <p>
+                      <a className="font-medium text-neutral-800 hover:text-neutral-950" href={`mailto:${settings.contactEmail}`}>
+                        {settings.contactEmail}
+                      </a>
+                    </p>
+                  ) : null}
+                  {settings.contactPhone ? (
+                    <p>
+                      <a className="font-medium text-neutral-800 hover:text-neutral-950" href={`tel:${settings.contactPhone}`}>
+                        {settings.contactPhone}
+                      </a>
+                    </p>
+                  ) : null}
+                  {settings.address?.trim() ? (
+                    <p className="whitespace-pre-wrap leading-relaxed text-neutral-600">{settings.address.trim()}</p>
+                  ) : null}
+                </div>
               ) : null}
-            </div>
-            <div className="mt-6 flex flex-wrap gap-2">
-              {social.map(([key, href]) => (
-                <a
-                  key={key}
-                  href={href as string}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="grid h-9 w-9 place-items-center rounded-full border border-neutral-200 text-[10px] font-semibold uppercase text-neutral-600 transition hover:border-neutral-900 hover:text-neutral-900"
-                >
-                  {(socialLabels[key.toLowerCase()] ?? key).slice(0, 2)}
-                </a>
-              ))}
+              <Link
+                href={contactHref}
+                className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-neutral-900 underline-offset-4 hover:underline"
+              >
+                {contactLabel}
+                <span aria-hidden>→</span>
+              </Link>
+
+              {social.length > 0 ? (
+                <>
+                  <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">Sosyal</p>
+                  <div className="mt-2 flex flex-wrap gap-2.5">
+                    {social.map(([key, href]) => {
+                      const label = socialLabels[key.toLowerCase()] ?? key;
+                      return (
+                        <a
+                          key={key}
+                          href={href as string}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={label}
+                          aria-label={label}
+                          className="grid h-10 w-10 place-items-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:border-neutral-900 hover:text-neutral-900"
+                        >
+                          <SocialNetworkIcon kind={key} className="h-[19px] w-[19px]" />
+                        </a>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
 
@@ -137,7 +173,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
           <p>
             © {year} {settings.siteName}. Tüm hakları saklıdır.
           </p>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 sm:justify-center">
             <span className="text-neutral-400">İyzico</span>
             <span className="text-neutral-300">·</span>
             <span>VISA</span>
@@ -146,9 +182,14 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
             <span className="text-neutral-300">·</span>
             <span>TROY</span>
           </div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
-            {settings.address?.trim() ? settings.address : "Türkiye"}
-          </p>
+          <a
+            href="https://tgrsoft.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] font-medium tracking-wide text-neutral-400/75 transition hover:text-neutral-600 max-sm:self-end sm:text-right"
+          >
+            tgrsoft
+          </a>
         </div>
       </div>
     </footer>

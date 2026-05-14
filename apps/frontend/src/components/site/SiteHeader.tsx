@@ -331,7 +331,7 @@ export function SiteHeader({
             <img
               src={logoSrc}
               alt={settings.siteName}
-              className="h-14 w-auto max-h-[4.75rem] max-w-[min(72vw,320px)] object-contain object-left sm:h-16 sm:max-w-[340px] md:h-[4.5rem] md:max-w-[380px] lg:h-[4.75rem] lg:max-w-[420px]"
+              className="h-[4.25rem] w-auto max-h-[6rem] max-w-[min(82vw,420px)] object-contain object-left sm:h-20 sm:max-w-[460px] md:h-[5.5rem] md:max-w-[500px] lg:h-[6rem] lg:max-w-[540px]"
             />
           </Link>
 

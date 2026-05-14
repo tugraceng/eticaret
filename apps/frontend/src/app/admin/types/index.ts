@@ -76,6 +76,26 @@ export type BlogPostRow = {
   publishedAt: string | null;
 };
 
+export type CmsServiceRow = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  description: string;
+  iconUrl: string | null;
+  sortOrder: number;
+};
+
+export type CmsProjectRow = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  description: string;
+  gallery: unknown;
+  completedAt: string | null;
+};
+
 export type CategoryRow = {
   id: string;
   name: string;

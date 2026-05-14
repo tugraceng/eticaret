@@ -14,6 +14,8 @@ import {
 import { commerceBeginCheckout, commercePurchase } from "@/lib/commerce-analytics";
 import { notifyCartUpdated } from "@/lib/platform-storage-events";
 import { CUSTOMER_EMAIL_KEY, CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { ProvinceDistrictSelect } from "@/components/forms/ProvinceDistrictSelect";
+import { isTrProvinceDistrictValid } from "@/lib/tr-province-district";
 import { CheckoutJumpNav } from "./_components/CheckoutJumpNav";
 import { CheckoutPaymentTrustPanel } from "./_components/CheckoutPaymentTrustPanel";
 
@@ -439,7 +441,10 @@ function CheckoutInner() {
     if (identityNumber && !/^\d{11}$/.test(identityNumber.trim()))
       errs.identityNumber = "T.C. Kimlik No 11 haneli rakam olmalıdır.";
     if (!line1.trim()) errs.line1 = "Adres zorunlu.";
-    if (!city.trim()) errs.city = "Şehir zorunlu.";
+    if (!city.trim()) errs.city = "İl seçmelisiniz.";
+    if (!district.trim()) errs.district = "İlçe seçmelisiniz.";
+    else if (!isTrProvinceDistrictValid(city.trim(), district.trim()))
+      errs.district = "Geçerli il ve ilçe seçin.";
     if (postalCode && !/^\d{5}$/.test(postalCode.trim())) errs.postalCode = "Posta kodu 5 haneli olmalıdır.";
     return errs;
   }
@@ -494,7 +499,7 @@ function CheckoutInner() {
           identityNumber: identityNumber.trim() || undefined,
           shippingLine1: line1.trim(),
           shippingLine2: line2.trim() || undefined,
-          shippingDistrict: district.trim() || undefined,
+          shippingDistrict: district.trim(),
           shippingCity: city.trim(),
           shippingPostalCode: postalCode.trim() || undefined,
           notes: notes.trim() || undefined,
@@ -799,30 +804,16 @@ function CheckoutInner() {
                     autoComplete="address-line2"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                    İlçe
-                  </label>
-                  <input
-                    value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
+                <div className="sm:col-span-2">
+                  <ProvinceDistrictSelect
+                    province={city}
+                    district={district}
+                    onProvinceChange={setCity}
+                    onDistrictChange={setDistrict}
                     disabled={!isNewAddress && loggedIn && addresses.length > 0}
-                    className="input-soft mt-2 disabled:cursor-not-allowed disabled:bg-slate-50"
-                    autoComplete="address-level2"
+                    provinceError={step1Errors.city}
+                    districtError={step1Errors.district}
                   />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                    Şehir *
-                  </label>
-                  <input
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    disabled={!isNewAddress && loggedIn && addresses.length > 0}
-                    className="input-soft mt-2 disabled:cursor-not-allowed disabled:bg-slate-50"
-                    autoComplete="address-level1"
-                  />
-                  {step1Errors.city && <p className="mt-1 text-xs text-rose-600">{step1Errors.city}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-slate-500">

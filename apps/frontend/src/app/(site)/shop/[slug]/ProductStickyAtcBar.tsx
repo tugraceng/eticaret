@@ -32,7 +32,7 @@ export function ProductStickyAtcBar({
   const openMiniCart = useCartStore((s) => s.openMiniCart);
 
   const unitPrice = useMemo(
-    () => (variants.length > 0 ? effectivePriceCents(basePriceCents) : basePriceCents),
+    () => (variants.length > 0 ? effectivePriceCents() : basePriceCents),
     [variants.length, effectivePriceCents, basePriceCents],
   );
 

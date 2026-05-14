@@ -278,7 +278,12 @@ export class ProductsController {
   constructor(private readonly products: ProductsService) {}
 
   @Get()
-  list(@Query("q") q?: string, @Query("categoryId") categoryId?: string, @Query("ids") ids?: string) {
+  list(
+    @Query("q") q?: string,
+    @Query("categoryId") categoryId?: string,
+    @Query("ids") ids?: string,
+    @Query("featured") featured?: string,
+  ) {
     if (ids) {
       const list = ids
         .split(",")
@@ -286,7 +291,8 @@ export class ProductsController {
         .filter(Boolean);
       return this.products.listByIds(list);
     }
-    return this.products.list(q, categoryId);
+    const featuredOnly = featured === "1" || featured === "true";
+    return this.products.list(q, categoryId, featuredOnly ? { featuredOnly: true } : undefined);
   }
 
   @Get("catalog")

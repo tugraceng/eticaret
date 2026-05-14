@@ -92,14 +92,16 @@ export class ProductsService {
     });
   }
 
-  async list(q?: string, categoryId?: string) {
+  async list(q?: string, categoryId?: string, opts?: { featuredOnly?: boolean }) {
+    const featuredOnly = opts?.featuredOnly === true;
     const cacheable = !q; // arama yoksa cache'leyebiliriz
-    const key = `products:list:q=${q ?? ""}|cat=${categoryId ?? ""}`;
+    const key = `products:list:q=${q ?? ""}|cat=${categoryId ?? ""}|feat=${featuredOnly ? 1 : 0}`;
     const loader = async () => {
       const catIds = categoryId ? await this.categoryIdsIncludingDescendants(categoryId) : undefined;
       const products = await this.prisma.product.findMany({
         where: {
           isPublished: true,
+          ...(featuredOnly ? { isFeatured: true } : {}),
           ...(catIds?.length ? { categoryId: { in: catIds } } : {}),
           ...(q
             ? {
@@ -110,7 +112,7 @@ export class ProductsService {
               }
             : {}),
         },
-        orderBy: { updatedAt: "desc" },
+        orderBy: featuredOnly ? { createdAt: "desc" } : { updatedAt: "desc" },
         take: UNPAGED_MAX, // bellek güvenliği için hard cap; /products/catalog pagination'lıdır
         include: { images: { orderBy: { sortOrder: "asc" } }, category: true },
       });

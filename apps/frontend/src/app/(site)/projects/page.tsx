@@ -1,83 +1,97 @@
-import Link from "next/link";
-import { apiJsonSafe } from "@/lib/api";
+import { Suspense } from "react";
+import { apiAssetUrl, apiJsonSafe } from "@/lib/api";
+import { CmsAnchorScroll } from "@/components/site/CmsAnchorScroll";
 
 type Project = {
   id: string;
   slug: string;
   title: string;
   summary: string | null;
+  description: string;
   gallery?: unknown;
+  completedAt?: string | null;
 };
+
+function galleryUrls(gallery: unknown): string[] {
+  if (!Array.isArray(gallery)) return [];
+  return gallery.filter((x): x is string => typeof x === "string");
+}
 
 export const metadata = { title: "Projeler" };
 
 export default async function ProjectsPage() {
-  const list = (await apiJsonSafe<Project[]>("/cms/projects")) ?? [];
+  const list = ((await apiJsonSafe<Project[]>("/cms/projects")) ?? []).slice();
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <div className="fade-up">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-          Portföy
-        </p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-          Tamamlanan işler
-        </h1>
+    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+      <Suspense fallback={null}>
+        <CmsAnchorScroll />
+      </Suspense>
+
+      <header className="fade-up">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Portföy</p>
+        <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Tamamlanan işler</h1>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">
-          Galeri ve detay metinleri CMS&apos;ten gelir. Her proje müşterinin hikâyesini anlatır.
+          Projeler tek sayfada görseller ve açıklamalarla listelenir. Detaylı inceleme için aşağı kaydırın.
         </p>
-      </div>
-      <ul className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      </header>
+
+      <div className="mt-14 space-y-20 sm:space-y-24">
         {list.length === 0 && (
-          <li className="col-span-full rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-sm text-slate-500 backdrop-blur">
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-sm text-slate-500 backdrop-blur">
             Portföy boş — CMS üzerinden proje ekleyin.
-          </li>
+          </div>
         )}
         {list.map((p, i) => {
-          const cover = Array.isArray(p.gallery)
-            ? ((p.gallery as unknown[]).filter((x): x is string => typeof x === "string")[0] ?? null)
-            : null;
+          const urls = galleryUrls(p.gallery).map((u) => apiAssetUrl(u) ?? u);
+          const cover = urls[0];
+          const rest = urls.slice(1);
           return (
-            <li key={p.id} className="fade-up" style={{ animationDelay: `${i * 60}ms` }}>
-              <Link
-                href={`/projects/${p.slug}`}
-                className="card-soft group flex h-full flex-col overflow-hidden p-0"
-              >
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
-                  {cover ? (
+            <section
+              key={p.id}
+              id={p.slug}
+              className="fade-up scroll-mt-28 border-b border-slate-200/80 pb-20 last:border-0 last:pb-0 sm:scroll-mt-32"
+              style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}
+            >
+              {cover ? (
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-3xl bg-slate-100 shadow-sm ring-1 ring-slate-200/60">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={cover} alt="" className="h-full w-full object-cover" loading={i === 0 ? "eager" : "lazy"} />
+                </div>
+              ) : (
+                <div className="grid aspect-[16/9] w-full place-items-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-400">
+                  Görsel yok
+                </div>
+              )}
+              <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+                <h2 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{p.title}</h2>
+                {p.completedAt ? (
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    {new Date(p.completedAt).toLocaleDateString("tr-TR", { month: "long", year: "numeric" })}
+                  </p>
+                ) : null}
+              </div>
+              {p.summary ? (
+                <p className="mt-3 text-lg leading-relaxed text-slate-600">{p.summary}</p>
+              ) : null}
+              <article className="mt-8 whitespace-pre-wrap text-base leading-[1.75] text-slate-700">{p.description}</article>
+              {rest.length > 0 ? (
+                <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                  {rest.map((url) => (
                     <div
-                      className="hover-zoom absolute inset-0 bg-cover bg-center"
-                      style={{ backgroundImage: `url(${cover})` }}
-                      role="img"
-                      aria-label=""
-                    />
-                  ) : (
-                    <div className="grid h-full place-items-center text-xs text-slate-400">
-                      Görsel yok
+                      key={url}
+                      className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-slate-200/60"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
                     </div>
-                  )}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/50 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                  ))}
                 </div>
-                <div className="p-6">
-                  <p className="text-lg font-semibold text-slate-900 group-hover:text-sky-800">
-                    {p.title}
-                  </p>
-                  {p.summary && (
-                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600">
-                      {p.summary}
-                    </p>
-                  )}
-                  <p className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-sky-800">
-                    Projeyi incele
-                    <span className="transition-transform duration-300 group-hover:translate-x-1.5" aria-hidden>
-                      →
-                    </span>
-                  </p>
-                </div>
-              </Link>
-            </li>
+              ) : null}
+            </section>
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }

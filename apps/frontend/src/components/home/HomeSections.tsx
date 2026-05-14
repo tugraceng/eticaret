@@ -181,9 +181,12 @@ async function FeaturedProducts({ section }: { section: HomeSection }) {
     const list = await apiJsonSafe<ProductCardData[]>(
       `/products?ids=${encodeURIComponent(ids.join(","))}`,
     );
-    if (list) products = list;
+    if (list?.length) {
+      const byId = new Map(list.map((p) => [p.id, p]));
+      products = ids.map((id) => byId.get(id)).filter((p): p is ProductCardData => p != null);
+    }
   } else {
-    const list = await apiJsonSafe<ProductCardData[]>("/products");
+    const list = await apiJsonSafe<ProductCardData[]>("/products?featured=1");
     if (list) products = list.slice(0, 6);
   }
   if (products.length === 0) return null;
@@ -210,7 +213,10 @@ async function FeaturedCategories({ section }: { section: HomeSection }) {
     ? (section.config!.categoryIds as unknown[]).filter((i): i is string => typeof i === "string")
     : [];
   const all = (await apiJsonSafe<Category[]>("/categories")) ?? [];
-  const selected = ids.length > 0 ? all.filter((c) => ids.includes(c.id)) : all.slice(0, 8);
+  const selected =
+    ids.length > 0
+      ? ids.map((id) => all.find((c) => c.id === id)).filter((c): c is Category => c != null)
+      : all.slice(0, 8);
   if (selected.length === 0) return null;
 
   return (

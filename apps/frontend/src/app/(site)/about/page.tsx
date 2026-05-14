@@ -43,6 +43,21 @@ function readPillars(raw: unknown): typeof defaultPillars {
   return out.length > 0 ? (out as typeof defaultPillars) : defaultPillars;
 }
 
+const defaultBizKimiz = {
+  title: "Ekibimiz ve yaklaşımımız",
+  body: "Deneyimli bir ekiple ürün, tasarım ve operasyonu bir arada düşünüyoruz. Şeffaf iletişim ve ölçülebilir teslimatlarla mağazanızın büyümesine odaklanıyoruz.",
+};
+
+function readBizKimiz(raw: unknown): { title: string; body: string } {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return defaultBizKimiz;
+  const o = raw as Record<string, unknown>;
+  const title =
+    typeof o.title === "string" && o.title.trim() ? o.title.trim() : defaultBizKimiz.title;
+  const body =
+    typeof o.body === "string" && o.body.trim() ? o.body.trim() : defaultBizKimiz.body;
+  return { title, body };
+}
+
 export const metadata = { title: "Hakkımızda" };
 
 export default async function AboutPage() {
@@ -53,6 +68,7 @@ export default async function AboutPage() {
       ? c.lead.trim()
       : "Küçük ve orta ölçekli işletmeler için modern e-ticaret ve kurumsal vitrin çözümü sunuyoruz. Amacımız, markanızı güçlü bir dijital hikâyeye dönüştürmek.";
   const pillars = readPillars(c?.pillars);
+  const bizKimiz = readBizKimiz(c?.bizKimiz);
   const body = typeof c?.body === "string" && c.body.trim() ? c.body.trim() : null;
 
   return (
@@ -72,17 +88,14 @@ export default async function AboutPage() {
         className="scroll-mt-28 fade-up mt-14 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8"
       >
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Biz kimiz</p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Ekibimiz ve yaklaşımımız</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-          Deneyimli bir ekiple ürün, tasarım ve operasyonu bir arada düşünüyoruz. Şeffaf iletişim ve ölçülebilir
-          teslimatlarla mağazanızın büyümesine odaklanıyoruz.
-        </p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">{bizKimiz.title}</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">{bizKimiz.body}</p>
       </section>
 
       <ul className="mt-12 grid gap-5 md:grid-cols-3">
         {pillars.map((p, i) => (
           <li
-            key={p.title}
+            key={`${i}-${p.title}`}
             className="card-soft fade-up p-6"
             style={{ animationDelay: `${i * 80}ms` }}
           >

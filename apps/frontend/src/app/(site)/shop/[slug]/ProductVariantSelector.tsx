@@ -2,11 +2,16 @@
 
 import { memo } from "react";
 import { cn } from "@/lib/cn";
-import { useProductVariants } from "./ProductVariantContext";
+import { resolveVariantPriceCents, useProductVariants } from "./ProductVariantContext";
+
+function priceFmt(cents: number) {
+  return (cents / 100).toLocaleString("tr-TR", { style: "currency", currency: "TRY" });
+}
 
 /** Sunucudan gelen variant listesi — chips. */
 export const ProductVariantSelector = memo(function ProductVariantSelector() {
-  const { variants, selectedId, setSelectedId, allVariantsSoldOut, showPublicStockCount } = useProductVariants();
+  const { variants, selectedId, setSelectedId, allVariantsSoldOut, showPublicStockCount, basePriceCents } =
+    useProductVariants();
 
   if (variants.length === 0) return null;
 
@@ -38,6 +43,14 @@ export const ProductVariantSelector = memo(function ProductVariantSelector() {
               aria-pressed={active}
             >
               {v.label}
+              <span
+                className={cn(
+                  "ml-1.5 font-normal tabular-nums",
+                  active && !soldOut ? "text-white/80" : "text-slate-500",
+                )}
+              >
+                {priceFmt(resolveVariantPriceCents(v.priceCents, basePriceCents))}
+              </span>
               {showPublicStockCount && v.trackStock && v.stock > 0 && v.stock <= 5 ? (
                 <span className="ml-1.5 text-[10px] font-normal opacity-90">({v.stock})</span>
               ) : null}

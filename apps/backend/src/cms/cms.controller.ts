@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards } from "@nestjs/common";
-import { IsBoolean, IsObject, IsOptional, IsString, MinLength } from "class-validator";
+import { Allow, IsArray, IsBoolean, IsInt, IsObject, IsOptional, IsString, MinLength } from "class-validator";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { CmsService } from "./cms.service";
@@ -55,6 +55,37 @@ class ServiceDto {
   summary?: string;
   @IsString()
   description!: string;
+  @IsOptional()
+  @Allow()
+  @IsString()
+  iconUrl?: string | null;
+  @IsOptional()
+  @IsInt()
+  sortOrder?: number;
+}
+
+class ServicePatchDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  slug?: string;
+  @IsOptional()
+  @IsString()
+  title?: string;
+  @IsOptional()
+  @Allow()
+  @IsString()
+  summary?: string | null;
+  @IsOptional()
+  @IsString()
+  description?: string;
+  @IsOptional()
+  @Allow()
+  @IsString()
+  iconUrl?: string | null;
+  @IsOptional()
+  @IsInt()
+  sortOrder?: number;
 }
 
 class ProjectDto {
@@ -69,6 +100,32 @@ class ProjectDto {
   description!: string;
   @IsOptional()
   gallery?: unknown[];
+  @IsOptional()
+  @IsString()
+  completedAt?: string | null;
+}
+
+class ProjectPatchDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  slug?: string;
+  @IsOptional()
+  @IsString()
+  title?: string;
+  @IsOptional()
+  @Allow()
+  @IsString()
+  summary?: string | null;
+  @IsOptional()
+  @IsString()
+  description?: string;
+  @IsOptional()
+  gallery?: unknown[];
+  @IsOptional()
+  @Allow()
+  @IsString()
+  completedAt?: string | null;
 }
 
 class PageDto {
@@ -77,7 +134,7 @@ class PageDto {
   @IsString()
   title!: string;
   @IsOptional()
-  @IsObject()
+  @Allow()
   content?: Record<string, unknown>;
   @IsOptional()
   @IsBoolean()
@@ -141,7 +198,32 @@ export class CmsController {
   @Post("services")
   @UseGuards(JwtAuthGuard, AdminGuard)
   serviceCreate(@Body() dto: ServiceDto) {
-    return this.cms.createService(dto);
+    return this.cms.createService({
+      slug: dto.slug,
+      title: dto.title,
+      summary: dto.summary,
+      description: dto.description,
+      iconUrl: dto.iconUrl,
+      sortOrder: dto.sortOrder,
+    });
+  }
+
+  @Get("services/admin/:id")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  serviceAdminById(@Param("id") id: string) {
+    return this.cms.serviceByIdAdmin(id);
+  }
+
+  @Patch("services/:id")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  servicePatch(@Param("id") id: string, @Body() dto: ServicePatchDto) {
+    return this.cms.updateService(id, dto);
+  }
+
+  @Delete("services/:id")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  serviceDelete(@Param("id") id: string) {
+    return this.cms.deleteService(id);
   }
 
   @Get("projects")
@@ -157,7 +239,32 @@ export class CmsController {
   @Post("projects")
   @UseGuards(JwtAuthGuard, AdminGuard)
   projectCreate(@Body() dto: ProjectDto) {
-    return this.cms.createProject({ ...dto, gallery: dto.gallery });
+    return this.cms.createProject({
+      slug: dto.slug,
+      title: dto.title,
+      summary: dto.summary,
+      description: dto.description,
+      gallery: dto.gallery,
+      completedAt: dto.completedAt,
+    });
+  }
+
+  @Get("projects/admin/:id")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  projectAdminById(@Param("id") id: string) {
+    return this.cms.projectByIdAdmin(id);
+  }
+
+  @Patch("projects/:id")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  projectPatch(@Param("id") id: string, @Body() dto: ProjectPatchDto) {
+    return this.cms.updateProject(id, dto);
+  }
+
+  @Delete("projects/:id")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  projectDelete(@Param("id") id: string) {
+    return this.cms.deleteProject(id);
   }
 
   @Get("pages")

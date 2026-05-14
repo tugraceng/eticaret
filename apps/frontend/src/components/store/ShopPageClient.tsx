@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, memo, useState, useEffect, useRef } from "react";
 import { ShopToolbar } from "@/app/(site)/shop/ShopToolbar";
 import { ShopCatalogGrid, type CatalogPayload } from "@/app/(site)/shop/ShopCatalogGrid";
-import { shopBrowseHref, type CategoryApiRow } from "@/lib/category-nav";
+import type { CategoryApiRow } from "@/lib/category-nav";
 import { cn } from "@/lib/cn";
 
 function sortCategories(a: CategoryApiRow, b: CategoryApiRow) {
@@ -78,7 +78,6 @@ const ViewToggle = memo(function ViewToggle({ view }: { view: "grid" | "list" })
 
 export function ShopPageClient({
   title,
-  hubMode,
   categories,
   catalog,
   catalogQs,
@@ -98,7 +97,6 @@ export function ShopPageClient({
   view,
 }: {
   title: string;
-  hubMode: boolean;
   categories: CategoryApiRow[];
   catalog: CatalogPayload;
   catalogQs: string;
@@ -156,8 +154,6 @@ export function ShopPageClient({
   const orphanCategories = categories.filter(
     (c) => c.parentId && !categories.some((p) => p.id === c.parentId),
   );
-  const hubRoots =
-    rootCategories.length > 0 ? rootCategories : categories.slice().sort(sortCategories);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
@@ -165,15 +161,13 @@ export function ShopPageClient({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
           <div className="min-w-0">
             <h1 className="text-h1 text-[var(--ds-text)] md:text-display md:text-4xl">{title}</h1>
-            <p className="mt-2 text-body text-[var(--ds-text-muted)]">
-              {hubMode ? "Ürünleri görmek için bir kategori seçin." : `${catalog.total} ürün bulundu`}
-            </p>
+            <p className="mt-2 text-body text-[var(--ds-text-muted)]">{`${catalog.total} ürün bulundu`}</p>
           </div>
           <div className="hidden w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center lg:flex lg:max-w-2xl">
             <div className="min-w-0 flex-1">
               <ShopToolbar />
             </div>
-            {!hubMode ? <ViewToggle view={view} /> : null}
+            <ViewToggle view={view} />
           </div>
         </div>
 
@@ -181,41 +175,32 @@ export function ShopPageClient({
           <ShopToolbar />
         </div>
 
-        {!hubMode ? (
-          <div className="flex w-full flex-wrap items-stretch gap-2 lg:hidden">
-            <div className="min-w-0 min-h-11 flex-1 basis-[min(100%,11rem)]">
-              <ViewToggle view={view} />
-            </div>
-            <button
-              type="button"
-              onClick={() => setFiltersOpen(true)}
-              className="flex min-h-11 flex-1 basis-[min(100%,11rem)] items-center justify-center gap-2 rounded-ds-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-2 text-sm font-semibold text-[var(--ds-text)] shadow-card"
-              aria-expanded={filtersOpen}
-              aria-haspopup="dialog"
-            >
-              Filtreler
-            </button>
+        <div className="flex w-full flex-wrap items-stretch gap-2 lg:hidden">
+          <div className="min-w-0 min-h-11 flex-1 basis-[min(100%,11rem)]">
+            <ViewToggle view={view} />
           </div>
-        ) : null}
+          <button
+            type="button"
+            onClick={() => setFiltersOpen(true)}
+            className="flex min-h-11 flex-1 basis-[min(100%,11rem)] items-center justify-center gap-2 rounded-ds-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-2 text-sm font-semibold text-[var(--ds-text)] shadow-card"
+            aria-expanded={filtersOpen}
+            aria-haspopup="dialog"
+          >
+            Filtreler
+          </button>
+        </div>
       </header>
-
-      {!hubMode ? (
-        <div
-          className={cn(
-            "fixed inset-0 z-[55] bg-[var(--ds-text)]/35 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden",
-            filtersOpen ? "opacity-100" : "pointer-events-none opacity-0",
-          )}
-          aria-hidden={!filtersOpen}
-          onClick={() => setFiltersOpen(false)}
-        />
-      ) : null}
 
       <div
         className={cn(
-          !hubMode && "lg:grid lg:grid-cols-[minmax(0,280px)_1fr] lg:items-start lg:gap-8 xl:gap-10",
+          "fixed inset-0 z-[55] bg-[var(--ds-text)]/35 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden",
+          filtersOpen ? "opacity-100" : "pointer-events-none opacity-0",
         )}
-      >
-        {!hubMode ? (
+        aria-hidden={!filtersOpen}
+        onClick={() => setFiltersOpen(false)}
+      />
+
+      <div className="lg:grid lg:grid-cols-[minmax(0,280px)_1fr] lg:items-start lg:gap-8 xl:gap-10">
         <aside
           className={cn(
             "flex max-h-[min(90dvh,640px)] flex-col overflow-hidden rounded-ds-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-card transition-transform duration-300 ease-out",
@@ -263,7 +248,11 @@ export function ShopPageClient({
               className="input-soft min-h-11 w-full !rounded-ds-lg"
               aria-label="Kategori seç"
             >
-              {q?.trim() ? <option value="">Tüm arama sonuçları</option> : null}
+              {q?.trim() ? (
+                <option value="">Tüm arama sonuçları</option>
+              ) : (
+                <option value="">Tüm ürünler</option>
+              )}
               {rootCategories.length > 0 ? (
                 rootCategories.map((r) => {
                   const children = childCategories(r.id);
@@ -394,67 +383,14 @@ export function ShopPageClient({
           </form>
           </div>
         </aside>
-        ) : null}
 
         <div className="min-w-0">
-          {hubMode ? (
-            hubRoots.length === 0 ? (
-              <div className="rounded-ds-xl border border-dashed border-[var(--ds-border)] bg-[var(--ds-surface-muted)] p-10 text-center text-small text-[var(--ds-text-muted)]">
-                Henüz mağazada kategori bulunmuyor.
-              </div>
-            ) : (
-              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {hubRoots.map((row) => {
-                  const children = childCategories(row.id);
-                  const href = shopBrowseHref({ categoryId: row.id, sort, view });
-                  return (
-                    <li
-                      key={row.id}
-                      className="overflow-hidden rounded-ds-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-card"
-                    >
-                      <Link
-                        href={href}
-                        prefetch
-                        className="block p-5 transition-colors hover:bg-[var(--ds-surface-muted)]"
-                      >
-                        <p className="text-lg font-semibold tracking-tight text-[var(--ds-text)]">{row.name}</p>
-                        {typeof row._count?.products === "number" ? (
-                          <p className="mt-1 text-micro text-[var(--ds-text-muted)]">{row._count.products} ürün</p>
-                        ) : null}
-                      </Link>
-                      {children.length > 0 ? (
-                        <div className="border-t border-[var(--ds-border)] bg-[var(--ds-surface-muted)]/35 px-4 py-3">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ds-text-muted)]">
-                            Alt kategoriler
-                          </p>
-                          <ul className="mt-2 flex flex-wrap gap-2">
-                            {children.map((ch) => (
-                              <li key={ch.id}>
-                                <Link
-                                  href={shopBrowseHref({ categoryId: ch.id, sort, view })}
-                                  prefetch
-                                  className="inline-flex rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2.5 py-1 text-xs font-medium text-[var(--ds-text)] hover:border-[var(--ds-text-muted)]"
-                                >
-                                  {ch.name}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            )
-          ) : (
-            <ShopCatalogGrid
-              key={`${catalogQs}|${page}`}
-              initial={catalog}
-              queryWithoutPage={catalogQs}
-              layout={view}
-            />
-          )}
+          <ShopCatalogGrid
+            key={`${catalogQs}|${page}`}
+            initial={catalog}
+            queryWithoutPage={catalogQs}
+            layout={view}
+          />
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { memo, type JSX } from "react";
 import { WishlistButton } from "@/app/(site)/shop/[slug]/ui";
 import { apiAssetUrl } from "@/lib/api";
+import { ProductCardAddToCart } from "@/components/site/ProductCardAddToCart";
 
 export type ProductCardData = {
   id: string;
@@ -155,30 +156,22 @@ function ProductCardInner({ product }: { product: ProductCardData }) {
               </span>
             </div>
           ) : null}
-          <div className="mt-4 flex items-end justify-between gap-2 border-t border-slate-100 pt-4">
+          <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-2">
             <div>
               <p className="text-base font-semibold text-slate-900">{priceFmt(product.priceCents)}</p>
               {onSale && (
                 <p className="text-xs text-slate-400 line-through">{priceFmt(product.compareAtCents!)}</p>
               )}
             </div>
-            <span
-              aria-hidden
-              className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-700 transition-all duration-300 ease-spring group-hover:bg-slate-900 group-hover:text-white group-hover:rotate-[-8deg]"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                <path d="M5 12h14" />
-                <path d="M13 5l7 7-7 7" />
-              </svg>
-            </span>
+            <div className="pointer-events-auto relative z-[6] shrink-0 sm:max-w-[55%]">
+              <ProductCardAddToCart
+                productId={product.id}
+                slug={product.slug}
+                title={product.name}
+                priceCents={product.priceCents}
+                imageUrl={cover}
+              />
+            </div>
           </div>
         </div>
       </div>

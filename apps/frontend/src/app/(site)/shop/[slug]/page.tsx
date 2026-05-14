@@ -200,7 +200,11 @@ export default async function ProductPage({
   const showStockCount = product.showPublicStockCount !== false;
 
   return (
-    <ProductVariantProvider variants={variantDtos} showPublicStockCount={showStockCount}>
+    <ProductVariantProvider
+      variants={variantDtos}
+      basePriceCents={product.priceCents}
+      showPublicStockCount={showStockCount}
+    >
       <div className="bg-slate-50/80">
       <script
         type="application/ld+json"
@@ -234,10 +238,10 @@ export default async function ProductPage({
           </span>
         </nav>
 
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)] lg:items-start">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start xl:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">
           <ProductGallery productName={product.name} images={gallery} onSale={onSale} />
 
-          <div>
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-3xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-4xl">
                 {product.name}

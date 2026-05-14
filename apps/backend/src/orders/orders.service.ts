@@ -24,7 +24,7 @@ type CreateOrderInput = {
   identityNumber?: string;
   shippingLine1: string;
   shippingLine2?: string;
-  shippingDistrict?: string;
+  shippingDistrict: string;
   shippingCity: string;
   shippingPostalCode?: string;
   shippingCountry?: string;
@@ -254,8 +254,8 @@ export class OrdersService {
           identityNumber: input.identityNumber || null,
           shippingLine1: input.shippingLine1,
           shippingLine2: input.shippingLine2 || null,
-          shippingDistrict: input.shippingDistrict || null,
-          shippingCity: input.shippingCity,
+          shippingDistrict: input.shippingDistrict.trim(),
+          shippingCity: input.shippingCity.trim(),
           shippingPostalCode: input.shippingPostalCode || null,
           notes: input.notes || null,
           kvkkAcceptedAt: new Date(),
@@ -343,8 +343,8 @@ export class OrdersService {
             phone: input.contactPhone,
             line1: input.shippingLine1,
             line2: input.shippingLine2 || null,
-            district: input.shippingDistrict || null,
-            city: input.shippingCity,
+            district: input.shippingDistrict.trim(),
+            city: input.shippingCity.trim(),
             postalCode: input.shippingPostalCode || "",
             isDefault: existingCount === 0,
           },
