@@ -560,7 +560,7 @@ export function HomeEditor({ token }: { token: string }) {
                   label="Slayt görseli"
                   value={slide.mediaUrl}
                   onChange={(url) => updateHeroSlide(idx, { mediaUrl: url })}
-                  hint="Önerilen: geniş yatay (21:9 veya 16:9), örn. 2560×1080 / 1920×1080. Hero alanı tam ekran yüksekliğinde; kare veya dikey görselde üst kısım öncelikli gösterilir, yanlar kırpılabilir."
+                  hint="Önerilen oran 48:23 (≈2,09:1), örn. 1920×920, 2400×1150 veya 3840×1840 — hero çerçevesiyle birebir; kırpma olmaz. 16:9 veya 21:9 kullanırsanız ürünü görselin orta–sağına yerleştirin (alan cover ile dolar). Kare/dikeyde üst-orta güvenli bölge kullanın."
                 />
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <Field label="CTA etiketi">
@@ -634,7 +634,7 @@ export function HomeEditor({ token }: { token: string }) {
 
         {draft.kind !== "HERO" ? null : (
           <p className="mt-2 text-xs text-slate-500">
-            Not: Hero için geçerli içerik slayt listesinden alınır; tek bir hero bölümünde birden fazla slayt ekleyebilirsiniz. Arka plan görselleri için yatay (21:9 / 16:9) yüksek çözünürlük kullanın.
+            Not: Hero için geçerli içerik slayt listesinden alınır; tek bir hero bölümünde birden fazla slayt ekleyebilirsiniz. Arka plan: 48:23 (ör. 3840×1840) ideal; diğer oranlarda kırpma olabilir.
           </p>
         )}
 

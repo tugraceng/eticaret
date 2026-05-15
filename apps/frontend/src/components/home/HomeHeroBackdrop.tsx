@@ -3,21 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 
-/** Metin okunabilirliği — görselin üstünde; görsel ayrı katmanda `contain` ile tam gösterilir. */
+/** Metin okunabilirliği — mobilde görsel `contain`, md+ `cover`; odak sağa. */
 const HERO_OVERLAY =
   "linear-gradient(105deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 38%, rgba(0,0,0,0.2) 100%)";
 
+/** Mobil: tam görünür (`contain`); masaüstü: alan dolar (`cover`), odak sağ. */
+const HERO_IMG_LAYER_CLASS =
+  "absolute inset-0 bg-no-repeat bg-center max-md:bg-contain md:bg-cover md:bg-[position:72%_50%]";
+
 type SlideImg = { image: string };
 
-function imageBg(slide: SlideImg | undefined, fallback: SlideImg) {
+function imageUrl(slide: SlideImg | undefined, fallback: SlideImg) {
   const url = slide?.image?.trim() || fallback.image?.trim();
-  if (!url) return null;
-  return {
-    backgroundImage: `url(${url})`,
-    backgroundSize: "contain" as const,
-    backgroundPosition: "center" as const,
-    backgroundRepeat: "no-repeat" as const,
-  };
+  return url || null;
 }
 
 /**
@@ -60,13 +58,15 @@ export function HomeHeroBackdrop({
   const durationMs = reduceMotion ? 0 : 1000;
   const ease = "cubic-bezier(0.22, 1, 0.36, 1)";
 
-  const styleA = imageBg(slides[slotA], fallback);
-  const styleB = imageBg(slides[slotB], fallback);
+  const urlA = imageUrl(slides[slotA], fallback);
+  const urlB = imageUrl(slides[slotB], fallback);
 
   if (n <= 1) {
     return (
       <div className="pointer-events-none absolute inset-0 z-0 bg-neutral-950" aria-hidden>
-        {styleA ? <div className="absolute inset-0" style={styleA} /> : null}
+        {urlA ? (
+          <div className={HERO_IMG_LAYER_CLASS} style={{ backgroundImage: `url(${urlA})` }} />
+        ) : null}
         <div className="absolute inset-0 z-[1]" style={{ backgroundImage: HERO_OVERLAY }} />
       </div>
     );
@@ -75,22 +75,22 @@ export function HomeHeroBackdrop({
   return (
     <div className="pointer-events-none absolute inset-0 z-0 bg-neutral-950" aria-hidden>
       <div className="absolute inset-0">
-        {styleA ? (
+        {urlA ? (
           <div
-            className="absolute inset-0 will-change-[opacity]"
+            className={`${HERO_IMG_LAYER_CLASS} will-change-[opacity]`}
             style={{
-              ...styleA,
+              backgroundImage: `url(${urlA})`,
               opacity: showA ? 1 : 0,
               transition: `opacity ${durationMs}ms ${ease}`,
               zIndex: showA ? 2 : 1,
             }}
           />
         ) : null}
-        {styleB ? (
+        {urlB ? (
           <div
-            className="absolute inset-0 will-change-[opacity]"
+            className={`${HERO_IMG_LAYER_CLASS} will-change-[opacity]`}
             style={{
-              ...styleB,
+              backgroundImage: `url(${urlB})`,
               opacity: showA ? 0 : 1,
               transition: `opacity ${durationMs}ms ${ease}`,
               zIndex: showA ? 1 : 2,

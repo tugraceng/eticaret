@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { HomeHeroArrows } from "@/components/home/HomeHeroArrows";
 import { HomeHeroBackdrop } from "@/components/home/HomeHeroBackdrop";
+import { heroSectionMinHeightClass } from "@/components/home/homeHeroLayout";
 import type { SiteSettings } from "@/lib/settings";
 
 type Props = {
@@ -67,11 +68,15 @@ export function HomeDefaultHero({ settings }: Props) {
   const goNext = () => setIndex((i) => (i + 1) % slides.length);
 
   return (
-    <section className="home-hero-default relative isolate min-h-[min(100svh,920px)] w-full overflow-hidden bg-neutral-950">
+    <section
+      className={`home-hero-default relative isolate ${heroSectionMinHeightClass} w-full overflow-hidden bg-neutral-950`}
+    >
       <HomeHeroBackdrop slides={slides} index={index} />
       <HomeHeroArrows visible={slides.length > 1} onPrev={goPrev} onNext={goNext} />
 
-      <div className="relative z-10 flex min-h-[min(100svh,920px)] flex-col justify-center px-5 pb-14 pt-20 sm:px-10 sm:pb-16 sm:pt-24 md:min-h-[min(100svh,920px)] md:justify-center md:px-12 md:pb-24 md:pt-32 lg:px-20">
+      <div
+        className={`relative z-10 flex ${heroSectionMinHeightClass} flex-col justify-center px-5 pb-14 pt-20 max-md:justify-start max-md:pb-10 max-md:pt-[max(5.5rem,calc(env(safe-area-inset-top,0px)+4.25rem))] sm:px-10 sm:pb-16 sm:pt-24 md:justify-center md:px-12 md:pb-24 md:pt-32 lg:px-20`}
+      >
         <motion.div
           key={index}
           className="mx-auto w-full max-w-[1400px] md:py-8"
@@ -93,7 +98,7 @@ export function HomeDefaultHero({ settings }: Props) {
             {active.body}
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center gap-3">
+          <div className="mt-8 flex flex-wrap items-center gap-3 md:mt-10">
             <Link
               href={active.cta}
               className="inline-flex min-h-[44px] items-center justify-center bg-neutral-950 px-8 py-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-white ring-1 ring-white/10 transition hover:bg-black"
@@ -108,7 +113,7 @@ export function HomeDefaultHero({ settings }: Props) {
             </Link>
           </div>
 
-          <div className="mt-14 flex items-center gap-2">
+          <div className="mt-8 flex items-center gap-2 md:mt-14">
             {slides.map((s, i) => (
               <button
                 key={s.title}
