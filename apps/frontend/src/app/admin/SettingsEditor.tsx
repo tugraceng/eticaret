@@ -911,7 +911,7 @@ export function SettingsEditor({ token }: { token: string }) {
 
       <AdminCard
         title="Üst promosyon şeridi"
-        description="Masaüstü görünümde, header'ın hemen üstündeki üçlü metin. Renkler ve metinler buradan yönetilir (mobilde bu şerit gizlidir)."
+        description="Header'ın hemen üstündeki kayan üçlü metin; tüm ekran boyutlarında görünür. Renkler ve metinler buradan yönetilir."
       >
         <div
           className="mb-4 flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200 px-3 py-2 text-[11px] font-medium"

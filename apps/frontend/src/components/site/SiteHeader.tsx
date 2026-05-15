@@ -172,8 +172,8 @@ function TopPromoMarqueeBar({
   };
 
   return (
-    <div className="hidden text-[11px] md:block" style={barStyle}>
-      <div ref={viewRef} className="min-w-0 overflow-hidden px-4 py-1.5">
+    <div className="block text-[10px] leading-snug sm:text-[11px]" style={barStyle}>
+      <div ref={viewRef} className="min-w-0 overflow-hidden px-3 py-1.5 sm:px-4">
         <div
           className={`top-promo-track flex w-max min-w-0 ${shiftPx > 0 ? "top-promo-track--ready" : ""}`}
           style={trackStyle}

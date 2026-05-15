@@ -95,6 +95,7 @@ export function ShopPageClient({
   newOnly,
   page,
   view,
+  hasActiveCatalogFilters,
 }: {
   title: string;
   categories: CategoryApiRow[];
@@ -114,6 +115,7 @@ export function ShopPageClient({
   newOnly: boolean;
   page: number;
   view: "grid" | "list";
+  hasActiveCatalogFilters: boolean;
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersSheetCloseRef = useRef<HTMLButtonElement>(null);
@@ -390,6 +392,7 @@ export function ShopPageClient({
             initial={catalog}
             queryWithoutPage={catalogQs}
             layout={view}
+            hasActiveFilters={hasActiveCatalogFilters}
           />
         </div>
       </div>

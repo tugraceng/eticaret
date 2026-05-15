@@ -17,6 +17,8 @@ export type HomeRenderContext = {
     bestsellers: ProductCardData[];
     popular: ProductCardData[];
     newest: ProductCardData[];
+    /** Yayında ve ürün kartında «öne çıkan» işaretli ürünler (hikâye şeridi vb.). */
+    featured: ProductCardData[];
   };
 };
 
@@ -183,7 +185,9 @@ async function FeaturedProducts({ section }: { section: HomeSection }) {
     );
     if (list?.length) {
       const byId = new Map(list.map((p) => [p.id, p]));
-      products = ids.map((id) => byId.get(id)).filter((p): p is ProductCardData => p != null);
+      products = ids
+        .map((id) => byId.get(id))
+        .filter((p): p is ProductCardData => p != null && Boolean(p.isFeatured));
     }
   } else {
     const list = await apiJsonSafe<ProductCardData[]>("/products?featured=1");
@@ -199,7 +203,7 @@ async function FeaturedProducts({ section }: { section: HomeSection }) {
       </div>
       <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((p) => (
-          <li key={p.id}>
+          <li key={p.id} className="flex h-full min-h-0">
             <ProductCard product={p} />
           </li>
         ))}
@@ -479,8 +483,7 @@ export async function HomeSectionRenderer({
         />
       );
     case "STORY_STRIP": {
-      const merged = [...ctx.catalog.newest, ...ctx.catalog.popular, ...ctx.catalog.bestsellers];
-      const unique = dedupeProductsById(merged);
+      const unique = dedupeProductsById(ctx.catalog.featured);
       return (
         <HomeStoryStrip
           products={unique}

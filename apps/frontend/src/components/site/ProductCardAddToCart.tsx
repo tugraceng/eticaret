@@ -20,14 +20,13 @@ export const ProductCardAddToCart = memo(function ProductCardAddToCart({
   imageUrl,
 }: Props) {
   const addLine = useCartStore((s) => s.addLine);
-  const openMini = useCartStore((s) => s.openMiniCart);
 
   return (
     <Button
       type="button"
       size="md"
       variant="secondary"
-      className="min-h-10 w-full px-4 text-micro uppercase sm:w-auto"
+      className="min-h-10 w-full px-4 text-micro uppercase"
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -39,7 +38,6 @@ export const ProductCardAddToCart = memo(function ProductCardAddToCart({
           slug,
           imageUrl,
         });
-        openMini();
       }}
     >
       Sepete ekle

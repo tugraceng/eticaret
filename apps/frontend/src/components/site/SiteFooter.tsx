@@ -86,7 +86,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
               >
                 {settings.logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={settings.logoUrl} alt={settings.siteName} className="h-11 w-auto object-contain sm:h-12" />
+                  <img src={settings.logoUrl} alt={settings.siteName} className="h-[5.5rem] w-auto object-contain sm:h-24" />
                 ) : (
                   <span className="text-xl font-semibold uppercase tracking-[0.12em]">{settings.siteName}</span>
                 )}

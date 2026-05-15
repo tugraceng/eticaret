@@ -139,18 +139,6 @@ export class ProductsService {
   }) {
     const qTrimmed = input?.q?.trim();
     const categoryTrimmed = input?.categoryId?.trim();
-    if (!categoryTrimmed && !qTrimmed) {
-      const { page, limit } = this.normalizePaging(input?.page, input?.limit);
-      return {
-        items: [],
-        page,
-        limit,
-        total: 0,
-        totalPages: 1,
-        hasPrev: false,
-        hasNext: false,
-      };
-    }
 
     let minRatingProductIds: string[] | undefined;
     if (

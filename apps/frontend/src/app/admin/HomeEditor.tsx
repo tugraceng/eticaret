@@ -44,7 +44,7 @@ const KIND_META: Record<
   STORY_STRIP: {
     label: "Hikâye şeridi",
     emoji: "📱",
-    desc: "Yatay ürün şeridi; başlık/metin panelden.",
+    desc: "Yatay ürün şeridi; yalnızca üründe «Öne çıkan» işaretli yayınlı ürünler (görseli olanlar). Başlık/metin panelden.",
   },
   PROMO_BANNER: {
     label: "Promo şeridi",
@@ -60,7 +60,7 @@ const KIND_META: Record<
   FEATURED_PRODUCTS: {
     label: "Öne çıkan ürünler",
     emoji: "📦",
-    desc: "Ürün seçmezseniz mağazada “öne çıkan” işaretli yayınlı ürünler listelenir; seçerseniz sıra editördeki gibidir.",
+    desc: "Yalnızca «Öne çıkan» işaretli yayınlı ürünler; seçim yapmazsanız hepsi, seçerseniz sıra editördeki gibi (işaretsizler gösterilmez).",
   },
   FEATURED_CATEGORIES: {
     label: "Öne çıkan kategoriler",

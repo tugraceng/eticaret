@@ -107,6 +107,19 @@ export default async function ShopPage({
   ].filter(Boolean);
   const title = titleBits.length ? `${titleBits.join(" · ")} sonuçları` : "Mağaza";
 
+  const hasActiveCatalogFilters = Boolean(
+    q ||
+      categoryId ||
+      minPriceCents != null ||
+      maxPriceCents != null ||
+      minAvgRating ||
+      inStockOnly ||
+      onSaleOnly ||
+      featuredOnly ||
+      newOnly ||
+      sort !== "newest",
+  );
+
   const baseParams = {
     q,
     categoryId,
@@ -141,6 +154,7 @@ export default async function ShopPage({
       newOnly={newOnly}
       page={page}
       view={view}
+      hasActiveCatalogFilters={hasActiveCatalogFilters}
     />
   );
 }

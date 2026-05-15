@@ -47,15 +47,18 @@ export default async function HomePage({
   let popularRail: ProductCardData[] = [];
   let newestRail: ProductCardData[] = [];
   let bestsellerRail: ProductCardData[] = [];
+  let featuredRail: ProductCardData[] = [];
   if (!filtering) {
-    const [pop, neu, best] = await Promise.all([
+    const [pop, neu, best, feat] = await Promise.all([
       apiJsonSafe<CatalogSlice>("/products/catalog?sort=popular&limit=10&page=1"),
       apiJsonSafe<CatalogSlice>("/products/catalog?sort=newest&limit=10&page=1"),
       apiJsonSafe<ProductCardData[]>("/products/bestsellers?limit=10"),
+      apiJsonSafe<ProductCardData[]>("/products?featured=1"),
     ]);
     popularRail = pop?.items ?? [];
     newestRail = neu?.items ?? [];
     bestsellerRail = Array.isArray(best) ? best : [];
+    featuredRail = Array.isArray(feat) ? feat : [];
   }
 
   const activeCategory = categoryId
@@ -78,6 +81,7 @@ export default async function HomePage({
       bestsellers: bestsellerRail,
       popular: popularRail,
       newest: newestRail,
+      featured: featuredRail,
     },
   };
 

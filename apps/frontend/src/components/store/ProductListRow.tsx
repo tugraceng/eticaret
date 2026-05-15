@@ -16,7 +16,6 @@ function priceFmt(cents: number) {
 
 export const ProductListRow = memo(function ProductListRow({ product }: Props) {
   const addLine = useCartStore((s) => s.addLine);
-  const openMini = useCartStore((s) => s.openMiniCart);
   const cover = apiAssetUrl(product.images?.[0]?.url) ?? undefined;
   const alt = product.images?.[0]?.alt ?? product.name;
 
@@ -56,7 +55,6 @@ export const ProductListRow = memo(function ProductListRow({ product }: Props) {
                 slug: product.slug,
                 imageUrl: cover,
               });
-              openMini();
             }}
           >
             Sepete ekle

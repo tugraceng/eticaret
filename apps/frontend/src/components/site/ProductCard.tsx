@@ -62,7 +62,7 @@ function ProductCardInner({ product }: { product: ProductCardData }) {
     : 0;
 
   return (
-    <div className="group fade-up relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_12px_40px_-24px_rgba(15,23,42,0.12)] transition-[box-shadow,transform] duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_28px_56px_-28px_rgba(15,23,42,0.22)]">
+    <div className="group fade-up relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_12px_40px_-24px_rgba(15,23,42,0.12)] transition-[box-shadow,transform] duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_28px_56px_-28px_rgba(15,23,42,0.22)]">
       <Link
         prefetch={false}
         href={`/shop/${product.slug}`}
@@ -141,29 +141,35 @@ function ProductCardInner({ product }: { product: ProductCardData }) {
           </span>
         </div>
 
-        <div className="flex flex-1 flex-col p-5">
-          <p className="text-base font-semibold leading-tight text-slate-900 transition-colors group-hover:text-sky-800">
-            {product.name}
-          </p>
-          {product.description && (
-            <p className="mt-1.5 line-clamp-2 flex-1 text-sm text-slate-500">{product.description}</p>
-          )}
-          {typeof product.reviewCount === "number" && product.reviewCount > 0 ? (
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
-              <Stars value={product.avgRating ?? 0} />
-              <span>
-                {(product.avgRating ?? 0).toFixed(1)} ({product.reviewCount})
-              </span>
+        <div className="flex min-h-0 flex-1 flex-col p-5">
+          <div className="flex min-h-0 flex-1 flex-col">
+            <p className="line-clamp-2 min-h-[2.75rem] text-base font-semibold leading-tight text-slate-900 transition-colors group-hover:text-sky-800">
+              {product.name}
+            </p>
+            <div className="mt-1.5 min-h-[2.75rem]">
+              {product.description ? (
+                <p className="line-clamp-2 text-sm text-slate-500">{product.description}</p>
+              ) : null}
             </div>
-          ) : null}
-          <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-2">
+            <div className="mt-2 min-h-[1.375rem]">
+              {typeof product.reviewCount === "number" && product.reviewCount > 0 ? (
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <Stars value={product.avgRating ?? 0} />
+                  <span>
+                    {(product.avgRating ?? 0).toFixed(1)} ({product.reviewCount})
+                  </span>
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <div className="mt-auto flex shrink-0 flex-col gap-3 border-t border-slate-100 pt-4">
             <div>
               <p className="text-base font-semibold text-slate-900">{priceFmt(product.priceCents)}</p>
               {onSale && (
                 <p className="text-xs text-slate-400 line-through">{priceFmt(product.compareAtCents!)}</p>
               )}
             </div>
-            <div className="pointer-events-auto relative z-[6] shrink-0 sm:max-w-[55%]">
+            <div className="pointer-events-auto relative z-[6] w-full">
               <ProductCardAddToCart
                 productId={product.id}
                 slug={product.slug}
