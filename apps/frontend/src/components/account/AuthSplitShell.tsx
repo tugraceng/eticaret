@@ -41,7 +41,7 @@ export function AuthSplitShell({
   return (
     <div className="flex min-h-[calc(100dvh-8rem)] flex-col bg-white md:min-h-[calc(100dvh-6rem)] lg:flex-row">
       <div
-        className="relative min-h-[200px] flex-[0_0_38%] overflow-hidden lg:min-h-0"
+        className="relative h-[min(32svh,280px)] w-full flex-shrink-0 overflow-hidden sm:h-[min(34svh,300px)] lg:h-auto lg:min-h-0 lg:flex-[0_0_38%]"
         style={{ color: panelTextColor }}
       >
         <div
@@ -54,7 +54,7 @@ export function AuthSplitShell({
         {panelImageUrl ? (
           <>
             <div
-              className="absolute inset-0 bg-cover bg-center opacity-55"
+              className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-55"
               style={{ backgroundImage: `url(${panelImageUrl})` }}
               role="img"
               aria-hidden
@@ -69,7 +69,7 @@ export function AuthSplitShell({
           }}
           aria-hidden
         />
-        <div className="relative z-10 flex h-full min-h-[220px] flex-col justify-end p-8 md:p-10 lg:min-h-0">
+        <div className="relative z-10 flex h-full min-h-0 flex-col justify-center px-6 py-8 max-lg:pb-10 md:p-10 lg:justify-end lg:pb-12">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">{siteName}</p>
           <p className="mt-2 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{panelTitle}</p>
           <p className="mt-3 max-w-sm text-sm leading-relaxed opacity-90 [text-wrap:pretty]">

@@ -567,7 +567,7 @@ export function SiteHeader({
 
         {megaCategory ? (
           <div
-            className="absolute inset-x-0 top-full z-[80] border-t border-slate-100 bg-white/98 shadow-[0_28px_56px_-24px_rgba(15,23,42,0.22)] backdrop-blur-md"
+            className="absolute inset-x-0 top-full z-[80] border-t border-slate-100 bg-white shadow-[0_28px_56px_-24px_rgba(15,23,42,0.22)]"
             onMouseEnter={clearMegaCloseTimer}
             onMouseLeave={scheduleMegaClose}
           >
@@ -615,7 +615,7 @@ export function SiteHeader({
           open ? "max-h-[720px] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
-        <div className="mx-auto flex max-w-7xl flex-col border-t border-slate-200/60 bg-white/98 px-4 py-4 shadow-[0_24px_50px_-24px_rgba(15,23,42,0.2)] backdrop-blur-lg sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-col border-t border-slate-200/60 bg-white px-4 py-4 shadow-[0_24px_50px_-24px_rgba(15,23,42,0.2)] sm:px-6">
           <div className="flex max-h-[min(70vh,560px)] flex-col gap-2 overflow-y-auto overscroll-y-contain pr-1 [-webkit-overflow-scrolling:touch]">
             {headerNav.beforeCategories.map((item) => (
               <Link

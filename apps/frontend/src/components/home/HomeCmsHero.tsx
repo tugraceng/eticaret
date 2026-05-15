@@ -67,7 +67,7 @@ export function HomeCmsHero({ section, settings }: Props) {
       <HomeHeroBackdrop slides={slides} index={index} />
       <HomeHeroArrows visible={slides.length > 1} onPrev={goPrev} onNext={goNext} />
 
-      <div className="relative z-10 flex min-h-[min(100svh,920px)] flex-col justify-end px-5 pb-16 pt-28 sm:px-10 sm:pb-20 sm:pt-32 md:justify-center md:px-12 md:pb-24 lg:px-20">
+      <div className="relative z-10 flex min-h-[min(100svh,920px)] flex-col justify-center px-5 pb-14 pt-20 sm:px-10 sm:pb-16 sm:pt-24 md:min-h-[min(100svh,920px)] md:justify-center md:px-12 md:pb-24 md:pt-32 lg:px-20">
         <motion.div
           key={index}
           className="mx-auto w-full max-w-[1400px] md:py-8"
