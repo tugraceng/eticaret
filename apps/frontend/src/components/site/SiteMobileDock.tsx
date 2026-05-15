@@ -6,7 +6,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { SiteHeaderSearch } from "@/components/site/SiteHeaderSearch";
 import { shopCategoryHref, type HeaderNavCategory } from "@/lib/category-nav";
 import { cn } from "@/lib/cn";
-import { useCartStore } from "@/stores/cart-store";
+import { useCartStore, selectCartTotalQty } from "@/stores/cart-store";
 
 type DockLink = {
   kind: "link";
@@ -108,15 +108,18 @@ export function SiteMobileDock({ categoryNav = [] }: { categoryNav?: HeaderNavCa
   const [searchOpen, setSearchOpen] = useState(false);
   const [dockSubcatsOpen, setDockSubcatsOpen] = useState<Set<string>>(new Set());
   const openMiniCart = useCartStore((s) => s.openMiniCart);
+  const cartCount = useCartStore(selectCartTotalQty);
+
+  useEffect(() => {
+    useCartStore.getState().hydrate();
+  }, []);
 
   const closeSearch = useCallback(() => setSearchOpen(false), []);
 
   const toggleDockSubcats = useCallback((id: string) => {
     setDockSubcatsOpen((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+      if (prev.has(id)) return new Set();
+      return new Set([id]);
     });
   }, []);
 
@@ -179,7 +182,7 @@ export function SiteMobileDock({ categoryNav = [] }: { categoryNav?: HeaderNavCa
                   const hasSubs = c.children.length > 0;
                   const expanded = dockSubcatsOpen.has(c.id);
                   return (
-                    <li key={c.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                    <li key={c.id} className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
                       <div className="flex min-h-10 items-stretch">
                         <Link
                           href={shopCategoryHref(c.id)}
@@ -191,11 +194,11 @@ export function SiteMobileDock({ categoryNav = [] }: { categoryNav?: HeaderNavCa
                         {hasSubs ? (
                           <button
                             type="button"
-                            className="flex w-11 shrink-0 items-center justify-center border-l border-slate-100 bg-slate-50/90 text-slate-600 hover:bg-slate-100"
+                            className="flex min-w-[3rem] shrink-0 items-center justify-center border-l border-slate-100 bg-slate-50/90 text-slate-600 hover:bg-slate-100 active:bg-slate-200"
                             aria-expanded={expanded}
                             aria-controls={`dock-subcats-${c.id}`}
                             aria-label={
-                              expanded ? `${c.name} alt kategorilerini gizle` : `${c.name} alt kategorilerini göster`
+                              expanded ? `${c.name} alt koleksiyonlarını gizle` : `${c.name} alt koleksiyonlarını göster`
                             }
                             onClick={() => toggleDockSubcats(c.id)}
                           >
@@ -207,24 +210,42 @@ export function SiteMobileDock({ categoryNav = [] }: { categoryNav?: HeaderNavCa
                         <div
                           id={`dock-subcats-${c.id}`}
                           role="region"
-                          aria-label={`${c.name} alt kategorileri`}
+                          aria-label={`${c.name} alt koleksiyonları`}
                           className={cn(
                             "grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none",
                             expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                           )}
                         >
-                          <div className="min-h-0 overflow-hidden">
-                            <div className="flex flex-wrap gap-1.5 border-t border-slate-100 bg-slate-50/70 px-3 py-2">
-                              {c.children.map((sub) => (
+                          <div className="min-h-0 overflow-hidden border-t border-slate-100 bg-slate-50/70">
+                            <div className="space-y-2 px-3 py-3">
+                              <div className="flex flex-wrap items-end justify-between gap-2">
+                                <div className="min-w-0">
+                                  <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                    Alt koleksiyonlar
+                                  </p>
+                                  <p className="mt-0.5 truncate text-xs font-semibold text-slate-900">{c.name}</p>
+                                </div>
                                 <Link
-                                  key={sub.id}
-                                  href={shopCategoryHref(sub.id)}
+                                  href={shopCategoryHref(c.id)}
                                   onClick={closeSearch}
-                                  className="max-w-full truncate rounded-lg border border-slate-200/90 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
+                                  className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-sky-700"
                                 >
-                                  {sub.name}
+                                  Tümü →
                                 </Link>
-                              ))}
+                              </div>
+                              <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                                {c.children.map((sub) => (
+                                  <li key={sub.id}>
+                                    <Link
+                                      href={shopCategoryHref(sub.id)}
+                                      onClick={closeSearch}
+                                      className="flex min-h-[2.75rem] items-center rounded-xl border border-slate-100 bg-white px-2.5 py-2 text-[11px] font-semibold text-slate-800 shadow-sm active:bg-slate-50"
+                                    >
+                                      <span className="truncate">{sub.name}</span>
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
                           </div>
                         </div>
@@ -262,14 +283,20 @@ export function SiteMobileDock({ categoryNav = [] }: { categoryNav?: HeaderNavCa
           {items.map((it) => {
             const active = it.kind === "link" ? it.match(pathname) : false;
             const cls = active ? "text-slate-900" : "text-slate-500";
+            const isCartDock = it.kind === "link" && it.href === "/cart";
             const inner = (
               <>
                 <span
-                  className={`grid h-9 w-9 place-items-center rounded-xl ring-1 ring-slate-200/80 ${
+                  className={`relative grid h-9 w-9 place-items-center rounded-xl ring-1 ring-slate-200/80 ${
                     it.kind === "search" ? "bg-slate-900 text-white ring-slate-800" : "bg-slate-50 text-slate-700"
                   }`}
                 >
                   {iconForItem(it)}
+                  {isCartDock && cartCount > 0 ? (
+                    <span className="absolute -right-1 -top-1 flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-slate-900 px-1 text-[9px] font-bold leading-none text-white shadow-sm ring-2 ring-white">
+                      {cartCount > 99 ? "99+" : cartCount}
+                    </span>
+                  ) : null}
                 </span>
                 <span className="max-w-[4.25rem] truncate text-[9px] font-semibold leading-tight sm:max-w-none">
                   {it.label}
@@ -283,7 +310,7 @@ export function SiteMobileDock({ categoryNav = [] }: { categoryNav?: HeaderNavCa
                     type="button"
                     onClick={() => openMiniCart()}
                     className={`flex w-full flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10px] font-semibold transition-colors ${cls} hover:bg-slate-100 hover:text-slate-900`}
-                    aria-label="Sepeti aç"
+                    aria-label={cartCount > 0 ? `Sepeti aç, ${cartCount} ürün` : "Sepeti aç"}
                     aria-haspopup="dialog"
                     aria-controls="mini-cart-panel"
                   >

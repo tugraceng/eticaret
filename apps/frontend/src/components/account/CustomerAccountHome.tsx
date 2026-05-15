@@ -17,6 +17,7 @@ import { ProvinceDistrictSelect } from "@/components/forms/ProvinceDistrictSelec
 import { isTrProvinceDistrictValid } from "@/lib/tr-province-district";
 import { showSiteToast } from "@/lib/site-toast";
 import { isAccountTabId, type AccountTabId } from "@/components/account/account-tab-ids";
+import { orderStatusLabelTr } from "@/lib/order-status-tr";
 
 type OrderRow = {
   id: string;
@@ -60,18 +61,6 @@ const statusClass: Record<string, string> = {
   DELIVERED: "bg-emerald-100 text-emerald-800",
   CANCELLED: "bg-rose-100 text-rose-800",
 };
-
-function orderStatusLabel(status: string) {
-  const m: Record<string, string> = {
-    PENDING: "Beklemede",
-    PAID: "Ödendi",
-    PROCESSING: "Hazırlanıyor",
-    SHIPPED: "Kargoda",
-    DELIVERED: "Teslim edildi",
-    CANCELLED: "İptal",
-  };
-  return m[status] ?? status;
-}
 
 function priceFmt(cents: number, currency = "TRY") {
   return (cents / 100).toLocaleString("tr-TR", { style: "currency", currency });
@@ -440,7 +429,7 @@ function OverviewTab({
                             : (statusClass[o.status] ?? "bg-slate-100 text-slate-700")
                       }`}
                     >
-                      {orderStatusLabel(o.status)}
+                      {orderStatusLabelTr(o.status)}
                     </span>
                     <p className="text-sm font-semibold text-slate-900">{priceFmt(o.totalCents, o.currency)}</p>
                     <div className="flex gap-2">
@@ -549,7 +538,7 @@ function OrdersTab({
                   statusClass[o.status] ?? "bg-slate-100 text-slate-700"
                 }`}
               >
-                {orderStatusLabel(o.status)}
+                {orderStatusLabelTr(o.status)}
               </span>
               <div className="text-right">
                 <p className="text-sm font-semibold text-slate-900">

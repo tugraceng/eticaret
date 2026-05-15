@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
+import { orderStatusLabelTr } from "@/lib/order-status-tr";
 import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
 
 type OrderRow = {
@@ -132,11 +133,11 @@ export default function OrdersPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                      className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide ${
                         statusClass[o.status] ?? "bg-slate-100 text-slate-700"
                       }`}
                     >
-                      {o.status}
+                      {orderStatusLabelTr(o.status)}
                     </span>
                     <div className="text-right">
                       <p className="text-sm font-semibold text-slate-900">

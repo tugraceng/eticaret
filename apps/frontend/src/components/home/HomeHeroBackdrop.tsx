@@ -12,6 +12,10 @@ function bgStyle(slide: SlideImg | undefined, fallback: SlideImg) {
   const img = slide?.image ?? fallback.image;
   return {
     backgroundImage: `${HERO_BG_GRADIENT}, url(${img})`,
+    backgroundSize: "cover",
+    /** Üst hizalama: yüksek/portre görsellerde önemli kısım genelde üstte; `center` ile “yarım” kesilme hissi azalır. */
+    backgroundPosition: "center top",
+    backgroundRepeat: "no-repeat",
   } as const;
 }
 
@@ -59,7 +63,7 @@ export function HomeHeroBackdrop({
   if (n <= 1) {
     return (
       <div
-        className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center"
+        className="pointer-events-none absolute inset-0 z-0"
         style={bgStyle(slides[safeIndex], fallback)}
         aria-hidden
       />
@@ -69,7 +73,7 @@ export function HomeHeroBackdrop({
   return (
     <div className="pointer-events-none absolute inset-0 z-0">
       <div
-        className="absolute inset-0 bg-cover bg-center will-change-[opacity]"
+        className="absolute inset-0 z-0 will-change-[opacity]"
         style={{
           ...bgStyle(slides[slotA], fallback),
           opacity: showA ? 1 : 0,
@@ -79,7 +83,7 @@ export function HomeHeroBackdrop({
         aria-hidden
       />
       <div
-        className="absolute inset-0 bg-cover bg-center will-change-[opacity]"
+        className="absolute inset-0 z-0 will-change-[opacity]"
         style={{
           ...bgStyle(slides[slotB], fallback),
           opacity: showA ? 0 : 1,

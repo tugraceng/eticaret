@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
+import { orderStatusHeadlineTr, orderStatusLabelTr } from "@/lib/order-status-tr";
 import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
 import { CancelButton } from "./CancelButton";
 import { ReturnRequestForm } from "./ReturnRequestForm";
@@ -139,12 +140,12 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Sipariş takibi</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-            Siparişiniz hazırlanıyor
+            {orderStatusHeadlineTr(order.status)}
           </h1>
           <p className="mt-2 font-mono text-xs text-slate-500">#{order.id}</p>
         </div>
-        <span className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider ${statusClass[order.status] ?? "bg-slate-100 text-slate-700"}`}>
-          {order.status}
+        <span className={`rounded-full px-3 py-1 text-[11px] font-bold tracking-wide ${statusClass[order.status] ?? "bg-slate-100 text-slate-700"}`}>
+          {orderStatusLabelTr(order.status)}
         </span>
       </div>
 
@@ -157,8 +158,8 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
                 <span className={`grid h-9 w-9 place-items-center rounded-full text-[11px] font-bold ${done ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-400"}`}>
                   {i + 1}
                 </span>
-                <span className={`mt-2 text-[10px] font-semibold uppercase tracking-widest ${done ? "text-slate-800" : "text-slate-400"}`}>
-                  {s}
+                <span className={`mt-2 text-[10px] font-semibold leading-tight tracking-wide text-balance ${done ? "text-slate-800" : "text-slate-400"}`}>
+                  {orderStatusLabelTr(s)}
                 </span>
               </li>
             );

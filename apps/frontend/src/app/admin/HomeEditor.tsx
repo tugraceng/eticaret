@@ -14,7 +14,7 @@ const KIND_META: Record<
   HERO: {
     label: "Hero slayt",
     emoji: "🎬",
-    desc: "Tam genişlik vitrin; baslik/aciklama/gorsel/CTA alanlariyla yonetin.",
+    desc: "Tam genişlik vitrin. Görseller için yatay (ör. 21:9, ~2560×1080) önerilir; kare görseller kırpılabilir.",
   },
   TRUST_STRIP: {
     label: "Güven şeridi",
@@ -560,7 +560,7 @@ export function HomeEditor({ token }: { token: string }) {
                   label="Slayt görseli"
                   value={slide.mediaUrl}
                   onChange={(url) => updateHeroSlide(idx, { mediaUrl: url })}
-                  hint="Bu alan zorunludur."
+                  hint="Önerilen: geniş yatay (21:9 veya 16:9), örn. 2560×1080 / 1920×1080. Hero alanı tam ekran yüksekliğinde; kare veya dikey görselde üst kısım öncelikli gösterilir, yanlar kırpılabilir."
                 />
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <Field label="CTA etiketi">
@@ -634,7 +634,7 @@ export function HomeEditor({ token }: { token: string }) {
 
         {draft.kind !== "HERO" ? null : (
           <p className="mt-2 text-xs text-slate-500">
-            Not: Hero için geçerli içerik slayt listesinden alınır; tek bir hero bölümünde birden fazla slayt ekleyebilirsiniz.
+            Not: Hero için geçerli içerik slayt listesinden alınır; tek bir hero bölümünde birden fazla slayt ekleyebilirsiniz. Arka plan görselleri için yatay (21:9 / 16:9) yüksek çözünürlük kullanın.
           </p>
         )}
 

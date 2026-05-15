@@ -3,9 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
-import { useCartStore } from "@/stores/cart-store";
 import type { ProductCardData } from "@/components/site/ProductCard";
-import { Button } from "@/components/ui/atoms";
+import { ProductInlineCartQty } from "@/components/site/ProductInlineCartQty";
 import { apiAssetUrl } from "@/lib/api";
 
 type Props = { product: ProductCardData };
@@ -15,7 +14,6 @@ function priceFmt(cents: number) {
 }
 
 export const ProductListRow = memo(function ProductListRow({ product }: Props) {
-  const addLine = useCartStore((s) => s.addLine);
   const cover = apiAssetUrl(product.images?.[0]?.url) ?? undefined;
   const alt = product.images?.[0]?.alt ?? product.name;
 
@@ -41,24 +39,15 @@ export const ProductListRow = memo(function ProductListRow({ product }: Props) {
         ) : null}
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-lg font-semibold text-[var(--ds-text)]">{priceFmt(product.priceCents)}</p>
-          <Button
-            type="button"
-            size="md"
-            variant="secondary"
-            className="min-h-10 px-4 text-micro uppercase"
-            onClick={() => {
-              addLine({
-                productId: product.id,
-                quantity: 1,
-                title: product.name,
-                priceCents: product.priceCents,
-                slug: product.slug,
-                imageUrl: cover,
-              });
-            }}
-          >
-            Sepete ekle
-          </Button>
+          <div className="min-w-[10.5rem] shrink-0">
+            <ProductInlineCartQty
+              productId={product.id}
+              slug={product.slug}
+              title={product.name}
+              priceCents={product.priceCents}
+              imageUrl={cover}
+            />
+          </div>
         </div>
       </div>
     </li>
