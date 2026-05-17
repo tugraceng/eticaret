@@ -147,6 +147,17 @@ export function CustomerLoginForm({
       panelGradientFrom={authPanel?.gradientFrom}
       panelGradientTo={authPanel?.gradientTo}
       panelTextColor={authPanel?.textColor}
+      bottomAccessory={
+        <p className="text-center text-sm text-slate-600">
+          Hesabınız yok mu?{" "}
+          <Link
+            href={`/hesap/kayit?callbackUrl=${encodeURIComponent(safeReturn)}`}
+            className="font-semibold text-slate-900 hover:underline"
+          >
+            Kayıt olun
+          </Link>
+        </p>
+      }
     >
       <div className="grid grid-cols-2 gap-3">
         <button
@@ -241,16 +252,6 @@ export function CustomerLoginForm({
         <button type="submit" disabled={busy} className="store-cta-primary">
           {busy ? "Giriş…" : "Giriş yap"}
         </button>
-
-        <p className="text-center text-sm text-slate-600">
-          Hesabınız yok mu?{" "}
-          <Link
-            href={`/hesap/kayit?callbackUrl=${encodeURIComponent(safeReturn)}`}
-            className="font-semibold text-slate-900 hover:underline"
-          >
-            Kayıt olun
-          </Link>
-        </p>
       </form>
     </AuthSplitShell>
   );

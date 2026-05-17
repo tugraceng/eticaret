@@ -135,6 +135,17 @@ export function CustomerRegisterForm({
       panelGradientFrom={authPanel?.gradientFrom}
       panelGradientTo={authPanel?.gradientTo}
       panelTextColor={authPanel?.textColor}
+      bottomAccessory={
+        <p className="text-center text-sm text-slate-600">
+          Zaten hesabınız var mı?{" "}
+          <Link
+            href={`/hesap/giris?callbackUrl=${encodeURIComponent(safeReturn)}`}
+            className="font-semibold text-slate-900 hover:underline"
+          >
+            Giriş yapın
+          </Link>
+        </p>
+      }
     >
       <form
         onSubmit={(e) => {
@@ -269,16 +280,6 @@ export function CustomerRegisterForm({
         <button type="submit" disabled={busy} className="store-cta-primary">
           {busy ? "Kayıt…" : "Kayıt ol"}
         </button>
-
-        <p className="text-center text-sm text-slate-600">
-          Zaten hesabınız var mı?{" "}
-          <Link
-            href={`/hesap/giris?callbackUrl=${encodeURIComponent(safeReturn)}`}
-            className="font-semibold text-slate-900 hover:underline"
-          >
-            Giriş yapın
-          </Link>
-        </p>
       </form>
     </AuthSplitShell>
   );
