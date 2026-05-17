@@ -25,6 +25,7 @@ const CHANNELS: Array<{ id: string; label: string }> = [
   { id: "EMAIL", label: "E-posta" },
   { id: "WHATSAPP_LINK", label: "E-posta + WhatsApp bağlantısı" },
   { id: "SMS_READY", label: "E-posta (SMS altyapısı için hazır)" },
+  { id: "SMS", label: "SMS (NetGSM — üye cep telefonu)" },
 ];
 
 type CampaignRow = {
@@ -110,15 +111,14 @@ export function MarketingPanel({ token }: { token: string }) {
     setPreviewCount(null);
     setErr(null);
     try {
-      const res = (await adminFetch(
-        `/admin/marketing/campaigns/preview?audience=${encodeURIComponent(audience)}`,
-        token,
-      )) as { count: number };
+      let url = `/admin/marketing/campaigns/preview?audience=${encodeURIComponent(audience)}`;
+      if (channel === "SMS") url += "&channel=SMS";
+      const res = (await adminFetch(url, token)) as { count: number };
       setPreviewCount(typeof res.count === "number" ? res.count : 0);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     }
-  }, [token, audience]);
+  }, [token, audience, channel]);
 
   const createCampaign = useCallback(async () => {
     if (!token) return;
@@ -280,6 +280,12 @@ export function MarketingPanel({ token }: { token: string }) {
             <div>
               <label className="text-xs font-semibold text-slate-700">Açıklama (HTML değil)</label>
               <AdminTextarea className="mt-1 w-full" value={body} onChange={(e) => setBody(e.target.value)} rows={6} />
+              {channel === "SMS" ? (
+                <p className="mt-1 text-[11px] text-slate-500">
+                  SMS kanalı düz metindir; başlık ve gövde tek mesajda birleştirilir. Yalnızca üye hesabında geçerli 05xx cep
+                  telefonu olan izinli müşterilere gider. Önizlemede bu kişiler sayılır. NetGSM ayarları Mağaza ayarlarından yapılır.
+                </p>
+              ) : null}
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-700">Kitle</label>
@@ -296,7 +302,10 @@ export function MarketingPanel({ token }: { token: string }) {
                 Alıcı sayısını önizle
               </AdminButton>
               {previewCount !== null ? (
-                <span className="text-sm font-medium text-slate-700">Tahmini alıcı: {previewCount}</span>
+                <span className="text-sm font-medium text-slate-700">
+                  Tahmini alıcı: {previewCount}
+                  {channel === "SMS" ? " (cep telefonu kayıtlı)" : ""}
+                </span>
               ) : null}
             </div>
             <div>

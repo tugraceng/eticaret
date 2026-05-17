@@ -1,12 +1,12 @@
 /**
  * Hero çerçevesi — tam genişlik.
  *
- * Önerilen kaynak görsel: **48:23** (örn. 1920×920). Masaüstü: `cover` + üst hizalı.
+ * Önerilen kaynak görsel: **48:23** (örn. 1920×920). Çerçeve masaüstünde ~**2:1** (24/48) ile hafif uzatılmıştır.
  */
 
-/** Yalnızca section için min-yükseklik (iç sütunda tekrarlamayın — flex-1 kullanın). */
+/** Yalnızca section için min-yükseklik — biraz daha uzun çerçeve görselin cover ile oturmasını kolaylaştırır. */
 export const heroSectionMinHeightClass =
-  "max-md:min-h-[clamp(24rem,min(72svh,36rem),38rem)] md:min-h-[max(28.75rem,min(92svh,min(57.5rem,calc(100vw*23/48))))]";
+  "max-md:min-h-[clamp(26rem,min(78svh,40rem),44rem)] md:min-h-[max(29rem,min(96svh,min(60rem,calc(100vw*24/48))))]";
 
 /** Yatay padding — iç sütun için */
 export const heroContentPaddingClass = "px-4 sm:px-6 md:px-10 lg:px-14 xl:px-20";

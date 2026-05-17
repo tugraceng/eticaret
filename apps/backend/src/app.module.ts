@@ -19,6 +19,7 @@ import { ReturnsModule } from "./returns/returns.module";
 import { ReviewsModule } from "./reviews/reviews.module";
 import { ShippingModule } from "./shipping/shipping.module";
 import { WhatsAppModule } from "./whatsapp/whatsapp.module";
+import { NetgsmModule } from "./netgsm/netgsm.module";
 import { UploadsModule } from "./uploads/uploads.module";
 import { MarketingModule } from "./marketing/marketing.module";
 import { EinvoiceModule } from "./einvoice/einvoice.module";
@@ -58,6 +59,7 @@ import { JobsModule } from "./common/jobs/jobs.module";
     ShippingModule,
     ReturnsModule,
     WhatsAppModule,
+    NetgsmModule,
     AnalyticsModule,
     UploadsModule,
     MarketingModule,

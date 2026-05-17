@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { buildWaMeUrl, normalizePhoneToE164 } from "../common/phone.util";
 import { PrismaService } from "../prisma/prisma.service";
 
 type ShippedPayload = {
@@ -17,33 +18,6 @@ type WhatsAppSettings = {
   whatsappShippedTemplate: string | null;
   whatsappTemplateLang: string;
 };
-
-/**
- * Telefonu WhatsApp için E.164 benzeri formata çevirir (sadece rakamlar, baştaki 0'ı düşer, 90 ekler).
- * Örn: "0555 123 45 67" -> "905551234567"
- */
-export function normalizePhoneToE164(raw: string, defaultCountryCode = "90"): string | null {
-  if (!raw) return null;
-  let digits = raw.replace(/\D/g, "");
-  if (!digits) return null;
-  // başta 0 varsa ve country code içermiyorsa
-  if (digits.startsWith("00")) digits = digits.slice(2);
-  if (digits.startsWith("0")) digits = digits.slice(1);
-  if (!digits.startsWith(defaultCountryCode) && digits.length === 10) {
-    digits = defaultCountryCode + digits;
-  }
-  // TR için toplam 12 hane bekleniyor (90 + 10)
-  if (digits.length < 11 || digits.length > 15) return null;
-  return digits;
-}
-
-/** "Merhaba {ad}" gibi hazır mesajı kullanıcıya özelleştir. */
-export function buildWaMeUrl(rawPhone: string, text?: string | null): string | null {
-  const phone = normalizePhoneToE164(rawPhone);
-  if (!phone) return null;
-  const qs = text ? `?text=${encodeURIComponent(text)}` : "";
-  return `https://wa.me/${phone}${qs}`;
-}
 
 @Injectable()
 export class WhatsAppService {

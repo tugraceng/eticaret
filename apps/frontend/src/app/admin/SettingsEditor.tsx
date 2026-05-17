@@ -35,6 +35,12 @@ type Settings = {
   whatsappAccessToken?: string | null;
   whatsappShippedTemplate?: string | null;
   whatsappTemplateLang?: string;
+  netgsmEnabled?: boolean;
+  netgsmUsercode?: string | null;
+  netgsmPassword?: string | null;
+  netgsmMsgHeader?: string | null;
+  netgsmSmsFilter?: string;
+  netgsmShippedMessageTemplate?: string | null;
   popupEnabled?: boolean;
   popupTitle?: string | null;
   popupBody?: string | null;
@@ -73,6 +79,20 @@ type Settings = {
   contactNavLabel?: string | null;
   contactNavHref?: string | null;
   headerNav?: unknown;
+};
+
+type SmsOutboundLogRow = {
+  id: string;
+  createdAt: string;
+  purpose: string;
+  toMasked: string;
+  messagePreview: string;
+  filterUsed: string;
+  ok: boolean;
+  providerCode: string | null;
+  providerDetail: string | null;
+  orderId: string | null;
+  campaignId: string | null;
 };
 
 const SOCIAL_KEYS = ["instagram", "facebook", "x", "youtube", "linkedin", "tiktok"] as const;
@@ -256,6 +276,20 @@ export function SettingsEditor({ token }: { token: string }) {
   const [waAccessToken, setWaAccessToken] = useState("");
   const [waShippedTemplate, setWaShippedTemplate] = useState("");
   const [waTemplateLang, setWaTemplateLang] = useState("tr");
+  const [netgsmEnabled, setNetgsmEnabled] = useState(false);
+  const [netgsmUsercode, setNetgsmUsercode] = useState("");
+  const [netgsmPassword, setNetgsmPassword] = useState("");
+  const [netgsmMsgHeader, setNetgsmMsgHeader] = useState("");
+  const [netgsmSmsFilter, setNetgsmSmsFilter] = useState("0");
+  const [netgsmShippedTemplate, setNetgsmShippedTemplate] = useState("");
+  const [testSmsPhone, setTestSmsPhone] = useState("");
+  const [testSmsMessage, setTestSmsMessage] = useState("");
+  const [testSmsBusy, setTestSmsBusy] = useState(false);
+  const [testSmsOk, setTestSmsOk] = useState(false);
+  const [smsLogs, setSmsLogs] = useState<SmsOutboundLogRow[]>([]);
+  const [smsLogsTotal, setSmsLogsTotal] = useState(0);
+  const [smsLogsBusy, setSmsLogsBusy] = useState(false);
+  const [smsLogPurposeFilter, setSmsLogPurposeFilter] = useState("");
   const [popupEnabled, setPopupEnabled] = useState(false);
   const [popupTitle, setPopupTitle] = useState("");
   const [popupBody, setPopupBody] = useState("");
@@ -295,6 +329,57 @@ export function SettingsEditor({ token }: { token: string }) {
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const loadSmsLogs = useCallback(async () => {
+    if (!token?.trim()) return;
+    setSmsLogsBusy(true);
+    try {
+      const purposeQ =
+        smsLogPurposeFilter.trim() !== ""
+          ? `&purpose=${encodeURIComponent(smsLogPurposeFilter.trim())}`
+          : "";
+      const res = (await adminFetch(`/admin/netgsm/logs?limit=40&offset=0${purposeQ}`, token)) as {
+        items?: SmsOutboundLogRow[];
+        total?: number;
+      };
+      setSmsLogs(Array.isArray(res.items) ? res.items : []);
+      setSmsLogsTotal(typeof res.total === "number" ? res.total : 0);
+    } catch {
+      setSmsLogs([]);
+      setSmsLogsTotal(0);
+    } finally {
+      setSmsLogsBusy(false);
+    }
+  }, [token, smsLogPurposeFilter]);
+
+  const sendTestSms = useCallback(async () => {
+    if (!token?.trim()) return;
+    const phone = testSmsPhone.trim();
+    if (!phone) {
+      setError("Test için telefon girin.");
+      return;
+    }
+    setTestSmsBusy(true);
+    setError(null);
+    setTestSmsOk(false);
+    try {
+      await adminFetch("/admin/netgsm/test-sms", token, {
+        method: "POST",
+        body: JSON.stringify({
+          phone,
+          ...(testSmsMessage.trim() ? { message: testSmsMessage.trim() } : {}),
+        }),
+      });
+      setTestSmsOk(true);
+      window.setTimeout(() => setTestSmsOk(false), 5000);
+      await loadSmsLogs();
+    } catch (e) {
+      const msg = formatAdminCaughtError(e, "Test SMS gönderilemedi");
+      if (msg) setError(msg);
+    } finally {
+      setTestSmsBusy(false);
+    }
+  }, [token, testSmsPhone, testSmsMessage, loadSmsLogs]);
+
   const load = useCallback(async () => {
     setBusy(true);
     setError(null);
@@ -331,6 +416,12 @@ export function SettingsEditor({ token }: { token: string }) {
       setWaAccessToken(s.whatsappAccessToken ?? "");
       setWaShippedTemplate(s.whatsappShippedTemplate ?? "");
       setWaTemplateLang(s.whatsappTemplateLang ?? "tr");
+      setNetgsmEnabled(Boolean(s.netgsmEnabled));
+      setNetgsmUsercode(s.netgsmUsercode ?? "");
+      setNetgsmPassword(s.netgsmPassword ?? "");
+      setNetgsmMsgHeader(s.netgsmMsgHeader ?? "");
+      setNetgsmSmsFilter((s.netgsmSmsFilter ?? "0").trim() || "0");
+      setNetgsmShippedTemplate(s.netgsmShippedMessageTemplate ?? "");
       setPopupEnabled(Boolean(s.popupEnabled));
       setPopupTitle(s.popupTitle ?? "");
       setPopupBody(s.popupBody ?? "");
@@ -379,6 +470,11 @@ export function SettingsEditor({ token }: { token: string }) {
   }, [token]);
 
   useEffect(() => {
+    if (!token?.trim()) return;
+    void loadSmsLogs();
+  }, [token, smsLogPurposeFilter, loadSmsLogs]);
+
+  useEffect(() => {
     void load();
   }, [load]);
 
@@ -420,6 +516,12 @@ export function SettingsEditor({ token }: { token: string }) {
         whatsappAccessToken: waAccessToken.trim() || null,
         whatsappShippedTemplate: waShippedTemplate.trim() || null,
         whatsappTemplateLang: waTemplateLang.trim() || "tr",
+        netgsmEnabled,
+        netgsmUsercode: netgsmUsercode.trim() || null,
+        netgsmPassword: netgsmPassword.trim() || null,
+        netgsmMsgHeader: netgsmMsgHeader.trim() || null,
+        netgsmSmsFilter: netgsmSmsFilter.trim() || "0",
+        netgsmShippedMessageTemplate: netgsmShippedTemplate.trim() || null,
         popupEnabled: popupEnabled,
         popupTitle: popupTitle.trim() || null,
         popupBody: popupBody.trim() || null,
@@ -506,6 +608,12 @@ export function SettingsEditor({ token }: { token: string }) {
     waAccessToken,
     waShippedTemplate,
     waTemplateLang,
+    netgsmEnabled,
+    netgsmUsercode,
+    netgsmPassword,
+    netgsmMsgHeader,
+    netgsmSmsFilter,
+    netgsmShippedTemplate,
     popupEnabled,
     popupTitle,
     popupBody,
@@ -906,6 +1014,210 @@ export function SettingsEditor({ token }: { token: string }) {
             takip numarası. Kargo firmasını 4. parametre olarak eklerseniz şablon mevcutsa
             gönderilir.
           </p>
+        </div>
+      </AdminCard>
+
+      <AdminCard
+        title="NetGSM SMS"
+        description="Kargo takip numarası bilgilendirme SMS’i ve pazarlama kampanyaları (SMS kanalı). Netgsm panelinde API kullanıcısı ve onaylı gönderici başlığı gerekir."
+      >
+        <label className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={netgsmEnabled}
+            onChange={(e) => setNetgsmEnabled(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300"
+          />
+          <span>
+            <span className="font-semibold text-slate-900">NetGSM SMS etkin</span>
+            <span className="ml-2 text-xs text-slate-500">
+              Kapalıyken kargo SMS’i ve SMS kampanyası gönderilmez.
+            </span>
+          </span>
+        </label>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <Field label="API kullanıcı kodu (usercode)" hint="Netgsm abonelik / API alt kullanıcı adı">
+            <input
+              className="input-soft font-mono text-xs"
+              value={netgsmUsercode}
+              onChange={(e) => setNetgsmUsercode(e.target.value)}
+              autoComplete="off"
+            />
+          </Field>
+          <Field label="API şifre" hint="Kaydedilir; herkese açık ayarlarda gösterilmez">
+            <input
+              type="password"
+              className="input-soft font-mono text-xs"
+              value={netgsmPassword}
+              onChange={(e) => setNetgsmPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+          </Field>
+          <Field label="Mesaj başlığı (msgheader)" hint="Netgsm’de onaylı gönderici adı (örn. XXX BASLIK)">
+            <input
+              className="input-soft"
+              value={netgsmMsgHeader}
+              onChange={(e) => setNetgsmMsgHeader(e.target.value)}
+              maxLength={11}
+            />
+          </Field>
+          <Field
+            label="Kampanya SMS filtresi (filter)"
+            hint="Bilgilendirme: 0. Ticari İYS: bireysel 11, tacir 12 — Netgsm dokümanına göre seçin."
+          >
+            <select
+              className="input-soft"
+              value={netgsmSmsFilter}
+              onChange={(e) => setNetgsmSmsFilter(e.target.value)}
+            >
+              <option value="0">0 — Bilgilendirme / işlemsel kullanım</option>
+              <option value="11">11 — Ticari (İYS bireysel)</option>
+              <option value="12">12 — Ticari (İYS tacir)</option>
+            </select>
+          </Field>
+        </div>
+        <Field
+          label="Kargo SMS metni (isteğe bağlı)"
+          hint="Boşsa varsayılan metin kullanılır. Yer tutucular: {ad} {siparis} {takip} {tasiyici}"
+          className="mt-3"
+        >
+          <textarea
+            className="input-soft min-h-[72px] font-mono text-xs"
+            value={netgsmShippedTemplate}
+            onChange={(e) => setNetgsmShippedTemplate(e.target.value)}
+            placeholder={`Merhaba {ad}, siparisiniz (#{siparis}) kargoya verildi. Takip no: {takip}{tasiyici}`}
+          />
+        </Field>
+        <p className="mt-3 text-[11px] text-slate-400">
+          Sipariş <em>SHIPPED</em> olduğunda veya takip numarası güncellendiğinde, WhatsApp ile birlikte bu kanaldan da SMS
+          gönderilir (telefon 05xx formatında olmalı). Aralık için ortam değişkeni:{" "}
+          <code className="rounded bg-slate-100 px-1">MARKETING_SMS_GAP_MS</code>.
+        </p>
+
+        <div className="mt-6 border-t border-slate-200 pt-5">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Test SMS</p>
+          <p className="mt-1 text-xs text-slate-500">
+            Netgsm ayarları kayıtlı ve etkin olmalı. Gönderim günlüğüne düşer (<code className="text-[10px]">TEST</code>
+            ).
+          </p>
+          {testSmsOk ? (
+            <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">Test SMS kuyruğa iletildi.</p>
+          ) : null}
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <Field label="Telefon (05xx)">
+              <input
+                className="input-soft"
+                value={testSmsPhone}
+                onChange={(e) => setTestSmsPhone(e.target.value)}
+                placeholder="05XX XXX XX XX"
+                disabled={testSmsBusy}
+              />
+            </Field>
+            <Field label="Mesaj (boşsa varsayılan test metni)" hint="En fazla 500 karakter">
+              <input
+                className="input-soft"
+                value={testSmsMessage}
+                onChange={(e) => setTestSmsMessage(e.target.value)}
+                placeholder="Bu bir test SMSidir."
+                maxLength={500}
+                disabled={testSmsBusy}
+              />
+            </Field>
+          </div>
+          <button
+            type="button"
+            disabled={testSmsBusy || busy}
+            onClick={() => void sendTestSms()}
+            className="mt-3 rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+          >
+            {testSmsBusy ? "Gönderiliyor…" : "Test SMS gönder"}
+          </button>
+        </div>
+
+        <div className="mt-8 border-t border-slate-200 pt-5">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Gönderim günlüğü</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Son kayıtlar (alıcı maskeli). Toplam eşleşen: {smsLogsTotal}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                className="input-soft text-xs"
+                value={smsLogPurposeFilter}
+                onChange={(e) => setSmsLogPurposeFilter(e.target.value)}
+                aria-label="Günlük amaç filtresi"
+              >
+                <option value="">Tüm amaçlar</option>
+                <option value="TEST">TEST</option>
+                <option value="ORDER_SHIPPED">ORDER_SHIPPED</option>
+                <option value="CAMPAIGN">CAMPAIGN</option>
+              </select>
+              <button
+                type="button"
+                disabled={smsLogsBusy || busy}
+                onClick={() => void loadSmsLogs()}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+              >
+                {smsLogsBusy ? "Yükleniyor…" : "Yenile"}
+              </button>
+            </div>
+          </div>
+          <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
+            <table className="min-w-[720px] w-full border-collapse text-left text-xs">
+              <thead className="border-b border-slate-200 bg-slate-50 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-3 py-2">Zaman</th>
+                  <th className="px-3 py-2">Amaç</th>
+                  <th className="px-3 py-2">Alıcı</th>
+                  <th className="px-3 py-2">Durum</th>
+                  <th className="px-3 py-2">Kod</th>
+                  <th className="px-3 py-2">Sipariş / Kampanya</th>
+                  <th className="px-3 py-2">Önizleme</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white text-slate-800">
+                {smsLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-3 py-8 text-center text-slate-500">
+                      {smsLogsBusy ? "Yükleniyor…" : "Henüz günlük kaydı yok veya migrasyon uygulanmadı."}
+                    </td>
+                  </tr>
+                ) : (
+                  smsLogs.map((row) => (
+                    <tr key={row.id}>
+                      <td className="whitespace-nowrap px-3 py-2 text-[11px] text-slate-600">
+                        {new Date(row.createdAt).toLocaleString("tr-TR")}
+                      </td>
+                      <td className="px-3 py-2 font-mono text-[11px]">{row.purpose}</td>
+                      <td className="px-3 py-2 font-mono text-[11px]">{row.toMasked}</td>
+                      <td className="px-3 py-2">
+                        <span
+                          className={
+                            row.ok
+                              ? "rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800"
+                              : "rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-800"
+                          }
+                        >
+                          {row.ok ? "OK" : "Hata"}
+                        </span>
+                      </td>
+                      <td className="max-w-[120px] truncate px-3 py-2 font-mono text-[11px]" title={row.providerCode ?? ""}>
+                        {row.providerCode ?? "—"}
+                      </td>
+                      <td className="max-w-[140px] truncate px-3 py-2 font-mono text-[10px]" title={`${row.orderId ?? ""} ${row.campaignId ?? ""}`}>
+                        {row.orderId ? row.orderId.slice(0, 8) + "…" : row.campaignId ? row.campaignId.slice(0, 8) + "…" : "—"}
+                      </td>
+                      <td className="max-w-[220px] truncate px-3 py-2 text-[11px] text-slate-600" title={row.messagePreview}>
+                        {row.messagePreview}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </AdminCard>
 

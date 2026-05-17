@@ -37,7 +37,7 @@ export default async function HomePage({
   let products: ProductCardData[] = [];
   let categories: ShopCategory[] = [];
   const [plist, clist] = await Promise.all([
-    apiJsonSafe<ProductCardData[]>(productApiPath(q, categoryId)),
+    filtering ? apiJsonSafe<ProductCardData[]>(productApiPath(q, categoryId)) : Promise.resolve(null),
     apiJsonSafe<ShopCategory[]>("/categories"),
   ]);
   products = Array.isArray(plist) ? plist : [];
@@ -70,7 +70,8 @@ export default async function HomePage({
     categoryId,
     filtering,
     activeCategoryName: activeCategory,
-    products,
+    /** Vitrin modunda yalnızca «Öne çıkan» işaretli yayınlı ürünler (güncelleme sırasına göre tüm liste karışmasın). */
+    products: filtering ? products : featuredRail,
     categories,
   };
 

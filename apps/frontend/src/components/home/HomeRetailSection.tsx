@@ -125,9 +125,17 @@ export function HomeRetailSection({
         <div className="mt-12">
           {isEmpty ? (
             <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
-              <p className="text-xl font-semibold text-slate-900">Henüz ürün eklenmedi</p>
-              <p className="mt-2 text-sm text-slate-600">Vitrin boş görünüyor. Admin panelinden ürün ekleyin.</p>
-              <p className="mt-1 text-sm text-slate-500">Kategori ekleyin ve ürünlerinizi yayınlayın.</p>
+              <p className="text-xl font-semibold text-slate-900">Öne çıkan ürün yok</p>
+              <p className="mt-2 text-sm text-slate-600">
+                Bu alanda yalnızca ürün kartında «Öne çıkan» işaretli yayında ürünler gösterilir. İsterseniz{" "}
+                <Link href="/shop" className="font-medium text-slate-800 underline-offset-2 hover:underline">
+                  mağazadaki
+                </Link>{" "}
+                tüm modellere göz atın.
+              </p>
+              <p className="mt-2 text-xs text-slate-500">
+                Admin panelinde ürünü düzenleyip «Öne çıkan» kutusunu işaretleyin.
+              </p>
             </div>
           ) : (
             <HomeEditorialProductGrid products={products} />

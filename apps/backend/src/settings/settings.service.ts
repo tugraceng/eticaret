@@ -44,6 +44,7 @@ export class SettingsService {
       whatsappPhoneId: _phoneId,
       whatsappShippedTemplate: _tpl,
       whatsappTemplateLang: _waTplLang,
+      netgsmPassword: _netgsmPw,
       birthdayCouponAutomationEnabled: _birthdayAuto,
       lowStockThreshold: _lowStock,
       ...safe
@@ -52,6 +53,7 @@ export class SettingsService {
     void _phoneId;
     void _tpl;
     void _waTplLang;
+    void _netgsmPw;
     void _birthdayAuto;
     void _lowStock;
     return safe;
@@ -85,6 +87,12 @@ export class SettingsService {
       whatsappAccessToken: string | null;
       whatsappShippedTemplate: string | null;
       whatsappTemplateLang: string;
+      netgsmEnabled: boolean;
+      netgsmUsercode: string | null;
+      netgsmPassword: string | null;
+      netgsmMsgHeader: string | null;
+      netgsmSmsFilter: string;
+      netgsmShippedMessageTemplate: string | null;
       popupEnabled: boolean;
       popupTitle: string | null;
       popupBody: string | null;

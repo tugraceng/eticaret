@@ -10,7 +10,7 @@ export const CAMPAIGN_AUDIENCES = [
 
 export type CampaignAudience = (typeof CAMPAIGN_AUDIENCES)[number];
 
-export const CAMPAIGN_CHANNELS = ["EMAIL", "WHATSAPP_LINK", "SMS_READY"] as const;
+export const CAMPAIGN_CHANNELS = ["EMAIL", "WHATSAPP_LINK", "SMS_READY", "SMS"] as const;
 
 export class CreateCampaignDto {
   @IsString()

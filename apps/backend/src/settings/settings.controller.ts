@@ -140,6 +140,30 @@ class UpdateSettingsDto {
 
   @IsOptional()
   @IsBoolean()
+  netgsmEnabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  netgsmUsercode?: string | null;
+
+  @IsOptional()
+  @IsString()
+  netgsmPassword?: string | null;
+
+  @IsOptional()
+  @IsString()
+  netgsmMsgHeader?: string | null;
+
+  @IsOptional()
+  @IsString()
+  netgsmSmsFilter?: string;
+
+  @IsOptional()
+  @IsString()
+  netgsmShippedMessageTemplate?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
   popupEnabled?: boolean;
 
   @IsOptional()

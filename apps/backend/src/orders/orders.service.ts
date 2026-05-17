@@ -6,6 +6,7 @@ import { EmailService } from "../email/email.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { WhatsAppService } from "../whatsapp/whatsapp.service";
+import { NetgsmService } from "../netgsm/netgsm.service";
 import { EinvoiceService } from "../einvoice/einvoice.service";
 
 const TOPIC_ORDER_EMAIL = "orders.email.orderCreated";
@@ -14,6 +15,7 @@ const TOPIC_ORDER_NOTIFY = "orders.notify.newOrder";
 const TOPIC_ORDER_NOTIFY_STOCK = "orders.notify.stock";
 const TOPIC_ORDER_EINVOICE = "orders.einvoice";
 const TOPIC_ORDER_WHATSAPP = "orders.whatsapp.shipped";
+const TOPIC_ORDER_NETGSM = "orders.netgsm.shipped";
 
 type CreateOrderInput = {
   items: { productId: string; quantity: number; productVariantId?: string }[];
@@ -44,6 +46,7 @@ export class OrdersService {
     private readonly notifications: NotificationsService,
     private readonly discounts: DiscountsService,
     private readonly whatsapp: WhatsAppService,
+    private readonly netgsm: NetgsmService,
     private readonly einvoice: EinvoiceService,
     private readonly cache: AppCacheService,
     private readonly jobs: JobQueueService,
@@ -79,6 +82,10 @@ export class OrdersService {
     this.jobs.registerHandler<Parameters<WhatsAppService["notifyShipped"]>[0]>(
       TOPIC_ORDER_WHATSAPP,
       (p) => this.whatsapp.notifyShipped(p),
+    );
+    this.jobs.registerHandler<Parameters<NetgsmService["notifyShipped"]>[0]>(
+      TOPIC_ORDER_NETGSM,
+      (p) => this.netgsm.notifyShipped(p),
     );
   }
 
@@ -659,17 +666,23 @@ export class OrdersService {
     trackingNumber: string | null;
   }) {
     if (!order.contactPhone || !order.trackingNumber) return;
-    // WhatsApp Cloud API external HTTP — admin response'unu bekletmeden kuyruğa at.
-    this.jobs.enqueue(
-      TOPIC_ORDER_WHATSAPP,
-      {
-        orderId: order.id,
-        customerPhone: order.contactPhone,
-        customerName: order.contactName,
-        trackingNumber: order.trackingNumber,
-      },
-      { name: "whatsapp.shipped", retries: 3, backoffMs: 500 },
-    );
+    const payload = {
+      orderId: order.id,
+      customerPhone: order.contactPhone,
+      customerName: order.contactName,
+      trackingNumber: order.trackingNumber,
+    };
+    // WhatsApp Cloud API — admin response'unu bekletmeden kuyruğa at.
+    this.jobs.enqueue(TOPIC_ORDER_WHATSAPP, payload, {
+      name: "whatsapp.shipped",
+      retries: 3,
+      backoffMs: 500,
+    });
+    this.jobs.enqueue(TOPIC_ORDER_NETGSM, payload, {
+      name: "netgsm.shipped",
+      retries: 3,
+      backoffMs: 500,
+    });
   }
 
   private async ensure(id: string) {

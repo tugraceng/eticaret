@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { WishlistButton } from "@/app/(site)/shop/[slug]/ui";
 import type { ProductCardData } from "@/components/site/ProductCard";
+import { apiAssetUrl } from "@/lib/api";
 
 function priceFmt(cents: number) {
   return (cents / 100).toLocaleString("tr-TR", { style: "currency", currency: "TRY" });
@@ -22,7 +24,12 @@ export function HomeEditorialProductGrid({ products, markFirstAsNew = true }: Pr
   return (
     <ul className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-4 md:gap-x-4 md:gap-y-10">
       {list.map((p, idx) => {
-        const cover = p.images?.[0]?.url;
+        const coverRaw = p.images?.[0]?.url;
+        const secondRaw = p.images?.[1]?.url;
+        const cover = apiAssetUrl(coverRaw) ?? undefined;
+        const second = apiAssetUrl(secondRaw) ?? undefined;
+        const alt = p.images?.[0]?.alt ?? p.name;
+        const alt2 = p.images?.[1]?.alt ?? alt;
         const onSale =
           typeof p.compareAtCents === "number" && p.compareAtCents > p.priceCents;
         return (
@@ -34,7 +41,7 @@ export function HomeEditorialProductGrid({ products, markFirstAsNew = true }: Pr
               aria-label={`${p.name} — ürüne git`}
             />
             <div className="pointer-events-none relative z-[2]">
-              <div className="relative aspect-square bg-neutral-100">
+              <div className="relative aspect-square overflow-hidden bg-neutral-100">
                 {markFirstAsNew && idx === 0 ? (
                   <span className="absolute bottom-3 left-3 z-10 bg-[#2563eb] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
                     Yeni
@@ -50,13 +57,31 @@ export function HomeEditorialProductGrid({ products, markFirstAsNew = true }: Pr
                     size="sm"
                   />
                 </div>
+                {second ? (
+                  <div className="absolute inset-0 z-[1]" role="img" aria-hidden>
+                    <Image
+                      src={second}
+                      alt={alt2}
+                      fill
+                      className="object-cover opacity-0 transition-all duration-500 ease-out group-hover:scale-[1.02] group-hover:opacity-100"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                  </div>
+                ) : null}
                 {cover ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={cover}
-                    alt={p.images?.[0]?.alt ?? p.name}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                  />
+                  <div
+                    className={`absolute inset-0 z-[2] ${second ? "transition-opacity duration-500 group-hover:opacity-0" : ""}`}
+                    role="img"
+                    aria-label={alt}
+                  >
+                    <Image
+                      src={cover}
+                      alt={alt}
+                      fill
+                      className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                  </div>
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs text-neutral-400">Görsel yok</div>
                 )}

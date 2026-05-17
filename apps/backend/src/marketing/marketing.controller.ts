@@ -49,11 +49,11 @@ export class MarketingController {
   }
 
   @Get("campaigns/preview")
-  preview(@Query("audience") audience: string) {
+  preview(@Query("audience") audience: string, @Query("channel") channel?: string) {
     if (!(CAMPAIGN_AUDIENCES as readonly string[]).includes(audience)) {
       throw new BadRequestException("Geçersiz kitle parametresi.");
     }
-    return this.marketing.previewAudience(audience as CampaignAudience);
+    return this.marketing.previewAudience(audience as CampaignAudience, channel);
   }
 
   @Get("campaigns")

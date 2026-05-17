@@ -6,10 +6,12 @@ import {
 } from "@nestjs/common";
 import { DiscountKind } from "@prisma/client";
 import { randomBytes } from "node:crypto";
+import { normalizePhoneTrMobile10 } from "../common/phone.util";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { DiscountsService } from "../discounts/discounts.service";
+import { NetgsmService } from "../netgsm/netgsm.service";
 import type { CampaignAudience, CreateCampaignDto } from "./dto/create-campaign.dto";
 import type { GuestAbandonDto } from "./dto/guest-abandon.dto";
 
@@ -21,8 +23,13 @@ function marketingEmailGapMs(): number {
   return Number.isFinite(n) && n > 0 ? Math.min(Math.floor(n), 60_000) : 0;
 }
 
+function marketingSmsGapMs(): number {
+  const n = Number(process.env.MARKETING_SMS_GAP_MS);
+  return Number.isFinite(n) && n > 0 ? Math.min(Math.floor(n), 60_000) : marketingEmailGapMs();
+}
+
 /** Kampanya alıcısı: üye userId dolu; misafir sepeti için null */
-export type AudienceRecipient = { userId: string | null; email: string };
+export type AudienceRecipient = { userId: string | null; email: string; phone?: string | null };
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -48,6 +55,7 @@ export class MarketingService {
     private readonly email: EmailService,
     private readonly notifications: NotificationsService,
     private readonly discounts: DiscountsService,
+    private readonly netgsm: NetgsmService,
   ) {}
 
   private marketingBaseWhere() {
@@ -64,9 +72,9 @@ export class MarketingService {
       case "ALL_OPT_IN": {
         const rows = await this.prisma.user.findMany({
           where: base,
-          select: { id: true, email: true },
+          select: { id: true, email: true, phone: true },
         });
-        return rows.map((r) => ({ userId: r.id, email: r.email }));
+        return rows.map((r) => ({ userId: r.id, email: r.email, phone: r.phone }));
       }
       case "LAST_30_SHOPPERS": {
         const since = new Date(Date.now() - 30 * 86400000);
@@ -83,9 +91,9 @@ export class MarketingService {
         if (!ids.length) return [];
         const rows = await this.prisma.user.findMany({
           where: { ...base, id: { in: ids } },
-          select: { id: true, email: true },
+          select: { id: true, email: true, phone: true },
         });
-        return rows.map((r) => ({ userId: r.id, email: r.email }));
+        return rows.map((r) => ({ userId: r.id, email: r.email, phone: r.phone }));
       }
       case "NEVER_ORDERED": {
         const ordered = await this.prisma.order.findMany({
@@ -96,9 +104,9 @@ export class MarketingService {
         const orderedIds = ordered.map((o) => o.buyerUserId!).filter(Boolean);
         const rows = await this.prisma.user.findMany({
           where: orderedIds.length ? { ...base, id: { notIn: orderedIds } } : base,
-          select: { id: true, email: true },
+          select: { id: true, email: true, phone: true },
         });
-        return rows.map((r) => ({ userId: r.id, email: r.email }));
+        return rows.map((r) => ({ userId: r.id, email: r.email, phone: r.phone }));
       }
       case "ABANDONED": {
         const staleBefore = new Date(Date.now() - 60 * 60 * 1000);
@@ -108,12 +116,20 @@ export class MarketingService {
             lastActivityAt: { lte: staleBefore },
           },
           include: {
-            user: { select: { id: true, email: true, marketingOptIn: true, kvkkAcceptedAt: true } },
+            user: {
+              select: {
+                id: true,
+                email: true,
+                phone: true,
+                marketingOptIn: true,
+                kvkkAcceptedAt: true,
+              },
+            },
           },
         });
         const userList: AudienceRecipient[] = rows
           .filter((r) => r.user.marketingOptIn && r.user.kvkkAcceptedAt)
-          .map((r) => ({ userId: r.user.id, email: r.user.email }));
+          .map((r) => ({ userId: r.user.id, email: r.user.email, phone: r.user.phone }));
         const seen = new Set(userList.map((u) => u.email.toLowerCase()));
         const guests = await this.prisma.guestAbandonedCart.findMany({
           where: {
@@ -128,7 +144,7 @@ export class MarketingService {
           const em = g.email.toLowerCase();
           if (!seen.has(em)) {
             seen.add(em);
-            out.push({ userId: null, email: g.email });
+            out.push({ userId: null, email: g.email, phone: null });
           }
         }
         return out;
@@ -136,18 +152,18 @@ export class MarketingService {
       case "BIRTHDAY_7D": {
         const users = await this.prisma.user.findMany({
           where: { ...base, birthDate: { not: null } },
-          select: { id: true, email: true, birthDate: true },
+          select: { id: true, email: true, phone: true, birthDate: true },
         });
         return users
           .filter((u) => u.birthDate && birthdayWithinDays(u.birthDate, 7))
-          .map((u) => ({ userId: u.id, email: u.email }));
+          .map((u) => ({ userId: u.id, email: u.email, phone: u.phone }));
       }
       default:
         return [];
     }
   }
 
-  async previewAudience(audience: CampaignAudience) {
+  async previewAudience(audience: CampaignAudience, channel?: string) {
     const list = await this.resolveRecipients(audience);
     const dedup = new Map<string, AudienceRecipient>();
     for (const u of list) {
@@ -155,7 +171,12 @@ export class MarketingService {
         dedup.set(u.email.toLowerCase(), u);
       }
     }
-    return { count: dedup.size };
+    const targets = [...dedup.values()];
+    if (channel === "SMS") {
+      const n = targets.filter((t) => t.userId && normalizePhoneTrMobile10(t.phone ?? "")).length;
+      return { count: n };
+    }
+    return { count: targets.length };
   }
 
   async upsertGuestAbandonedCart(dto: GuestAbandonDto) {
@@ -395,6 +416,19 @@ export class MarketingService {
     });
   }
 
+  private buildCampaignSmsPlain(campaign: {
+    title: string;
+    body: string;
+    discountCode: { code: string } | null;
+    ctaLink: string | null;
+  }): string {
+    let t = `${campaign.title.trim()}: ${campaign.body.trim()}`.replace(/\s+/g, " ").trim();
+    if (campaign.discountCode?.code) t += ` Kod: ${campaign.discountCode.code}`;
+    if (campaign.ctaLink?.trim()) t += ` ${campaign.ctaLink.trim()}`;
+    if (t.length > 920) t = t.slice(0, 917) + "...";
+    return t;
+  }
+
   async campaignStats(id: string) {
     const c = await this.prisma.campaignMessage.findUnique({
       where: { id },
@@ -428,13 +462,45 @@ export class MarketingService {
         dedup.set(u.email.toLowerCase(), u);
       }
     }
-    const targets = [...dedup.values()];
+    let targets = [...dedup.values()];
     if (!targets.length) {
       throw new BadRequestException("Bu kitle için gönderilecek izinli alıcı bulunamadı.");
     }
 
     const settings = await this.prisma.siteSettings.findFirst();
     const wa = settings?.whatsappNumber?.replace(/\D/g, "") || null;
+
+    const isSms = campaign.channel === "SMS";
+    let smsPlain: string | undefined;
+    let gapMs = marketingEmailGapMs();
+
+    if (isSms) {
+      if (
+        !settings?.netgsmEnabled ||
+        !settings.netgsmUsercode?.trim() ||
+        !settings.netgsmPassword?.trim() ||
+        !settings.netgsmMsgHeader?.trim()
+      ) {
+        throw new BadRequestException(
+          "NetGSM kapalı veya kullanıcı adı / şifre / mesaj başlığı eksik. Mağaza ayarlarından doldurun.",
+        );
+      }
+      targets = targets.filter((t) => t.userId && normalizePhoneTrMobile10(t.phone ?? ""));
+      if (!targets.length) {
+        throw new BadRequestException(
+          "SMS için kayıtlı geçerli cep telefonu (05xx) olan izinli müşteri bulunamadı.",
+        );
+      }
+      smsPlain = this.buildCampaignSmsPlain({
+        title: campaign.title,
+        body: campaign.body,
+        discountCode: campaign.discountCode,
+        ctaLink: campaign.ctaLink,
+      });
+      gapMs = marketingSmsGapMs();
+    }
+
+    const phoneByEmail = new Map(targets.map((t) => [t.email.toLowerCase(), t.phone]));
 
     await this.prisma.campaignMessage.update({
       where: { id },
@@ -457,7 +523,6 @@ export class MarketingService {
     let ok = 0;
     let fail = 0;
     const errors: string[] = [];
-    const perEmailGapMs = marketingEmailGapMs();
     const totalRecipients = recipientRows.length;
     let sentIndex = 0;
 
@@ -465,30 +530,54 @@ export class MarketingService {
       const chunk = recipientRows.slice(i, i + BATCH);
       for (const rec of chunk) {
         try {
-          const r = await this.email.campaignEmail({
-            to: rec.email,
-            title: campaign.title,
-            bodyHtml: campaign.body.replace(/\n/g, "<br/>"),
-            couponCode: campaign.discountCode?.code,
-            ctaLink: campaign.ctaLink,
-            couponExpiresAt: campaign.couponExpiresAt,
-            channel: campaign.channel,
-            whatsappDigits: wa,
-          });
-          if (r.ok) {
-            ok += 1;
-            await this.prisma.campaignRecipient.update({
-              where: { id: rec.id },
-              data: { status: "SENT", sentAt: new Date(), error: null },
+          if (isSms && smsPlain) {
+            const phoneRaw = phoneByEmail.get(rec.email.toLowerCase()) ?? "";
+            const r = await this.netgsm.sendSms({
+              toRaw: phoneRaw,
+              message: smsPlain,
+              log: { purpose: "CAMPAIGN", campaignId: id },
             });
+            if (r.ok) {
+              ok += 1;
+              await this.prisma.campaignRecipient.update({
+                where: { id: rec.id },
+                data: { status: "SENT", sentAt: new Date(), error: null },
+              });
+            } else {
+              fail += 1;
+              const msg = r.detail ?? r.code ?? "SMS hatası";
+              errors.push(`${rec.email}: ${msg}`);
+              await this.prisma.campaignRecipient.update({
+                where: { id: rec.id },
+                data: { status: "FAILED", error: msg },
+              });
+            }
           } else {
-            fail += 1;
-            const msg = r.error ?? "Bilinmeyen hata";
-            errors.push(`${rec.email}: ${msg}`);
-            await this.prisma.campaignRecipient.update({
-              where: { id: rec.id },
-              data: { status: "FAILED", error: msg },
+            const r = await this.email.campaignEmail({
+              to: rec.email,
+              title: campaign.title,
+              bodyHtml: campaign.body.replace(/\n/g, "<br/>"),
+              couponCode: campaign.discountCode?.code,
+              ctaLink: campaign.ctaLink,
+              couponExpiresAt: campaign.couponExpiresAt,
+              channel: campaign.channel,
+              whatsappDigits: wa,
             });
+            if (r.ok) {
+              ok += 1;
+              await this.prisma.campaignRecipient.update({
+                where: { id: rec.id },
+                data: { status: "SENT", sentAt: new Date(), error: null },
+              });
+            } else {
+              fail += 1;
+              const msg = r.error ?? "Bilinmeyen hata";
+              errors.push(`${rec.email}: ${msg}`);
+              await this.prisma.campaignRecipient.update({
+                where: { id: rec.id },
+                data: { status: "FAILED", error: msg },
+              });
+            }
           }
         } catch (e) {
           fail += 1;
@@ -500,7 +589,7 @@ export class MarketingService {
           });
         }
         sentIndex += 1;
-        if (perEmailGapMs > 0 && sentIndex < totalRecipients) await sleep(perEmailGapMs);
+        if (gapMs > 0 && sentIndex < totalRecipients) await sleep(gapMs);
       }
       if (i + BATCH < recipientRows.length) await sleep(BATCH_PAUSE_MS);
     }
@@ -527,7 +616,6 @@ export class MarketingService {
       void this.notifications.notifyCampaignSentWithErrors(campaign.title, ok, fail);
     }
 
-    // Çok alıcıda: BullMQ/SQS kuyruk + MARKETING_EMAIL_GAP_MS ile sağlayıcı hız sınırı önerilir.
     this.log.log(`Kampanya ${id} tamamlandı: ok=${ok} fail=${fail}`);
     return { ok: true, recipientCount: targets.length, successCount: ok, failCount: fail };
   }

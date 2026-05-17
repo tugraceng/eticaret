@@ -151,6 +151,15 @@ model SiteSettings {
   whatsappAccessToken   String? // Cloud API erişim anahtarı
   whatsappShippedTemplate String? // Onaylı şablon adı (ör: order_shipped)
   whatsappTemplateLang  String @default("tr")
+  // NetGSM SMS — kargo takip, kampanya (api.netgsm.com.tr)
+  netgsmEnabled                 Boolean  @default(false)
+  netgsmUsercode                String? // API kullanıcı kodu
+  netgsmPassword                String? // API şifresi
+  netgsmMsgHeader               String? // Onaylı gönderici başlığı
+  /// 0 bilgilendirme; 11/12 ticari İYS (NetGSM dokümanı)
+  netgsmSmsFilter               String   @default("0")
+  /// Boşsa varsayılan kargo SMS metni kullanılır; {ad} {siparis} {takip} {tasiyici}
+  netgsmShippedMessageTemplate  String?  @db.Text
   // Promosyon popup (anasayfa / tüm site)
   popupEnabled            Boolean @default(false)
   popupTitle              String?
@@ -669,7 +678,7 @@ model CampaignMessage {
   body             String   @db.Text
   /// ALL_OPT_IN | LAST_30_SHOPPERS | NEVER_ORDERED | ABANDONED | BIRTHDAY_7D
   audience         String
-  /// EMAIL | WHATSAPP_LINK | SMS_READY
+  /// EMAIL | WHATSAPP_LINK | SMS_READY | SMS (NetGSM)
   channel          String   @default("EMAIL")
   discountCodeId   String?
   ctaLink          String?
@@ -701,6 +710,26 @@ model CampaignRecipient {
 
   @@index([campaignId])
   @@index([email])
+}
+
+/// NetGSM çıkış SMS günlüğü — TEST | ORDER_SHIPPED | CAMPAIGN
+model SmsOutboundLog {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  purpose        String
+  toMasked       String
+  messagePreview String
+  filterUsed     String   @default("0")
+  ok             Boolean
+  providerCode   String?
+  providerDetail String?  @db.Text
+  orderId        String?
+  campaignId     String?
+
+  @@index([createdAt])
+  @@index([purpose])
+  @@index([orderId])
+  @@index([campaignId])
 }
 
 model PaymentProviderConfig {
