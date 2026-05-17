@@ -156,6 +156,12 @@ class CreateProductVariantDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /** Ürün galerisindeki görsel kimliği; seçenek seçildiğinde vitrin bu görseli gösterir */
+  @IsOptional()
+  @ValidateIf((_, v) => v !== undefined && v !== null)
+  @IsString()
+  productImageId?: string | null;
 }
 
 class UpdateProductVariantDto {
@@ -192,6 +198,11 @@ class UpdateProductVariantDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== undefined && v !== null)
+  @IsString()
+  productImageId?: string | null;
 }
 
 class UpdateProductDto {

@@ -291,24 +291,28 @@ model Product {
 
 /// Ürün seçenekleri (renk/beden vb.). priceCents null ise ürün fiyatı kullanılır.
 model ProductVariant {
-  id         String   @id @default(cuid())
-  productId  String
-  sku        String?
-  label      String
-  priceCents Int?
-  stock      Int      @default(0)
-  trackStock Boolean  @default(true)
-  sortOrder  Int      @default(0)
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orderItems OrderItem[]
-  cartItems  CartItem[]
+  id             String         @id @default(cuid())
+  productId      String
+  /// Bu seçenek seçildiğinde vitrinde öncelikli gösterilecek ürün galeri görseli (aynı ürüne ait olmalı)
+  productImageId String?
+  sku            String?
+  label          String
+  priceCents     Int?
+  stock          Int            @default(0)
+  trackStock     Boolean        @default(true)
+  sortOrder      Int            @default(0)
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productImage   ProductImage?  @relation(fields: [productImageId], references: [id], onDelete: SetNull)
+  orderItems     OrderItem[]
+  cartItems      CartItem[]
   stockMovements StockMovement[]
 
   @@index([productId])
   @@index([productId, isActive])
+  @@index([productImageId])
 }
 
 model Review {
@@ -343,12 +347,13 @@ model PasswordResetToken {
 }
 
 model ProductImage {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   productId String
   url       String
   alt       String?
-  sortOrder Int     @default(0)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sortOrder Int      @default(0)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variants  ProductVariant[]
 
   @@index([productId])
 }

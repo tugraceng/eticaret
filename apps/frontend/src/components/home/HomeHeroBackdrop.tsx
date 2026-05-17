@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 
-/** Metin okunabilirliği — mobilde görsel `contain`, md+ `cover`; odak sağa. */
+/** Metin okunabilirliği — görsel `cover`, üstten hizalı (logo üstte kalır). */
 const HERO_OVERLAY =
   "linear-gradient(105deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 38%, rgba(0,0,0,0.2) 100%)";
 
-/** Mobil: tam görünür (`contain`); masaüstü: alan dolar (`cover`), odak sağ. */
+/** Tüm kırılımlar: alanı doldur, üst + yatay orta; kırpma öncelikle alttan. */
 const HERO_IMG_LAYER_CLASS =
-  "absolute inset-0 bg-no-repeat bg-center max-md:bg-contain md:bg-cover md:bg-[position:72%_50%]";
+  "absolute inset-0 bg-cover bg-no-repeat bg-[position:center_top]";
 
 type SlideImg = { image: string };
 

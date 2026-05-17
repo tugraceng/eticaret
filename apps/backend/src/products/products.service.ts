@@ -394,6 +394,7 @@ export class ProductsService {
       trackStock?: boolean;
       sortOrder?: number;
       isActive?: boolean;
+      productImageId?: string | null;
     },
   ) {
     await this.ensure(productId);
@@ -405,6 +406,7 @@ export class ProductsService {
       typeof data.sortOrder === "number"
         ? data.sortOrder
         : (agg._max.sortOrder ?? -1) + 1;
+    const productImageId = await this.resolveVariantGalleryImage(productId, data.productImageId ?? null);
     const created = await this.prisma.productVariant.create({
       data: {
         productId,
@@ -415,6 +417,7 @@ export class ProductsService {
         trackStock: data.trackStock ?? true,
         sortOrder,
         isActive: data.isActive ?? true,
+        productImageId,
       },
     });
     this.invalidate();
@@ -432,6 +435,7 @@ export class ProductsService {
       trackStock: boolean;
       sortOrder: number;
       isActive: boolean;
+      productImageId: string | null;
     }>,
   ) {
     const existing = await this.prisma.productVariant.findFirst({
@@ -446,6 +450,7 @@ export class ProductsService {
       trackStock?: boolean;
       sortOrder?: number;
       isActive?: boolean;
+      productImageId?: string | null;
     } = {};
     if (data.label !== undefined) patch.label = data.label.trim();
     if (data.sku !== undefined) patch.sku = data.sku?.trim() ? data.sku.trim() : null;
@@ -454,6 +459,9 @@ export class ProductsService {
     if (data.trackStock !== undefined) patch.trackStock = data.trackStock;
     if (data.sortOrder !== undefined) patch.sortOrder = data.sortOrder;
     if (data.isActive !== undefined) patch.isActive = data.isActive;
+    if (data.productImageId !== undefined) {
+      patch.productImageId = await this.resolveVariantGalleryImage(productId, data.productImageId);
+    }
     const updated = await this.prisma.productVariant.update({
       where: { id: variantId },
       data: patch,
@@ -767,6 +775,23 @@ export class ProductsService {
     );
     this.invalidate();
     return { ok: true };
+  }
+
+  /** Varyanta bağlı vitrin görseli — ürünle eşleşmezse hata. Boş / null = bağlantıyı kaldır */
+  private async resolveVariantGalleryImage(
+    productId: string,
+    raw: string | null | undefined,
+  ): Promise<string | null> {
+    if (raw == null || String(raw).trim() === "") return null;
+    const id = String(raw).trim();
+    const img = await this.prisma.productImage.findFirst({
+      where: { id, productId },
+      select: { id: true },
+    });
+    if (!img) {
+      throw new BadRequestException("Seçilen vitrin görseli bu ürüne ait değil veya bulunamadı.");
+    }
+    return img.id;
   }
 
   private async ensure(id: string) {

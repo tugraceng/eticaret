@@ -560,7 +560,7 @@ export function HomeEditor({ token }: { token: string }) {
                   label="Slayt görseli"
                   value={slide.mediaUrl}
                   onChange={(url) => updateHeroSlide(idx, { mediaUrl: url })}
-                  hint="Önerilen oran 48:23 (≈2,09:1), örn. 1920×920, 2400×1150 veya 3840×1840 — hero çerçevesiyle birebir; kırpma olmaz. 16:9 veya 21:9 kullanırsanız ürünü görselin orta–sağına yerleştirin (alan cover ile dolar). Kare/dikeyde üst-orta güvenli bölge kullanın."
+                  hint="Önerilen oran 48:23 (≈2,09:1), örn. 1920×920, 2400×1150 veya 3840×1840. Masaüstünde arka plan üstten hizalı: logo/önemli detay üstte kalsın; hafif oran farkında kırpma alta gider. 16:9 veya 21:9 kullanırsanız ürünü orta–sağa yerleştirin. Kare/dikeyde üst-orta güvenli bölge kullanın."
                 />
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <Field label="CTA etiketi">

@@ -16,13 +16,14 @@ import { ProductViewTracker } from "./ProductViewTracker";
 import { ProductTrustStrip } from "./ProductTrustStrip";
 import { ProductDetailTabs } from "./ProductDetailTabs";
 
-type ProductImage = { url: string; alt: string | null };
+type ProductImage = { id?: string; url: string; alt: string | null };
 type ProductVariantApi = {
   id: string;
   label: string;
   stock: number;
   trackStock: boolean;
   priceCents: number | null;
+  productImageId?: string | null;
 };
 
 type Product = {
@@ -134,9 +135,10 @@ export default async function ProductPage({
     notFound();
   }
   const gallery = (product.images ?? [])
-    .map((img) => ({
-      ...img,
+    .map((img, i) => ({
+      id: img.id?.trim() || `img-${i}`,
       url: apiAssetUrl(img.url) ?? "",
+      alt: img.alt ?? null,
     }))
     .filter((img) => img.url.length > 0);
   const onSale =
@@ -194,15 +196,18 @@ export default async function ProductPage({
     stock: v.stock,
     trackStock: v.trackStock,
     priceCents: v.priceCents,
+    productImageId: v.productImageId ?? null,
   }));
 
-  const hasVariantOptions = variantDtos.length > 0;
+  const productGalleryRefs = gallery.map(({ id, url }) => ({ id, url }));
   const showStockCount = product.showPublicStockCount !== false;
+  const hasVariantOptions = variantDtos.length > 0;
 
   return (
     <ProductVariantProvider
       variants={variantDtos}
       basePriceCents={product.priceCents}
+      productGallery={productGalleryRefs}
       showPublicStockCount={showStockCount}
     >
       <div className="bg-slate-50/80">

@@ -163,6 +163,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   const [newVariantStock, setNewVariantStock] = useState("0");
   const [newVariantTrackStock, setNewVariantTrackStock] = useState(true);
   const [newVariantActive, setNewVariantActive] = useState(true);
+  const [newVariantProductImageId, setNewVariantProductImageId] = useState("");
 
   const goTab = useCallback(
     (next: Tab) => {
@@ -935,6 +936,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     setNewVariantStock("0");
     setNewVariantTrackStock(true);
     setNewVariantActive(true);
+    setNewVariantProductImageId("");
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
@@ -1068,6 +1070,9 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
           stock: parseInt(newVariantStock, 10) || 0,
           trackStock: newVariantTrackStock,
           isActive: newVariantActive,
+          ...(newVariantProductImageId.trim()
+            ? { productImageId: newVariantProductImageId.trim() }
+            : {}),
         }),
       });
       setNewVariantLabel("");
@@ -1076,6 +1081,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
       setNewVariantStock("0");
       setNewVariantTrackStock(true);
       setNewVariantActive(true);
+      setNewVariantProductImageId("");
       await loadProducts();
     } catch (e) {
       if (!(e instanceof AdminSessionTerminated)) {
@@ -1093,6 +1099,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     newVariantStock,
     newVariantTrackStock,
     newVariantActive,
+    newVariantProductImageId,
     loadProducts,
   ]);
 
@@ -1107,6 +1114,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
         stock: number;
         trackStock: boolean;
         isActive: boolean;
+        productImageId: string | null;
       },
     ) => {
       if (!token) return;
@@ -1363,6 +1371,8 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               setNewVariantTrackStock={setNewVariantTrackStock}
               newVariantActive={newVariantActive}
               setNewVariantActive={setNewVariantActive}
+              newVariantProductImageId={newVariantProductImageId}
+              setNewVariantProductImageId={setNewVariantProductImageId}
               addProductVariant={addProductVariant}
               updateProductVariant={updateProductVariant}
               deleteProductVariant={deleteProductVariant}

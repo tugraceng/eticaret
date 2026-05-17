@@ -74,6 +74,8 @@ export function ProductsPanel({
   setNewVariantTrackStock,
   newVariantActive,
   setNewVariantActive,
+  newVariantProductImageId,
+  setNewVariantProductImageId,
   addProductVariant,
   updateProductVariant,
   deleteProductVariant,
@@ -144,6 +146,8 @@ export function ProductsPanel({
   setNewVariantTrackStock: Dispatch<SetStateAction<boolean>>;
   newVariantActive: boolean;
   setNewVariantActive: Dispatch<SetStateAction<boolean>>;
+  newVariantProductImageId: string;
+  setNewVariantProductImageId: Dispatch<SetStateAction<string>>;
   addProductVariant: () => Promise<void>;
   updateProductVariant: (
     productId: string,
@@ -155,6 +159,7 @@ export function ProductsPanel({
       stock: number;
       trackStock: boolean;
       isActive: boolean;
+      productImageId: string | null;
     },
   ) => Promise<void>;
   deleteProductVariant: (productId: string, variantId: string, label: string) => Promise<void>;
@@ -644,6 +649,7 @@ export function ProductsPanel({
                     variant={v}
                     busy={busy}
                     priceFmt={priceFmt}
+                    galleryImages={editProductImages.map((im) => ({ id: im.id, url: im.url }))}
                     onUpdate={(variantId, body) =>
                       updateProductVariant(editingProductId!, variantId, body)
                     }
@@ -654,7 +660,7 @@ export function ProductsPanel({
                 ))
               )}
             </div>
-            <div className="mt-4 rounded-xl border border-dashed border-slate-200 p-3">
+              <div className="mt-4 rounded-xl border border-dashed border-slate-200 p-3">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Yeni seçenek</p>
               <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <Field label="Etiket">
@@ -688,6 +694,24 @@ export function ProductsPanel({
                   />
                 </Field>
               </div>
+              {editProductImages.length > 0 ? (
+                <div className="mt-3 max-w-md">
+                  <Field label="Vitrin görseli" hint="Boş = ilk görsel">
+                    <select
+                      className="input-soft text-xs"
+                      value={newVariantProductImageId}
+                      onChange={(e) => setNewVariantProductImageId(e.target.value)}
+                    >
+                      <option value="">Varsayılan (ilk görsel)</option>
+                      {editProductImages.map((im, i) => (
+                        <option key={im.id} value={im.id}>
+                          Görsel {i + 1}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+              ) : null}
               <div className="mt-2 flex flex-wrap items-center gap-4">
                 <label className="flex items-center gap-2 text-xs text-slate-700">
                   <input

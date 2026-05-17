@@ -15,6 +15,8 @@ type VariantDraft = {
   stock: string;
   trackStock: boolean;
   active: boolean;
+  /** Yüklenen görseller sırasına göre indeks; null = ilk görsel */
+  galleryImageIndex: number | null;
 };
 
 const STEPS = ["Temel bilgiler", "Fiyat ve stok", "Görseller", "Varyantlar", "SEO", "Yayınlama"] as const;
@@ -55,6 +57,7 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
   const [variantStock, setVariantStock] = useState("0");
   const [variantTrack, setVariantTrack] = useState(true);
   const [variantActive, setVariantActive] = useState(true);
+  const [variantGalleryImageIndex, setVariantGalleryImageIndex] = useState<number | null>(null);
 
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
@@ -152,6 +155,7 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
         stock: String(st),
         trackStock: variantTrack,
         active: variantActive,
+        galleryImageIndex: variantGalleryImageIndex,
       },
     ]);
     setVariantLabel("");
@@ -160,6 +164,7 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
     setVariantStock("0");
     setVariantTrack(true);
     setVariantActive(true);
+    setVariantGalleryImageIndex(null);
   };
 
   const validateStep = (s: number): boolean => {
@@ -188,6 +193,19 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
       if (!Number.isFinite(st) || st < 0) {
         onError("Stok miktarı negatif olamaz.");
         return false;
+      }
+    }
+    if (s === 4) {
+      for (const v of variants) {
+        if (v.galleryImageIndex == null) continue;
+        if (imageFiles.length === 0) {
+          onError("Vitrin görseli seçilen seçenekler için önce adım 3’te görsel yükleyin veya vitrin alanını varsayılan bırakın.");
+          return false;
+        }
+        if (v.galleryImageIndex < 0 || v.galleryImageIndex >= imageFiles.length) {
+          onError("Bir seçeneğin vitrin görseli geçersiz; görsel sırasını kontrol edin.");
+          return false;
+        }
       }
     }
     return true;
@@ -243,16 +261,19 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
       const finalSlug =
         typeof slugRaw === "string" && slugRaw.trim() ? slugRaw.trim() : requestedSlug;
 
+      const uploadedImageIds: string[] = [];
+
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
         const { url } = await adminUploadFile(token, file);
-        await adminFetch(`/products/${id}/images`, token, {
+        const imgRow = (await adminFetch(`/products/${id}/images`, token, {
           method: "POST",
           body: JSON.stringify({
             url,
             alt: i === 0 && firstImageAlt.trim() ? firstImageAlt.trim() : undefined,
           }),
-        });
+        })) as { id?: string };
+        if (typeof imgRow?.id === "string") uploadedImageIds.push(imgRow.id);
       }
 
       for (const v of variants) {
@@ -263,6 +284,10 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
           if (!parsed.ok) throw new Error(parsed.message);
           priceCents = parsed.cents;
         }
+        let productImageId: string | undefined;
+        if (v.galleryImageIndex != null && uploadedImageIds[v.galleryImageIndex]) {
+          productImageId = uploadedImageIds[v.galleryImageIndex];
+        }
         await adminFetch(`/products/${id}/variants`, token, {
           method: "POST",
           body: JSON.stringify({
@@ -272,6 +297,7 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
             stock: Math.max(0, parseInt(v.stock, 10) || 0),
             trackStock: v.trackStock,
             isActive: v.active,
+            ...(productImageId ? { productImageId } : {}),
           }),
         });
       }
@@ -526,6 +552,7 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
                   <span className="text-xs text-slate-500">
                     Stok {v.stock}
                     {v.priceTry.trim() ? ` · ${v.priceTry} ₺` : ""}
+                    {v.galleryImageIndex != null ? ` · Vitrin: görsel ${v.galleryImageIndex + 1}` : ""}
                   </span>
                   <button
                     type="button"
@@ -567,6 +594,27 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
                 />
               </Field>
             </div>
+            {imagePreviews.length > 0 ? (
+              <div className="mt-3 max-w-md">
+                <Field label="Vitrin görseli" hint="Bu seçenek mağazada seçildiğinde hangi görsel öne çıksın (yüklediğiniz sıraya göre).">
+                  <select
+                    className="input-soft text-sm"
+                    value={variantGalleryImageIndex === null ? "" : String(variantGalleryImageIndex)}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setVariantGalleryImageIndex(raw === "" ? null : parseInt(raw, 10));
+                    }}
+                  >
+                    <option value="">Varsayılan (ilk görsel)</option>
+                    {imagePreviews.map((_, idx) => (
+                      <option key={idx} value={idx}>
+                        Görsel {idx + 1}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+            ) : null}
             <div className="mt-3 flex flex-wrap gap-4">
               <label className="flex items-center gap-2 text-xs text-slate-700">
                 <input type="checkbox" checked={variantTrack} onChange={(e) => setVariantTrack(e.target.checked)} className="rounded border-slate-300" />

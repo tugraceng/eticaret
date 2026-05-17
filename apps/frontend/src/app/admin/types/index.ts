@@ -30,6 +30,7 @@ export type ProductRow = {
     trackStock: boolean;
     sortOrder: number;
     isActive: boolean;
+    productImageId?: string | null;
   }>;
 };
 
@@ -122,6 +123,7 @@ export type AdminProductVariant = {
   trackStock: boolean;
   sortOrder: number;
   isActive: boolean;
+  productImageId?: string | null;
 };
 
 export type AdminCounters = {

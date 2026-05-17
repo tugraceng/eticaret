@@ -27,7 +27,8 @@ export function ProductStickyAtcBar({
 }) {
   const router = useRouter();
   const [visible, setVisible] = useState(false);
-  const { variants, selected, allVariantsSoldOut, effectivePriceCents } = useProductVariantsOptional();
+  const { variants, selected, allVariantsSoldOut, effectivePriceCents, resolvedPrimaryImageUrl } =
+    useProductVariantsOptional();
   const addLine = useCartStore((s) => s.addLine);
   const openMiniCart = useCartStore((s) => s.openMiniCart);
 
@@ -35,6 +36,8 @@ export function ProductStickyAtcBar({
     () => (variants.length > 0 ? effectivePriceCents() : basePriceCents),
     [variants.length, effectivePriceCents, basePriceCents],
   );
+
+  const thumbUrl = resolvedPrimaryImageUrl || imageUrl;
 
   const priceLabel = fmt(unitPrice);
 
@@ -67,7 +70,7 @@ export function ProductStickyAtcBar({
         title,
         priceCents: unitPrice,
         slug,
-        imageUrl,
+        imageUrl: thumbUrl,
       });
       commerceAddToCart({
         item_id: productId,
@@ -89,7 +92,7 @@ export function ProductStickyAtcBar({
       name,
       unitPrice,
       slug,
-      imageUrl,
+      thumbUrl,
       router,
       variants.length,
       selected,

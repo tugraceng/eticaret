@@ -26,9 +26,12 @@ export function AddToCart({
   const router = useRouter();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
-  const { variants, selected, allVariantsSoldOut, effectivePriceCents } = useProductVariantsOptional();
+  const { variants, selected, allVariantsSoldOut, effectivePriceCents, resolvedPrimaryImageUrl } =
+    useProductVariantsOptional();
   const addLine = useCartStore((s) => s.addLine);
   const openMiniCart = useCartStore((s) => s.openMiniCart);
+
+  const lineImageUrl = resolvedPrimaryImageUrl || imageUrl;
 
   const unitPrice =
     typeof basePriceCents === "number"
@@ -60,7 +63,7 @@ export function AddToCart({
         title,
         priceCents: unitPrice,
         slug,
-        imageUrl,
+        imageUrl: lineImageUrl,
       });
       commerceAddToCart({
         item_id: productId,
@@ -92,6 +95,7 @@ export function AddToCart({
       allVariantsSoldOut,
       addLine,
       openMiniCart,
+      lineImageUrl,
     ],
   );
 
@@ -129,7 +133,7 @@ export function AddToCart({
           slug={slug ?? ""}
           title={name}
           priceCents={variants.length > 0 ? effectivePriceCents() : basePriceCents ?? 0}
-          imageUrl={imageUrl}
+          imageUrl={lineImageUrl}
         />
       </div>
       <div className="flex max-w-md flex-col gap-3">

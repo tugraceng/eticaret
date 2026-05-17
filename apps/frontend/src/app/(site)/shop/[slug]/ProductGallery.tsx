@@ -3,11 +3,12 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
+import { useProductVariantsOptional } from "./ProductVariantContext";
 
-type ImageItem = { url: string; alt: string | null };
+type ImageItem = { id: string; url: string; alt: string | null };
 
 export function ProductGallery({
   productName,
@@ -23,9 +24,19 @@ export function ProductGallery({
   const [active, setActive] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [portalReady, setPortalReady] = useState(false);
+  const { selected } = useProductVariantsOptional();
+  const variantImageId = selected?.productImageId ?? null;
   const list = images.length > 0 ? images : [];
   const main = list[active] ?? list[0];
   const canStep = list.length > 1;
+
+  const imageIdsKey = useMemo(() => images.map((img) => img.id).join(","), [images]);
+
+  useEffect(() => {
+    if (!variantImageId || images.length === 0) return;
+    const idx = images.findIndex((img) => img.id === variantImageId);
+    if (idx >= 0) setActive(idx);
+  }, [variantImageId, imageIdsKey, images]);
 
   const goPrev = useCallback(() => {
     setActive((i) => (i - 1 + list.length) % list.length);
@@ -163,7 +174,7 @@ export function ProductGallery({
         >
           {list.slice(0, 8).map((img, i) => (
             <button
-              key={i}
+              key={img.id}
               type="button"
               role="tab"
               aria-selected={active === i}

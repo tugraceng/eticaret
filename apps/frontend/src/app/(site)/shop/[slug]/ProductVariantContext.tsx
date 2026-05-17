@@ -8,7 +8,11 @@ export type ProductVariantDto = {
   stock: number;
   trackStock: boolean;
   priceCents: number | null;
+  /** Ürün galerisindeki görsel; seçildiğinde vitrin bu görsele geçer */
+  productImageId: string | null;
 };
+
+export type ProductGalleryImageRef = { id: string; url: string };
 
 /** Varyant fiyatı boş veya geçersizse ürün taban fiyatı (kuruş). */
 export function resolveVariantPriceCents(
@@ -25,23 +29,29 @@ type Ctx = {
   variants: ProductVariantDto[];
   /** Ürün taban fiyatı; varyantta fiyat yoksa buna düşülür */
   basePriceCents: number;
+  /** Galeri sırasına göre görseller (kimlik + URL) */
+  productGallery: readonly ProductGalleryImageRef[];
   selectedId: string | null;
   setSelectedId: (id: string | null) => void;
   selected: ProductVariantDto | null;
   effectivePriceCents: () => number;
   allVariantsSoldOut: boolean;
   showPublicStockCount: boolean;
+  /** Sepet / yapışkan çubuk için seçilen varyanta uygun küçük görsel URL */
+  resolvedPrimaryImageUrl: string;
 };
 
 const EMPTY: Ctx = {
   variants: [],
   basePriceCents: 0,
+  productGallery: [],
   selectedId: null,
   setSelectedId: () => {},
   selected: null,
   effectivePriceCents: () => 0,
   allVariantsSoldOut: false,
   showPublicStockCount: true,
+  resolvedPrimaryImageUrl: "",
 };
 
 const ProductVariantContext = createContext<Ctx | null>(null);
@@ -50,12 +60,14 @@ export function ProductVariantProvider({
   children,
   variants,
   basePriceCents,
+  productGallery,
   defaultSelectedId,
   showPublicStockCount = true,
 }: {
   children: ReactNode;
   variants: ProductVariantDto[];
   basePriceCents: number;
+  productGallery: readonly ProductGalleryImageRef[];
   defaultSelectedId?: string | null;
   /** false iken varyant etiketlerinde stok adedi gösterilmez */
   showPublicStockCount?: boolean;
@@ -89,26 +101,37 @@ export function ProductVariantProvider({
     [variants],
   );
 
+  const resolvedPrimaryImageUrl = useMemo(() => {
+    const first = productGallery[0]?.url ?? "";
+    if (!selected?.productImageId) return first;
+    const hit = productGallery.find((g) => g.id === selected.productImageId);
+    return hit?.url ?? first;
+  }, [selected, productGallery]);
+
   const value = useMemo(
     () => ({
       variants,
       basePriceCents,
+      productGallery,
       selectedId,
       setSelectedId,
       selected,
       effectivePriceCents,
       allVariantsSoldOut,
       showPublicStockCount,
+      resolvedPrimaryImageUrl,
     }),
     [
       variants,
       basePriceCents,
+      productGallery,
       selectedId,
       setSelectedId,
       selected,
       effectivePriceCents,
       allVariantsSoldOut,
       showPublicStockCount,
+      resolvedPrimaryImageUrl,
     ],
   );
 

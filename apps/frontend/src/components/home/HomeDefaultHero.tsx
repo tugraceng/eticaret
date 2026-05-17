@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { HomeHeroArrows } from "@/components/home/HomeHeroArrows";
 import { HomeHeroBackdrop } from "@/components/home/HomeHeroBackdrop";
-import { heroSectionMinHeightClass } from "@/components/home/homeHeroLayout";
+import { heroContentPaddingClass, heroSectionMinHeightClass } from "@/components/home/homeHeroLayout";
 import type { SiteSettings } from "@/lib/settings";
 
 type Props = {
@@ -69,17 +69,17 @@ export function HomeDefaultHero({ settings }: Props) {
 
   return (
     <section
-      className={`home-hero-default relative isolate ${heroSectionMinHeightClass} w-full overflow-hidden bg-neutral-950`}
+      className={`home-hero-default relative isolate flex w-full flex-col overflow-hidden bg-neutral-950 ${heroSectionMinHeightClass}`}
     >
       <HomeHeroBackdrop slides={slides} index={index} />
       <HomeHeroArrows visible={slides.length > 1} onPrev={goPrev} onNext={goNext} />
 
       <div
-        className={`relative z-10 flex ${heroSectionMinHeightClass} flex-col justify-center px-5 pb-14 pt-20 max-md:justify-start max-md:pb-10 max-md:pt-[max(5.5rem,calc(env(safe-area-inset-top,0px)+4.25rem))] sm:px-10 sm:pb-16 sm:pt-24 md:justify-center md:px-12 md:pb-24 md:pt-32 lg:px-20`}
+        className={`relative z-10 flex w-full flex-1 flex-col justify-center ${heroContentPaddingClass}`}
       >
         <motion.div
           key={index}
-          className="mx-auto w-full max-w-[1400px] md:py-8"
+          className="mx-auto w-full max-w-[1400px] md:py-6"
           initial={reduceMotion ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{
@@ -91,7 +91,7 @@ export function HomeDefaultHero({ settings }: Props) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#5b8def]">
             {active.eyebrow}
           </p>
-          <h1 className="mt-4 max-w-[18ch] text-4xl font-medium leading-[1.05] tracking-tight text-white sm:text-5xl md:max-w-[20ch] md:text-6xl lg:text-7xl">
+          <h1 className="mt-3 max-w-[18ch] text-[1.75rem] font-medium leading-[1.08] tracking-tight text-white sm:text-4xl md:mt-4 md:max-w-[20ch] md:text-6xl lg:text-7xl">
             {active.title}
           </h1>
           <p className="mt-6 max-w-md text-sm leading-relaxed text-white/85 sm:text-base md:max-w-lg">

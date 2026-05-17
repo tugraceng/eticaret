@@ -9,6 +9,7 @@ export function ProductVariantRow({
   variant,
   busy,
   priceFmt,
+  galleryImages,
   onUpdate,
   onDelete,
 }: {
@@ -16,6 +17,7 @@ export function ProductVariantRow({
   variant: AdminProductVariant;
   busy: boolean;
   priceFmt: (cents: number, currency?: string) => string;
+  galleryImages: Array<{ id: string; url: string }>;
   onUpdate: (
     variantId: string,
     body: {
@@ -25,6 +27,7 @@ export function ProductVariantRow({
       stock: number;
       trackStock: boolean;
       isActive: boolean;
+      productImageId: string | null;
     },
   ) => Promise<void>;
   onDelete: (variantId: string, label: string) => Promise<void>;
@@ -37,6 +40,7 @@ export function ProductVariantRow({
   const [stock, setStock] = useState(String(variant.stock));
   const [trackStock, setTrackStock] = useState(variant.trackStock);
   const [isActive, setIsActive] = useState(variant.isActive);
+  const [productImageId, setProductImageId] = useState<string>(variant.productImageId ?? "");
 
   useEffect(() => {
     setLabel(variant.label);
@@ -47,6 +51,7 @@ export function ProductVariantRow({
     setStock(String(variant.stock));
     setTrackStock(variant.trackStock);
     setIsActive(variant.isActive);
+    setProductImageId(variant.productImageId ?? "");
   }, [variant]);
 
   const save = async () => {
@@ -58,6 +63,7 @@ export function ProductVariantRow({
       if (!Number.isFinite(c) || c < 0) return;
       priceCents = c;
     }
+    const chosen = productImageId.trim();
     await onUpdate(variant.id, {
       label: label.trim(),
       sku: sku.trim() || null,
@@ -65,6 +71,7 @@ export function ProductVariantRow({
       stock: parseInt(stock, 10) || 0,
       trackStock,
       isActive,
+      productImageId: chosen ? chosen : null,
     });
   };
 
@@ -107,6 +114,27 @@ export function ProductVariantRow({
           Aktif
         </label>
       </div>
+      {galleryImages.length > 0 ? (
+        <div className="mt-3 sm:max-w-md">
+          <Field
+            label="Vitrin görseli"
+            hint="Bu seçenek seçildiğinde ürün sayfasında önce bu görsel gösterilir. Boş = galerideki ilk sıra."
+          >
+            <select
+              className="input-soft text-xs"
+              value={productImageId}
+              onChange={(e) => setProductImageId(e.target.value)}
+            >
+              <option value="">Varsayılan (ilk görsel)</option>
+              {galleryImages.map((im, i) => (
+                <option key={im.id} value={im.id}>
+                  Görsel {i + 1}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+      ) : null}
       <div className="mt-2 flex flex-wrap gap-2">
         <button
           type="button"
