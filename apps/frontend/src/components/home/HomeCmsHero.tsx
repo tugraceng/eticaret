@@ -8,7 +8,7 @@ import { HomeHeroBackdrop } from "@/components/home/HomeHeroBackdrop";
 import { apiAssetUrl } from "@/lib/api";
 import type { HomeSection, SiteSettings } from "@/lib/settings";
 import { defaultHeroSlides, parseHeroSlides, type HomeHeroSlide } from "@/components/home/homeHeroDefaults";
-import { heroContentPaddingClass, heroSectionMinHeightClass } from "@/components/home/homeHeroLayout";
+import { heroContentLayoutClass, heroContentPaddingClass, heroSectionMinHeightClass } from "@/components/home/homeHeroLayout";
 
 type Props = {
   section: HomeSection;
@@ -71,7 +71,7 @@ export function HomeCmsHero({ section, settings }: Props) {
       <HomeHeroArrows visible={slides.length > 1} onPrev={goPrev} onNext={goNext} />
 
       <div
-        className={`relative z-10 flex w-full flex-1 flex-col justify-center ${heroContentPaddingClass}`}
+        className={`relative z-10 ${heroContentPaddingClass} ${heroContentLayoutClass}`}
       >
         <motion.div
           key={index}

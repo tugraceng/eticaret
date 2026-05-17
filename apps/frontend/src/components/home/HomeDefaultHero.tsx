@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { HomeHeroArrows } from "@/components/home/HomeHeroArrows";
 import { HomeHeroBackdrop } from "@/components/home/HomeHeroBackdrop";
-import { heroContentPaddingClass, heroSectionMinHeightClass } from "@/components/home/homeHeroLayout";
+import { heroContentLayoutClass, heroContentPaddingClass, heroSectionMinHeightClass } from "@/components/home/homeHeroLayout";
 import type { SiteSettings } from "@/lib/settings";
 
 type Props = {
@@ -75,7 +75,7 @@ export function HomeDefaultHero({ settings }: Props) {
       <HomeHeroArrows visible={slides.length > 1} onPrev={goPrev} onNext={goNext} />
 
       <div
-        className={`relative z-10 flex w-full flex-1 flex-col justify-center ${heroContentPaddingClass}`}
+        className={`relative z-10 ${heroContentPaddingClass} ${heroContentLayoutClass}`}
       >
         <motion.div
           key={index}

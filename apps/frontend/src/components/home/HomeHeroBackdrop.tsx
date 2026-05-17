@@ -7,9 +7,9 @@ import { useReducedMotion } from "framer-motion";
 const HERO_OVERLAY =
   "linear-gradient(105deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 38%, rgba(0,0,0,0.2) 100%)";
 
-/** Tüm kırılımlar: alanı doldur, üst + yatay orta; kırpma öncelikle alttan. */
+/** Mobilde odak biraz aşağı — üst logo alanı daha görünür; md+ üst sabit. */
 const HERO_IMG_LAYER_CLASS =
-  "absolute inset-0 bg-cover bg-no-repeat bg-[position:center_top]";
+  "absolute inset-0 bg-cover bg-no-repeat max-md:bg-[position:center_12%] md:bg-[position:center_top]";
 
 type SlideImg = { image: string };
 
