@@ -148,7 +148,7 @@ export default async function AboutPage() {
             <span className="text-2xl" aria-hidden>
               {p.icon}
             </span>
-            <h2 className="mt-4 text-lg font-semibold text-slate-900">{p.title}</h2>
+            <h3 className="mt-4 text-lg font-semibold text-slate-900">{p.title}</h3>
             <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{p.body}</p>
           </li>
         ))}

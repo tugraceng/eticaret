@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { headingClass, sectionSpacing, siteContainerClass } from "@/lib/design-system";
 
-/** Header / footer ile aynı yatay hiza (max-width + padding). */
-export const siteContainerClass =
-  "mx-auto w-full min-w-0 max-w-7xl px-4 sm:px-6 lg:px-8";
+export { siteContainerClass };
 
 type Props = {
   children: ReactNode;
@@ -25,7 +24,7 @@ export function PageContainer({
       className={cn(
         siteContainerClass,
         width === "narrow" ? "max-w-3xl" : undefined,
-        "py-12 sm:py-14",
+        sectionSpacing.default,
         className,
       )}
     >
@@ -48,9 +47,9 @@ export function PageHeader({
   return (
     <header className={cn("fade-up max-w-3xl", className)}>
       {eyebrow ? (
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{eyebrow}</p>
+        <p className={headingClass.eyebrow}>{eyebrow}</p>
       ) : null}
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl lg:text-[2.5rem]">
+      <h1 className={cn("mt-2", headingClass.h1)}>
         {title}
       </h1>
       {description ? (

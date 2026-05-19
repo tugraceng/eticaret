@@ -240,6 +240,7 @@ export function SiteHeader({
   const [loggedIn, setLoggedIn] = useState(false);
   /** Masaüstü: alt kategorili kök üzerindeyken tam genişlik mega panel */
   const [megaCategoryId, setMegaCategoryId] = useState<string | null>(null);
+  const [headerCompact, setHeaderCompact] = useState(false);
   const megaCloseTimerRef = useRef<number | null>(null);
 
   const clearMegaCloseTimer = useCallback(() => {
@@ -286,6 +287,13 @@ export function SiteHeader({
   }, []);
 
   useEffect(() => {
+    const onScroll = () => setHeaderCompact(window.scrollY > 32);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
     setOpen(false);
     collapseMega();
   }, [pathname, collapseMega]);
@@ -326,9 +334,14 @@ export function SiteHeader({
     };
   }, [pathname]);
 
-  const headerSurface = isHome
-    ? "border-b border-slate-200/80 bg-white text-slate-900 shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)]"
-    : "border-b border-slate-200/90 bg-white text-slate-900 shadow-[0_6px_24px_-16px_rgba(15,23,42,0.1)]";
+  const headerSurface = cn(
+    "border-b border-slate-200/90 bg-white text-slate-900 transition-[box-shadow,padding] duration-300",
+    headerCompact
+      ? "shadow-[0_10px_32px_-18px_rgba(15,23,42,0.14)]"
+      : isHome
+        ? "shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)]"
+        : "shadow-[0_6px_24px_-16px_rgba(15,23,42,0.1)]",
+  );
 
   const headerPosition = isHome ? "fixed inset-x-0 top-0" : "sticky top-0";
 
@@ -355,13 +368,19 @@ export function SiteHeader({
   return (
     <header
       style={style}
-      className={`${headerPosition} z-50 flex flex-col transition-[background-color,box-shadow] duration-300 ${headerSurface}`}
+      data-compact={headerCompact ? "" : undefined}
+      className={cn(headerPosition, "z-50 flex flex-col", headerSurface)}
     >
       {topPromoLines.length > 0 ? (
         <TopPromoMarqueeBar lines={topPromoLines} style={topPromoBarStyle} />
       ) : null}
 
-      <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8 md:flex-row md:items-center md:gap-6 md:py-3.5">
+      <div
+        className={cn(
+          "mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-3 px-4 sm:px-6 lg:px-8 md:flex-row md:items-center md:gap-6 transition-[padding] duration-300",
+          headerCompact ? "py-2 md:py-2" : "py-3 md:py-3.5",
+        )}
+      >
         <div className="flex min-w-0 flex-1 items-center gap-3 md:contents">
           <Link
             href="/"
@@ -372,7 +391,12 @@ export function SiteHeader({
             <img
               src={logoSrc}
               alt={settings.siteName}
-              className="h-[4.25rem] w-auto max-h-[6rem] max-w-[min(82vw,420px)] object-contain object-left sm:h-20 sm:max-w-[460px] md:h-[5.5rem] md:max-w-[500px] lg:h-[6rem] lg:max-w-[540px]"
+              className={cn(
+                "w-auto object-contain object-left transition-[height,max-height] duration-300",
+                headerCompact
+                  ? "h-14 max-h-[4rem] max-w-[min(72vw,360px)] sm:h-16 sm:max-w-[400px] md:h-[4.25rem] md:max-w-[440px]"
+                  : "h-[4.25rem] max-h-[6rem] max-w-[min(82vw,420px)] sm:h-20 sm:max-w-[460px] md:h-[5.5rem] md:max-w-[500px] lg:h-[6rem] lg:max-w-[540px]",
+              )}
             />
           </Link>
 
@@ -471,7 +495,10 @@ export function SiteHeader({
         </div>
       </div>
 
-      <nav aria-label="Kategori ve bağlantılar" className="relative z-0 hidden shrink-0 border-t border-slate-100 bg-white md:block">
+      <nav
+        aria-label="Kategori ve bağlantılar"
+        className="relative z-0 hidden shrink-0 border-t border-slate-200/90 bg-white md:block"
+      >
         <div className="mx-auto flex max-w-7xl flex-wrap items-end gap-x-0.5 gap-y-0 px-4 sm:px-6 lg:px-8">
           {headerNav.beforeCategories.map((item) => {
             const isInternal = item.href.startsWith("/");
@@ -483,6 +510,7 @@ export function SiteHeader({
                 href={item.href}
                 active={tailActive}
                 muted={item.muted}
+                compact={headerCompact}
                 onMouseEnter={collapseMega}
               >
                 {item.label}
@@ -490,7 +518,12 @@ export function SiteHeader({
             );
           })}
           {categoryNav.length === 0 ? (
-            <SiteNavTab href="/shop" active={pathname.startsWith("/shop")} onMouseEnter={collapseMega}>
+            <SiteNavTab
+              href="/shop"
+              active={pathname.startsWith("/shop")}
+              compact={headerCompact}
+              onMouseEnter={collapseMega}
+            >
               Ürünler
             </SiteNavTab>
           ) : null}
@@ -509,6 +542,7 @@ export function SiteHeader({
                 <SiteNavTab
                   href={shopCategoryHref(cat.id)}
                   active={catActive || megaOpen}
+                  compact={headerCompact}
                   onMouseEnter={() => {
                     if (cat.children.length > 0) openMegaCategory(cat.id);
                     else collapseMega();
@@ -537,6 +571,7 @@ export function SiteHeader({
                 href={item.href}
                 active={tailActive}
                 muted={item.muted}
+                compact={headerCompact}
                 onMouseEnter={collapseMega}
               >
                 {item.label}
@@ -546,6 +581,7 @@ export function SiteHeader({
           <SiteNavTab
             href={contactNavItem.href}
             active={contactNavActive}
+            compact={headerCompact}
             onMouseEnter={collapseMega}
           >
             {contactNavItem.label}

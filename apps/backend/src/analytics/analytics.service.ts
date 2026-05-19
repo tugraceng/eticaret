@@ -7,7 +7,11 @@ export class AnalyticsService {
 
   track(event: string, path?: string, metadata?: object) {
     return this.prisma.analyticsEvent.create({
-      data: { event, path, metadata },
+      data: {
+        event,
+        path: path ?? null,
+        ...(metadata !== undefined ? { metadata: metadata as object } : {}),
+      },
     });
   }
 

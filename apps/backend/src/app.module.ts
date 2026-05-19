@@ -21,6 +21,7 @@ import { ShippingModule } from "./shipping/shipping.module";
 import { WhatsAppModule } from "./whatsapp/whatsapp.module";
 import { NetgsmModule } from "./netgsm/netgsm.module";
 import { ContactModule } from "./contact/contact.module";
+import { HealthModule } from "./health/health.module";
 import { UploadsModule } from "./uploads/uploads.module";
 import { MarketingModule } from "./marketing/marketing.module";
 import { EinvoiceModule } from "./einvoice/einvoice.module";
@@ -45,6 +46,7 @@ import { JobsModule } from "./common/jobs/jobs.module";
     JobsModule,
     EinvoiceModule,
     PrismaModule,
+    HealthModule,
     EmailModule,
     CategoriesModule,
     NotificationsModule,
