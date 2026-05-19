@@ -13,8 +13,6 @@ import { AdminGuard } from "../common/guards/admin.guard";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { ALLOWED_IMAGE_MIMES, UploadsService } from "./uploads.service";
 
-const uploadStorageService = new UploadsService();
-
 @Controller("uploads")
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class UploadsController {
@@ -26,15 +24,16 @@ export class UploadsController {
       storage: diskStorage({
         destination: (_req, _file, cb) => {
           try {
-            uploadStorageService.ensureUploadDir();
-            cb(null, uploadStorageService.getUploadDir());
+            const storage = new UploadsService();
+            storage.ensureUploadDir();
+            cb(null, storage.getUploadDir());
           } catch {
             cb(new BadRequestException("Upload klasoru olusturulamadi."), "");
           }
         },
         filename: (_req, file, cb) => {
           try {
-            cb(null, uploadStorageService.buildFilename(file.originalname, file.mimetype));
+            cb(null, new UploadsService().buildFilename(file.originalname, file.mimetype));
           } catch {
             cb(new BadRequestException("Dosya adi olusturulamadi."), "");
           }

@@ -1,5 +1,4 @@
 import { existsSync } from "node:fs";
-import { resolve } from "node:path";
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
@@ -8,20 +7,7 @@ import express from "express";
 import { AppModule } from "./app.module";
 import { GlobalExceptionFilter } from "./common/http/global-exception.filter";
 import { perfMiddleware } from "./common/perf/perf.middleware";
-import { UploadsService } from "./uploads/uploads.service";
-
-/** .env içindeki UPLOAD_DIR=uploads → apps/backend/uploads hatasını önler */
-function ensureUploadDirEnv(): void {
-  const repo = resolve(__dirname, "../../../uploads");
-  const d = process.env.UPLOAD_DIR?.trim();
-  if (!d || d === "uploads" || d === "./uploads") {
-    process.env.UPLOAD_DIR = repo;
-    return;
-  }
-  if (!d.startsWith("/") && !/^[a-zA-Z]:[/\\]/.test(d)) {
-    process.env.UPLOAD_DIR = repo;
-  }
-}
+import { resolveRepoUploadsDir, UploadsService } from "./uploads/uploads.service";
 
 function parseOriginList(raw: string | undefined): string[] {
   const list = (raw ?? "http://localhost:3000")
@@ -61,10 +47,10 @@ function buildCorsOptions(): CorsOptions {
 }
 
 async function bootstrap() {
-  ensureUploadDirEnv();
+  const uploadDir = resolveRepoUploadsDir();
+  process.env.UPLOAD_DIR = uploadDir;
   const uploadSvc = new UploadsService();
   uploadSvc.ensureUploadDir();
-  const uploadDir = uploadSvc.getUploadDir();
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   if (process.env.TRUST_PROXY === "1" || process.env.TRUST_PROXY === "true") {

@@ -28,16 +28,26 @@ export function resolveRepoUploadsDir(): string {
   return resolve(__dirname, "../../../../uploads");
 }
 
+function isWrongUploadPath(normalized: string): boolean {
+  return (
+    normalized === "uploads" ||
+    normalized === "./uploads" ||
+    normalized.endsWith("/apps/backend/uploads") ||
+    normalized.endsWith("apps/backend/uploads")
+  );
+}
+
 @Injectable()
 export class UploadsService {
-  /** Yerel veya mutlak klasör yolu. Göreli `uploads` her zaman repo köküne çözülür. */
+  /** Tek doğru klasör: repo kökü uploads/. Yanlış .env yolları yok sayılır. */
   getUploadDir(): string {
-    const repo = resolveRepoUploadsDir();
+    const canonical = resolveRepoUploadsDir();
     const d = process.env.UPLOAD_DIR?.trim();
-    if (!d) return repo;
-    if (d === "uploads" || d === "./uploads") return repo;
+    if (!d) return canonical;
+    const normalized = d.replace(/\\/g, "/");
+    if (isWrongUploadPath(normalized)) return canonical;
     if (d.startsWith("/") || /^[a-zA-Z]:[/\\]/.test(d)) return d;
-    return resolve(repo, d);
+    return resolve(canonical, d);
   }
 
   ensureUploadDir(): void {
