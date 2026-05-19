@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { apiAssetUrl } from "@/lib/api";
 import { cn } from "@/lib/cn";
 
 /** Sepet / ödeme satırı küçük ürün görseli — düşük kalite, lazy. */
@@ -13,9 +14,10 @@ export function ThumbImage({
   size?: number;
   className?: string;
 }) {
+  const resolved = apiAssetUrl(src) ?? src;
   return (
     <Image
-      src={src}
+      src={resolved}
       alt={alt}
       width={size}
       height={size}

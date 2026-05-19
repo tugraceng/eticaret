@@ -9,6 +9,7 @@ import {
   type HeroImageDisplay,
   type HeroImageFit,
 } from "@/components/home/homeHeroImage";
+import { apiAssetUrl } from "@/lib/api";
 import { cn } from "@/lib/cn";
 
 /** Metin okunabilirliği */
@@ -23,7 +24,8 @@ export type HeroBackdropSlide = {
 
 function imageUrl(slide: HeroBackdropSlide | undefined, fallback: HeroBackdropSlide) {
   const url = slide?.image?.trim() || fallback.image?.trim();
-  return url || null;
+  if (!url) return null;
+  return apiAssetUrl(url) ?? url;
 }
 
 function slideDisplay(slide: HeroBackdropSlide | undefined): HeroImageDisplay {

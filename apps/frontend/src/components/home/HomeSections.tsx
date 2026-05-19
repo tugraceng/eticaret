@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ShopCategory } from "@/app/(site)/shop/CategoryStrip";
-import { apiJsonSafe } from "@/lib/api";
+import { apiAssetUrl, apiJsonSafe } from "@/lib/api";
 import { ProductCard, type ProductCardData } from "@/components/site/ProductCard";
 import type { HomeSection, SiteSettings } from "@/lib/settings";
 import { HomeCategoryIconGrid } from "./HomeCategoryIconGrid";
@@ -132,7 +132,9 @@ function Banners({ section }: { section: HomeSection }) {
               {b.imageUrl ? (
                 <div
                   className="hover-zoom absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${b.imageUrl})` }}
+                  style={{
+                    backgroundImage: `url(${apiAssetUrl(b.imageUrl) ?? b.imageUrl})`,
+                  }}
                   aria-hidden
                 />
               ) : (
