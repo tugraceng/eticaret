@@ -8,6 +8,8 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: "4000",
+        /** PM2 cwd: apps/backend — görseller repo kökünde uploads/ */
+        UPLOAD_DIR: "../../uploads",
       },
     },
     {

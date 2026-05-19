@@ -9,6 +9,7 @@ Set these env vars:
 - `NEXT_PUBLIC_API_URL=http://SERVER_IP/api`
 - `CORS_ORIGIN=http://SERVER_IP`
 - `PUBLIC_WEB_URL=http://SERVER_IP`
+- `UPLOAD_DIR=../../uploads` (PM2 `cwd` = `apps/backend` iken repo kökündeki `uploads/` klasörü)
 
 ## 2) Install and build
 
