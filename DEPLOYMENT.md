@@ -14,10 +14,28 @@ Set these env vars:
 
 ```bash
 npm install
+npx prisma generate --schema=database/prisma/schema.prisma
 npm run db:migrate:deploy
 npm run build -w @platform/backend
 npm run build -w @platform/frontend
 ```
+
+### Backend build takılıyor gibi görünüyorsa
+
+`nest build` çıktı vermeden dakikalarca sürebilir (özellikle 1 GB RAM VPS). Önce:
+
+```bash
+cd ~/eticaret
+free -h
+# Temiz build
+rm -rf apps/backend/dist apps/backend/tsconfig.tsbuildinfo
+export NODE_OPTIONS="--max-old-space-size=2048"
+cd apps/backend && npm run build:tsc
+```
+
+`build:tsc` biterse `dist/main.js` oluşur; PM2 aynı dosyayı kullanır. Alternatif: `npm run build` (`nest build --tsc`).
+
+OOM (bellek) şüphesi: `dmesg | tail -20` içinde `Killed process` arayın; gerekirse swap ekleyin.
 
 ## 3) PM2
 
@@ -27,6 +45,16 @@ Run:
 pm2 start ecosystem.config.cjs
 pm2 save
 pm2 startup
+```
+
+Frontend `errored` / `Missing script: start` ise repo kökünden yeniden başlatın (ecosystem artık `next start` doğrudan çalıştırır):
+
+```bash
+cd ~/eticaret
+npm run build -w @platform/frontend
+pm2 delete eticaret-frontend 2>/dev/null || true
+pm2 start ecosystem.config.cjs --only eticaret-frontend
+pm2 save
 ```
 
 Notes:
