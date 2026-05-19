@@ -49,14 +49,29 @@ export function parseHeroImageDisplay(o: Record<string, unknown> | null | undefi
   };
 }
 
-/** Tailwind object-position (responsive: mobil ayrı seçilebilir). */
+/**
+ * Tailwind arbitrary object-position sınıfları build’de üretilmediği için
+ * masaüstünde konum uygulanmıyordu — CSS değişkenleri kullanın (hero-image-position-host).
+ */
+export function heroImagePositionVars(
+  desktop: HeroImagePosition,
+  mobile: HeroImagePosition | null,
+): Record<string, string> {
+  const m = mobile ?? desktop;
+  return {
+    "--hero-object-position": desktop,
+    "--hero-object-position-mobile": m,
+  };
+}
+
+/** @deprecated heroImagePositionVars + .hero-image-position-host kullanın */
 export function heroObjectPositionClass(
   desktop: HeroImagePosition,
   mobile: HeroImagePosition | null,
 ): string {
-  const d = `object-[${desktop.replace(" ", "_")}]`;
-  if (!mobile) return d;
-  return `max-md:object-[${mobile.replace(" ", "_")}] md:object-[${desktop.replace(" ", "_")}]`;
+  void desktop;
+  void mobile;
+  return "hero-image-position-host";
 }
 
 export const HERO_IMAGE_FIT_LABELS: Record<HeroImageFit, string> = {

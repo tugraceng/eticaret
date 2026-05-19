@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthSplitShell, type AuthPagePanel } from "@/components/account/AuthSplitShell";
+import { GoogleIcon } from "@/components/account/GoogleIcon";
 import { mergeGuestCartIntoServerCart } from "@/lib/cart-sync";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import {
@@ -148,11 +149,11 @@ export function CustomerLoginForm({
       panelGradientTo={authPanel?.gradientTo}
       panelTextColor={authPanel?.textColor}
       bottomAccessory={
-        <p className="text-center text-sm text-slate-600">
+        <p>
           Hesabınız yok mu?{" "}
           <Link
             href={`/hesap/kayit?callbackUrl=${encodeURIComponent(safeReturn)}`}
-            className="font-semibold text-slate-900 hover:underline"
+            className="auth-footer-link"
           >
             Kayıt olun
           </Link>
@@ -169,23 +170,16 @@ export function CustomerLoginForm({
               if (busy) return;
               window.location.assign(apiUrl("/auth/oauth/google"));
             }}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-60"
+            className="auth-btn-google"
           >
-            <span className="text-base font-bold" aria-hidden>
-              G
-            </span>
+            <GoogleIcon />
             Google ile devam et
           </button>
-          <p className="text-center text-[11px] text-slate-400">
+          <p className="text-center text-[11px] leading-relaxed text-slate-400">
             Önce sitede aynı e-posta ile kayıt olmalısınız.
           </p>
-          <div className="relative py-1">
-            <div className="absolute inset-0 flex items-center" aria-hidden>
-              <div className="w-full border-t border-slate-200" />
-            </div>
-            <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-              <span className="bg-white px-2">veya e-posta</span>
-            </div>
+          <div className="auth-divider" aria-hidden>
+            <span>veya e-posta</span>
           </div>
         </>
       ) : null}
@@ -198,7 +192,7 @@ export function CustomerLoginForm({
         className="space-y-4"
       >
         <div>
-          <label className="text-xs font-semibold text-slate-800" htmlFor="login-email">
+          <label className="auth-field-label" htmlFor="login-email">
             E-posta
           </label>
           <input
@@ -206,7 +200,7 @@ export function CustomerLoginForm({
             name="email"
             type="email"
             inputMode="email"
-            className="input-soft mt-1.5 w-full"
+            className="auth-field-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="username email"
@@ -216,10 +210,12 @@ export function CustomerLoginForm({
         </div>
         <div>
           <div className="flex items-center justify-between gap-2">
-            <label className="text-xs font-semibold text-slate-800">Şifre</label>
+            <label className="auth-field-label" htmlFor="login-password">
+              Şifre
+            </label>
             <Link
               href="/hesap/sifre-unuttum"
-              className="text-xs font-medium text-sky-600 hover:underline"
+              className="text-xs font-medium text-slate-600 underline decoration-slate-300 underline-offset-2 hover:text-slate-900"
             >
               Şifremi unuttum
             </Link>
@@ -228,7 +224,7 @@ export function CustomerLoginForm({
             id="login-password"
             name="password"
             type="password"
-            className="input-soft mt-1.5 w-full"
+            className="auth-field-input"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
@@ -236,13 +232,9 @@ export function CustomerLoginForm({
           />
         </div>
 
-        {error && (
-          <pre className="max-h-32 overflow-auto rounded-xl bg-rose-50 p-3 text-xs text-rose-700 whitespace-pre-wrap">
-            {error}
-          </pre>
-        )}
+        {error ? <p className="auth-error whitespace-pre-wrap">{error}</p> : null}
 
-        <button type="submit" disabled={busy} className="store-cta-primary">
+        <button type="submit" disabled={busy} className="auth-btn-primary">
           {busy ? "Giriş…" : "Giriş yap"}
         </button>
       </form>

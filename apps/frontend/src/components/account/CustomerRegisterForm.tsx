@@ -136,11 +136,11 @@ export function CustomerRegisterForm({
       panelGradientTo={authPanel?.gradientTo}
       panelTextColor={authPanel?.textColor}
       bottomAccessory={
-        <p className="text-center text-sm text-slate-600">
+        <p>
           Zaten hesabınız var mı?{" "}
           <Link
             href={`/hesap/giris?callbackUrl=${encodeURIComponent(safeReturn)}`}
-            className="font-semibold text-slate-900 hover:underline"
+            className="auth-footer-link"
           >
             Giriş yapın
           </Link>
@@ -157,14 +157,14 @@ export function CustomerRegisterForm({
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-xs font-semibold text-slate-800" htmlFor="register-given-name">
+            <label className="auth-field-label" htmlFor="register-given-name">
               Ad *
             </label>
             <input
               id="register-given-name"
               name="given-name"
               type="text"
-              className="input-soft mt-1.5 w-full"
+              className="auth-field-input"
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoComplete="given-name"
@@ -172,14 +172,14 @@ export function CustomerRegisterForm({
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-800" htmlFor="register-family-name">
+            <label className="auth-field-label" htmlFor="register-family-name">
               Soyad *
             </label>
             <input
               id="register-family-name"
               name="family-name"
               type="text"
-              className="input-soft mt-1.5 w-full"
+              className="auth-field-input"
               value={surname}
               onChange={(e) => setSurname(e.target.value)}
               autoComplete="family-name"
@@ -189,7 +189,7 @@ export function CustomerRegisterForm({
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-slate-800" htmlFor="register-email">
+          <label className="auth-field-label" htmlFor="register-email">
             E-posta *
           </label>
           <input
@@ -197,7 +197,7 @@ export function CustomerRegisterForm({
             name="email"
             type="email"
             inputMode="email"
-            className="input-soft mt-1.5 w-full"
+            className="auth-field-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
@@ -207,7 +207,7 @@ export function CustomerRegisterForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-xs font-semibold text-slate-800" htmlFor="register-phone">
+            <label className="auth-field-label" htmlFor="register-phone">
               Telefon *
             </label>
             <input
@@ -215,7 +215,7 @@ export function CustomerRegisterForm({
               name="phone"
               type="tel"
               inputMode="tel"
-              className="input-soft mt-1.5 w-full"
+              className="auth-field-input"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               autoComplete="tel"
@@ -224,14 +224,14 @@ export function CustomerRegisterForm({
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-800" htmlFor="register-bday">
+            <label className="auth-field-label" htmlFor="register-bday">
               Doğum tarihi *
             </label>
             <input
               id="register-bday"
               name="bday"
               type="date"
-              className="input-soft mt-1.5 w-full"
+              className="auth-field-input"
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
               autoComplete="bday"
@@ -243,14 +243,14 @@ export function CustomerRegisterForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-xs font-semibold text-slate-800" htmlFor="register-password">
+            <label className="auth-field-label" htmlFor="register-password">
               Şifre *
             </label>
             <input
               id="register-password"
               name="password"
               type="password"
-              className="input-soft mt-1.5 w-full"
+              className="auth-field-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
@@ -259,14 +259,14 @@ export function CustomerRegisterForm({
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-800" htmlFor="register-password-confirm">
+            <label className="auth-field-label" htmlFor="register-password-confirm">
               Şifre (tekrar) *
             </label>
             <input
               id="register-password-confirm"
               name="new-password-confirm"
               type="password"
-              className="input-soft mt-1.5 w-full"
+              className="auth-field-input"
               value={passwordConfirm}
               onChange={(e) => setPasswordConfirm(e.target.value)}
               autoComplete="new-password"
@@ -303,13 +303,9 @@ export function CustomerRegisterForm({
           </label>
         </div>
 
-        {error && (
-          <pre className="max-h-32 overflow-auto rounded-xl bg-rose-50 p-3 text-xs text-rose-700 whitespace-pre-wrap">
-            {error}
-          </pre>
-        )}
+        {error ? <p className="auth-error whitespace-pre-wrap">{error}</p> : null}
 
-        <button type="submit" disabled={busy} className="store-cta-primary">
+        <button type="submit" disabled={busy} className="auth-btn-primary">
           {busy ? "Kayıt…" : "Kayıt ol"}
         </button>
       </form>

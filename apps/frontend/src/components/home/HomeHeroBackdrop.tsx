@@ -1,16 +1,16 @@
 "use client";
 
 import Image from "next/image";
+import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import {
   DEFAULT_HERO_IMAGE_DISPLAY,
-  heroObjectPositionClass,
+  heroImagePositionVars,
   type HeroImageDisplay,
   type HeroImageFit,
 } from "@/components/home/homeHeroImage";
 import { apiAssetUrl } from "@/lib/api";
-import { cn } from "@/lib/cn";
 
 /** Metin okunabilirliği */
 const HERO_OVERLAY =
@@ -40,20 +40,26 @@ function HeroImageLayer({
   src,
   alt,
   fit,
-  positionClass,
+  positionVars,
   priority,
   quality,
 }: {
   src: string;
   alt: string;
   fit: HeroImageFit;
-  positionClass: string;
+  positionVars: Record<string, string>;
   priority?: boolean;
   quality?: number;
 }) {
+  const hostStyle = positionVars as CSSProperties;
+
   if (fit === "contain_blur") {
     return (
-      <div className="absolute inset-0" aria-hidden>
+      <div
+        className="hero-image-position-host absolute inset-0"
+        style={hostStyle}
+        aria-hidden
+      >
         <Image
           src={src}
           alt=""
@@ -71,7 +77,7 @@ function HeroImageLayer({
           sizes={HERO_SIZES}
           quality={quality ?? 78}
           priority={priority}
-          className={cn("relative z-[1] object-contain", positionClass)}
+          className="relative z-[1] object-contain"
         />
       </div>
     );
@@ -80,15 +86,17 @@ function HeroImageLayer({
   const objectFitClass = fit === "contain" ? "object-contain" : "object-cover";
 
   return (
-    <Image
-      src={src}
-      alt={alt}
-      fill
-      sizes={HERO_SIZES}
-      quality={quality ?? fit === "cover" ? 82 : 78}
-      priority={priority}
-      className={cn(objectFitClass, positionClass)}
-    />
+    <div className="hero-image-position-host absolute inset-0" style={hostStyle}>
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={HERO_SIZES}
+        quality={quality ?? fit === "cover" ? 82 : 78}
+        priority={priority}
+        className={objectFitClass}
+      />
+    </div>
   );
 }
 
@@ -104,14 +112,14 @@ function SingleHeroLayer({
   const url = imageUrl(slide, fallback);
   if (!url) return null;
   const { imageFit, imagePosition, imagePositionMobile } = slideDisplay(slide);
-  const positionClass = heroObjectPositionClass(imagePosition, imagePositionMobile);
+  const positionVars = heroImagePositionVars(imagePosition, imagePositionMobile);
 
   return (
     <HeroImageLayer
       src={url}
       alt=""
       fit={imageFit}
-      positionClass={positionClass}
+      positionVars={positionVars}
       priority={priority}
     />
   );

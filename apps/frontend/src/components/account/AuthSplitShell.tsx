@@ -1,4 +1,6 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
+import { apiAssetUrl } from "@/lib/api";
 
 export type AuthPagePanel = {
   title?: string;
@@ -10,7 +12,7 @@ export type AuthPagePanel = {
 };
 
 /**
- * Giriş / kayıt: bölünmüş yerleşim. Sol panel SiteSettings (`authPanel*`) ile yönetilir.
+ * Giriş / kayıt: premium bölünmüş kart. Sol panel SiteSettings (`authPanel*`) ile yönetilir.
  */
 export function AuthSplitShell({
   title,
@@ -22,7 +24,7 @@ export function AuthSplitShell({
   panelTitle = "Her adımda kalite.",
   panelSubtitle = "Hassas üretim ve zamansız tasarımı bir araya getiren seçkin ürünler, tek tıkla kapınızda.",
   panelImageUrl = null,
-  panelGradientFrom = "#334155",
+  panelGradientFrom = "#1e293b",
   panelGradientTo = "#020617",
   panelTextColor = "#ffffff",
 }: {
@@ -39,69 +41,108 @@ export function AuthSplitShell({
   panelGradientTo?: string;
   panelTextColor?: string;
 }) {
-  const anchoredFooter = Boolean(bottomAccessory);
   const compactForm = contentAlign === "start";
+  const resolvedImage = apiAssetUrl(panelImageUrl) ?? panelImageUrl?.trim() ?? null;
 
   return (
-    <div className="flex min-h-0 flex-col bg-white lg:min-h-[calc(100dvh-7rem)] lg:flex-row lg:items-stretch">
-      {/* Sol panel — masaüstünde form ile aynı yükseklik, taşma yok */}
-      <div
-        className="relative isolate flex w-full shrink-0 flex-col overflow-hidden lg:flex-[0_0_38%] lg:max-w-[480px] xl:max-w-[520px] min-h-[200px] max-h-[min(36svh,280px)] lg:max-h-none lg:min-h-0"
-        style={{ color: panelTextColor }}
-      >
-        <div
-          className="absolute inset-0 -z-10"
-          style={{
-            background: `linear-gradient(145deg, ${panelGradientFrom} 0%, ${panelGradientTo} 100%)`,
-          }}
-          aria-hidden
-        />
-        {panelImageUrl ? (
-          <>
+    <div className="auth-page-root">
+      <div className="auth-shell">
+        <aside
+          className="auth-shell-panel"
+          style={{ color: panelTextColor }}
+          aria-label="Marka"
+        >
+          <div
+            className="absolute inset-0 -z-10"
+            style={{
+              background: `linear-gradient(155deg, ${panelGradientFrom} 0%, ${panelGradientTo} 72%)`,
+            }}
+            aria-hidden
+          />
+          {resolvedImage ? (
+            <>
+              <Image
+                src={resolvedImage}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 480px"
+                priority
+              />
+              <div
+                className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/45 to-black/75"
+                aria-hidden
+              />
+            </>
+          ) : (
             <div
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url(${panelImageUrl})` }}
+              className="pointer-events-none absolute inset-0 opacity-[0.14]"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)",
+                backgroundSize: "22px 22px",
+              }}
               aria-hidden
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-black/55 via-black/30 to-black/60" aria-hidden />
-          </>
-        ) : null}
-        <div className="relative z-10 flex flex-1 flex-col justify-end p-6 sm:p-8 lg:p-10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-75">{siteName}</p>
-          <p className="mt-2 text-xl font-semibold leading-tight tracking-tight sm:text-2xl">{panelTitle}</p>
-          <p className="mt-2 line-clamp-3 text-sm leading-relaxed opacity-90">{panelSubtitle}</p>
-        </div>
-      </div>
-
-      {/* Sağ: form — kayıtta gereksiz scroll azaltılır */}
-      <div className="flex min-h-0 flex-1 flex-col border-t border-slate-100 lg:border-l lg:border-t-0">
-        <div
-          className={`mx-auto flex w-full max-w-md flex-1 flex-col px-4 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-10 ${
-            compactForm ? "" : "justify-center"
-          }`}
-        >
-          <header className="shrink-0">
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
-            <p className="mt-1.5 text-sm text-slate-600">{subtitle}</p>
-          </header>
-
+          )}
           <div
-            className={`mt-5 min-h-0 flex-1 ${
-              compactForm ? "overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]" : ""
-            }`}
-          >
-            <div
-              className={
-                contentAlign === "center" && !compactForm
-                  ? "flex min-h-[min(320px,50vh)] flex-col justify-center py-2"
-                  : "py-1"
-              }
-            >
-              <div className="space-y-4 sm:space-y-5">{children}</div>
+            className="pointer-events-none absolute -right-16 top-8 h-48 w-48 rounded-full bg-white/10 blur-3xl"
+            aria-hidden
+          />
+          <div className="relative z-10 flex flex-1 flex-col justify-between p-6 sm:p-8 lg:p-10">
+            <p className="text-[10px] font-bold uppercase tracking-[0.24em] opacity-80">{siteName}</p>
+            <div>
+              <p className="text-2xl font-semibold leading-tight tracking-tight sm:text-[1.65rem]">
+                {panelTitle}
+              </p>
+              <p className="mt-3 max-w-sm text-sm leading-relaxed opacity-90 sm:text-[0.9375rem]">
+                {panelSubtitle}
+              </p>
+              <ul className="mt-6 hidden gap-3 text-xs font-medium opacity-85 sm:flex sm:flex-wrap">
+                <li className="rounded-full border border-white/25 bg-white/10 px-3 py-1.5 backdrop-blur-sm">
+                  Güvenli ödeme
+                </li>
+                <li className="rounded-full border border-white/25 bg-white/10 px-3 py-1.5 backdrop-blur-sm">
+                  Hızlı kargo
+                </li>
+                <li className="rounded-full border border-white/25 bg-white/10 px-3 py-1.5 backdrop-blur-sm">
+                  7/24 sipariş takibi
+                </li>
+              </ul>
             </div>
           </div>
+        </aside>
 
-          {anchoredFooter ? <div className="shrink-0 pt-5">{bottomAccessory}</div> : null}
+        <div className="auth-shell-form border-t border-slate-100 lg:border-l lg:border-t-0">
+          <div className="auth-shell-form-inner">
+            <header className="shrink-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 lg:hidden">
+                {siteName}
+              </p>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">
+                {title}
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{subtitle}</p>
+            </header>
+
+            <div className={compactForm ? "auth-shell-form-scroll mt-5" : "mt-6 sm:mt-8"}>
+              <div
+                className={
+                  compactForm
+                    ? "pb-2"
+                    : "flex min-h-[min(280px,42vh)] flex-col justify-center py-1 lg:min-h-[min(320px,50vh)]"
+                }
+              >
+                <div className="space-y-4 sm:space-y-5">{children}</div>
+              </div>
+            </div>
+
+            {bottomAccessory ? (
+              <footer className="shrink-0 border-t border-slate-100 pt-5 text-center text-sm text-slate-600">
+                {bottomAccessory}
+              </footer>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

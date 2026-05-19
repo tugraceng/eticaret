@@ -124,6 +124,73 @@
     @apply py-8 sm:py-12;
   }
 
+  /** Hero next/image — admin image_position (mobil + masaüstü) */
+  .hero-image-position-host img {
+    object-position: var(--hero-object-position-mobile, center center);
+  }
+  @media (min-width: 768px) {
+    .hero-image-position-host img {
+      object-position: var(--hero-object-position, center center);
+    }
+  }
+
+  /* Auth — giriş / kayıt */
+  .auth-page-root {
+    @apply -mx-4 min-h-[calc(100dvh-4rem)] bg-slate-50/80 py-4 sm:-mx-6 sm:py-6 lg:-mx-8 lg:py-8;
+  }
+  .auth-shell {
+    @apply mx-auto flex w-full max-w-[1120px] flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_24px_80px_-32px_rgba(15,23,42,0.28)] sm:rounded-3xl lg:min-h-[min(720px,calc(100dvh-7.5rem))] lg:flex-row lg:items-stretch;
+  }
+  .auth-shell-panel {
+    @apply relative isolate flex min-h-[220px] w-full shrink-0 flex-col justify-end overflow-hidden sm:min-h-[260px] lg:min-h-0 lg:w-[44%] lg:max-w-[480px];
+  }
+  .auth-shell-form {
+    @apply flex min-h-0 flex-1 flex-col lg:w-[56%];
+  }
+  .auth-shell-form-inner {
+    @apply mx-auto flex w-full max-w-md flex-1 flex-col px-5 py-7 sm:px-10 sm:py-9 lg:max-w-lg lg:px-12 lg:py-10;
+  }
+  .auth-shell-form-scroll {
+    @apply min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch];
+  }
+  .auth-field-label {
+    @apply text-xs font-semibold tracking-wide text-slate-700;
+  }
+  .auth-field-input {
+    @apply mt-2 w-full rounded-xl border border-slate-200/90 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition-[border-color,box-shadow] placeholder:text-slate-400;
+  }
+  .auth-field-input:hover {
+    @apply border-slate-300;
+  }
+  .auth-field-input:focus {
+    @apply border-slate-400 outline-none ring-2 ring-slate-900/10;
+  }
+  .auth-btn-primary {
+    @apply inline-flex h-12 w-full items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white shadow-md transition-[background-color,transform,box-shadow] hover:bg-slate-950 hover:shadow-lg active:scale-[0.99] disabled:pointer-events-none disabled:opacity-55;
+  }
+  .auth-btn-google {
+    @apply inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-55;
+  }
+  .auth-divider {
+    @apply relative py-2;
+  }
+  .auth-divider::before {
+    content: "";
+    @apply absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-slate-200;
+  }
+  .auth-divider span {
+    @apply relative mx-auto block w-fit bg-white px-3 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400;
+  }
+  .auth-error {
+    @apply rounded-xl border border-rose-200/80 bg-rose-50 px-4 py-3 text-sm leading-relaxed text-rose-800;
+  }
+  .auth-consent-box {
+    @apply space-y-3 rounded-2xl border border-slate-100 bg-slate-50/90 p-4;
+  }
+  .auth-footer-link {
+    @apply font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:decoration-slate-900;
+  }
+
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm;
     transition: transform 200ms var(--ease-spring), box-shadow 200ms var(--ease-smooth), background-color 200ms;
