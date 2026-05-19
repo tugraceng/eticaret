@@ -1,8 +1,7 @@
 const path = require("path");
 
-/** Repo kökü — PM2 bu dosyayı nereden başlatırsa başlatsın uploads buraya bağlanır */
+/** PM2 ecosystem dosyasının bulunduğu klasör = repo kökü */
 const repoRoot = __dirname;
-const uploadDir = path.join(repoRoot, "uploads");
 
 module.exports = {
   apps: [
@@ -14,7 +13,7 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: "4000",
-        UPLOAD_DIR: uploadDir,
+        /** İsteğe bağlı override; yoksa backend dist konumundan ../../../uploads kullanır */
       },
     },
     {

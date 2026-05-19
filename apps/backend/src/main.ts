@@ -1,11 +1,20 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import type { CorsOptions } from "@nestjs/common/interfaces/external/cors-options.interface";
+import express from "express";
 import { AppModule } from "./app.module";
 import { GlobalExceptionFilter } from "./common/http/global-exception.filter";
 import { perfMiddleware } from "./common/perf/perf.middleware";
 import { UploadsService } from "./uploads/uploads.service";
+
+/** PM2 cwd apps/backend olsa bile repo kökü uploads/ (dist → ../../../uploads) */
+function ensureUploadDirEnv(): void {
+  if (process.env.UPLOAD_DIR?.trim()) return;
+  process.env.UPLOAD_DIR = resolve(__dirname, "../../../uploads");
+}
 
 function parseOriginList(raw: string | undefined): string[] {
   const list = (raw ?? "http://localhost:3000")
@@ -45,6 +54,7 @@ function buildCorsOptions(): CorsOptions {
 }
 
 async function bootstrap() {
+  ensureUploadDirEnv();
   const uploadSvc = new UploadsService();
   uploadSvc.ensureUploadDir();
   const uploadDir = uploadSvc.getUploadDir();
@@ -53,7 +63,14 @@ async function bootstrap() {
   if (process.env.TRUST_PROXY === "1" || process.env.TRUST_PROXY === "true") {
     app.set("trust proxy", 1);
   }
-  app.useStaticAssets(uploadDir, { prefix: "/uploads/" });
+  app.use(
+    "/uploads",
+    express.static(uploadDir, {
+      fallthrough: false,
+      index: false,
+      maxAge: "7d",
+    }),
+  );
   app.use(perfMiddleware);
   app.enableCors(buildCorsOptions());
   app.setGlobalPrefix("api");
@@ -69,6 +86,8 @@ async function bootstrap() {
   await app.listen(port);
   // eslint-disable-next-line no-console
   console.log(`API http://localhost:${port}/api`);
+  // eslint-disable-next-line no-console
+  console.log(`[uploads] dir=${uploadDir} exists=${existsSync(uploadDir)}`);
 }
 
 bootstrap();
