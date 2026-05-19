@@ -49,6 +49,11 @@ export class UploadsService {
     return `/uploads/${encodeURIComponent(filename)}`;
   }
 
+  /** @deprecated Eski controller uyumluluğu */
+  buildPublicUrl(filename: string): string {
+    return this.publicUrl(filename);
+  }
+
   buildFilename(originalname: string, mimetype: string): string {
     const fromMime = MIME_EXT[mimetype];
     const fromName = extname(originalname).toLowerCase();
