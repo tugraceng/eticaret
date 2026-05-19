@@ -18,6 +18,8 @@ import { ProvinceDistrictSelect } from "@/components/forms/ProvinceDistrictSelec
 import { isTrProvinceDistrictValid } from "@/lib/tr-province-district";
 import { CheckoutJumpNav } from "./_components/CheckoutJumpNav";
 import { CheckoutPaymentTrustPanel } from "./_components/CheckoutPaymentTrustPanel";
+import { PageContainer } from "@/components/site/PageContainer";
+import { ThumbImage } from "@/components/site/ThumbImage";
 
 const PHONE_TR = /^(\+?90)?[\s-]?0?5\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}$/;
 const NEW_ADDRESS = "__new__";
@@ -1255,8 +1257,7 @@ function CheckoutInner() {
                 </div>
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
                   {l.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- harici yükleme URL'leri (S3 vb.)
-                    <img src={l.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    <ThumbImage src={l.imageUrl} alt="" size={48} />
                   ) : (
                     <span className="absolute inset-0 grid place-items-center text-[10px] font-semibold text-slate-400">
                       —
@@ -1347,7 +1348,7 @@ function CheckoutInner() {
 
 export default function CheckoutPage() {
   return (
-    <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+    <PageContainer as="main" className="py-10 sm:py-12">
       <div className="section-shell">
         <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-indigo-50/70 to-transparent" aria-hidden />
         <div className="relative">
@@ -1368,6 +1369,6 @@ export default function CheckoutPage() {
           <CheckoutInner />
         </Suspense>
       </div>
-    </main>
+    </PageContainer>
   );
 }

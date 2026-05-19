@@ -92,6 +92,18 @@ class CreateProductDto {
   seoKeywords?: string | null;
 
   @IsOptional()
+  @IsString()
+  seoCanonicalUrl?: string | null;
+
+  @IsOptional()
+  @IsString()
+  seoOgImageUrl?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  seoNoIndex?: boolean;
+
+  @IsOptional()
   @IsBoolean()
   isFeatured?: boolean;
 
@@ -113,9 +125,9 @@ class AddProductImageDto {
   @IsString()
   url!: string;
 
-  @IsOptional()
   @IsString()
-  alt?: string;
+  @MinLength(1)
+  alt!: string;
 }
 
 class ReorderProductImagesDto {
@@ -274,6 +286,20 @@ class UpdateProductDto {
   @IsString()
   @MaxLength(4000)
   seoKeywords?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== undefined)
+  @IsString()
+  seoCanonicalUrl?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== undefined)
+  @IsString()
+  seoOgImageUrl?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  seoNoIndex?: boolean;
 
   @IsOptional()
   @IsBoolean()

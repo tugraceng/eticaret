@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { PageContainer } from "@/components/site/PageContainer";
+import { ThumbImage } from "@/components/site/ThumbImage";
 import { mergeLineIntoLocalCart } from "@/lib/cart-sync";
 import { type WishItem } from "@/lib/wishlist";
 import { useWishlistHydrated, useWishlistStore } from "@/stores/wishlist-store";
@@ -30,7 +32,7 @@ export default function WishlistPage() {
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+    <PageContainer as="main" className="py-10 sm:py-12">
       <div className="section-shell">
         <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-rose-50/70 to-transparent" aria-hidden />
         <div className="relative">
@@ -70,7 +72,7 @@ export default function WishlistPage() {
                 <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl bg-slate-100 text-2xl">
                   {it.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={it.imageUrl} alt={it.title} className="h-full w-full object-cover" />
+                    <ThumbImage src={it.imageUrl} alt={it.title} size={80} />
                   ) : (
                     <span aria-hidden>📦</span>
                   )}
@@ -108,6 +110,6 @@ export default function WishlistPage() {
       ) : (
         <div className="mt-10 flex justify-center py-16 text-sm text-slate-500">Yükleniyor…</div>
       )}
-    </main>
+    </PageContainer>
   );
 }

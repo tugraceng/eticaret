@@ -139,6 +139,24 @@ class PageDto {
   @IsOptional()
   @IsBoolean()
   isPublished?: boolean;
+  @IsOptional()
+  @IsString()
+  metaTitle?: string | null;
+  @IsOptional()
+  @IsString()
+  metaDescription?: string | null;
+  @IsOptional()
+  @IsString()
+  seoKeywords?: string | null;
+  @IsOptional()
+  @IsString()
+  seoCanonicalUrl?: string | null;
+  @IsOptional()
+  @IsString()
+  seoOgImageUrl?: string | null;
+  @IsOptional()
+  @IsBoolean()
+  seoNoIndex?: boolean;
 }
 
 @Controller("cms")

@@ -78,6 +78,7 @@ function ProductCardInner({ product }: { product: ProductCardData }) {
                 src={second}
                 alt={alt2}
                 fill
+                quality={55}
                 className="object-cover opacity-0 transition-all duration-500 ease-out group-hover:scale-[1.04] group-hover:opacity-100"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               />
@@ -93,6 +94,7 @@ function ProductCardInner({ product }: { product: ProductCardData }) {
                 src={cover}
                 alt={alt}
                 fill
+                quality={78}
                 className={`object-cover ${second ? "transition-transform duration-500 ease-out group-hover:scale-[1.02]" : "transition-transform duration-500 ease-out group-hover:scale-[1.04]"}`}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               />

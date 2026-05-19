@@ -111,7 +111,7 @@ export function ProductStickyAtcBar({
       role="region"
       aria-label="Hızlı satın alma"
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 lg:max-w-7xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs font-semibold text-slate-900">{name}</p>
           <p className="text-sm font-bold text-slate-800">{priceLabel}</p>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { PageContainer } from "@/components/site/PageContainer";
 import { apiUrl } from "@/lib/api";
 import { orderStatusLabelTr } from "@/lib/order-status-tr";
 import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
@@ -59,7 +60,7 @@ export default function OrdersPage() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+    <PageContainer className="py-10 sm:py-12">
       <div className="fade-up section-shell">
         <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-sky-50/70 to-transparent" aria-hidden />
         <div className="relative">
@@ -160,6 +161,6 @@ export default function OrdersPage() {
           )}
         </section>
       )}
-    </div>
+    </PageContainer>
   );
 }

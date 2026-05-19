@@ -6,6 +6,16 @@ import { AdminImageUpload } from "./AdminImageUpload";
 import { adminFetch } from "./api";
 import { formatAdminCaughtError } from "./admin-api-error";
 import { AdminCard, Field, Icon, Toast } from "./ui";
+import {
+  HERO_IMAGE_FIT_LABELS,
+  HERO_IMAGE_FITS,
+  HERO_IMAGE_POSITION_LABELS,
+  HERO_IMAGE_POSITIONS,
+  DEFAULT_HERO_IMAGE_DISPLAY,
+  parseHeroImageDisplay,
+  type HeroImageFit,
+  type HeroImagePosition,
+} from "@/components/home/homeHeroImage";
 
 const KIND_META: Record<
   HomeSectionKind,
@@ -122,6 +132,9 @@ type HeroSlideDraft = {
   mediaUrl: string;
   ctaLabel: string;
   ctaHref: string;
+  imageFit: HeroImageFit;
+  imagePosition: HeroImagePosition;
+  imagePositionMobile: HeroImagePosition | "";
 };
 
 function emptyHeroSlide(): HeroSlideDraft {
@@ -132,6 +145,9 @@ function emptyHeroSlide(): HeroSlideDraft {
     mediaUrl: "",
     ctaLabel: "",
     ctaHref: "",
+    imageFit: DEFAULT_HERO_IMAGE_DISPLAY.imageFit,
+    imagePosition: DEFAULT_HERO_IMAGE_DISPLAY.imagePosition,
+    imagePositionMobile: "",
   };
 }
 
@@ -179,16 +195,22 @@ function draftFromSection(s: HomeSection): Draft {
   const heroSlidesFromConfig = Array.isArray(cfg.slides)
     ? (cfg.slides as unknown[])
         .filter((x): x is Record<string, unknown> => typeof x === "object" && x !== null)
-        .map((x) => ({
-          title: typeof x.title === "string" ? x.title : "",
-          subtitle: typeof x.eyebrow === "string" ? x.eyebrow : "",
-          body: typeof x.body === "string" ? x.body : "",
-          mediaUrl: typeof x.image === "string" ? x.image : "",
-          ctaLabel: typeof x.ctaLabel === "string" ? x.ctaLabel : "",
-          ctaHref: typeof x.cta === "string" ? x.cta : "",
-        }))
+        .map((x): HeroSlideDraft => {
+          const display = parseHeroImageDisplay(x);
+          return {
+            title: typeof x.title === "string" ? x.title : "",
+            subtitle: typeof x.eyebrow === "string" ? x.eyebrow : "",
+            body: typeof x.body === "string" ? x.body : "",
+            mediaUrl: typeof x.image === "string" ? x.image : "",
+            ctaLabel: typeof x.ctaLabel === "string" ? x.ctaLabel : "",
+            ctaHref: typeof x.cta === "string" ? x.cta : "",
+            imageFit: display.imageFit,
+            imagePosition: display.imagePosition,
+            imagePositionMobile: display.imagePositionMobile ?? ("" as const),
+          };
+        })
     : [];
-  const heroSlides =
+  const heroSlides: HeroSlideDraft[] =
     heroSlidesFromConfig.length > 0
       ? heroSlidesFromConfig
       : [
@@ -199,6 +221,9 @@ function draftFromSection(s: HomeSection): Draft {
             mediaUrl: s.mediaUrl ?? "",
             ctaLabel: s.ctaLabel ?? "",
             ctaHref: s.ctaHref ?? "",
+            imageFit: DEFAULT_HERO_IMAGE_DISPLAY.imageFit,
+            imagePosition: DEFAULT_HERO_IMAGE_DISPLAY.imagePosition,
+            imagePositionMobile: "" as const,
           },
         ];
   const kind: HomeSectionKind = s.kind;
@@ -230,6 +255,11 @@ function buildConfig(d: Draft): Record<string, unknown> {
         image: s.mediaUrl.trim(),
         ctaLabel: s.ctaLabel.trim() || "Keşfet",
         cta: s.ctaHref.trim() || "/shop",
+        image_fit: s.imageFit,
+        image_position: s.imagePosition,
+        ...(s.imagePositionMobile.trim()
+          ? { image_position_mobile: s.imagePositionMobile.trim() }
+          : {}),
       }))
       .filter((s) => s.title && s.image);
     if (slides.length > 0) base.slides = slides;
@@ -560,8 +590,60 @@ export function HomeEditor({ token }: { token: string }) {
                   label="Slayt görseli"
                   value={slide.mediaUrl}
                   onChange={(url) => updateHeroSlide(idx, { mediaUrl: url })}
-                  hint="Önerilen oran 48:23 (≈2,09:1), örn. 1920×920, 2400×1150 veya 3840×1840. Masaüstünde arka plan üstten hizalı: logo/önemli detay üstte kalsın; hafif oran farkında kırpma alta gider. 16:9 veya 21:9 kullanırsanız ürünü orta–sağa yerleştirin. Kare/dikeyde üst-orta güvenli bölge kullanın."
+                  hint="Gösterim modu ve konum ile kırpmayı kontrol edebilirsiniz. «Sığdır» veya «Sığdır + bulanık arka plan» ile görselin tamamı görünür."
                 />
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <Field label="Görsel gösterim (image_fit)">
+                    <select
+                      className="input-soft"
+                      value={slide.imageFit}
+                      onChange={(e) =>
+                        updateHeroSlide(idx, { imageFit: e.target.value as HeroImageFit })
+                      }
+                    >
+                      {HERO_IMAGE_FITS.map((fit) => (
+                        <option key={fit} value={fit}>
+                          {HERO_IMAGE_FIT_LABELS[fit]}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Görsel konumu (masaüstü)">
+                    <select
+                      className="input-soft"
+                      value={slide.imagePosition}
+                      onChange={(e) =>
+                        updateHeroSlide(idx, {
+                          imagePosition: e.target.value as HeroImagePosition,
+                        })
+                      }
+                    >
+                      {HERO_IMAGE_POSITIONS.map((pos) => (
+                        <option key={pos} value={pos}>
+                          {HERO_IMAGE_POSITION_LABELS[pos]}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+                <Field label="Görsel konumu (mobil, isteğe bağlı)" className="mt-3">
+                  <select
+                    className="input-soft"
+                    value={slide.imagePositionMobile}
+                    onChange={(e) =>
+                      updateHeroSlide(idx, {
+                        imagePositionMobile: e.target.value as HeroImagePosition | "",
+                      })
+                    }
+                  >
+                    <option value="">Masaüstü ile aynı</option>
+                    {HERO_IMAGE_POSITIONS.map((pos) => (
+                      <option key={pos} value={pos}>
+                        {HERO_IMAGE_POSITION_LABELS[pos]}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <Field label="CTA etiketi">
                     <input
@@ -634,7 +716,7 @@ export function HomeEditor({ token }: { token: string }) {
 
         {draft.kind !== "HERO" ? null : (
           <p className="mt-2 text-xs text-slate-500">
-            Not: Hero için geçerli içerik slayt listesinden alınır; tek bir hero bölümünde birden fazla slayt ekleyebilirsiniz. Arka plan: 48:23 (ör. 3840×1840) ideal; diğer oranlarda kırpma olabilir.
+            Varsayılan gösterim «Kapla»dır (mevcut vitrin görünümü). Logo veya ürün kırpılıyorsa «Sığdır» veya «Sığdır + bulanık arka plan» deneyin; konumu üst/alt/sol/sağ ile ayarlayın.
           </p>
         )}
 

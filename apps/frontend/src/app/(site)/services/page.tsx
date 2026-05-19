@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { apiAssetUrl, apiJsonSafe } from "@/lib/api";
 import { CmsAnchorScroll } from "@/components/site/CmsAnchorScroll";
+import { PageContainer, PageHeader } from "@/components/site/PageContainer";
 
 type Service = {
   id: string;
@@ -39,18 +41,12 @@ export default async function ServicesPage() {
       : "Aşağıda tüm hizmetlerimizi görsellerle birlikte tek sayfada bulabilirsiniz. Özel paket ve teklif için iletişime geçin.";
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+    <PageContainer className="py-12 sm:py-16">
       <Suspense fallback={null}>
         <CmsAnchorScroll />
       </Suspense>
 
-      <header className="fade-up">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{eyebrow}</p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-          {landing?.title?.trim() || "Hizmetler"}
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">{intro}</p>
-      </header>
+      <PageHeader eyebrow={eyebrow} title={landing?.title?.trim() || "Hizmetler"} description={intro} />
 
       <div className="mt-14 space-y-20 sm:space-y-24">
         {services.length === 0 && (
@@ -69,8 +65,15 @@ export default async function ServicesPage() {
             >
               {cover ? (
                 <div className="relative aspect-[2/1] max-h-[min(52vw,380px)] w-full overflow-hidden rounded-3xl bg-slate-100 shadow-sm ring-1 ring-slate-200/60 sm:aspect-[21/9]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={cover} alt="" className="h-full w-full object-cover" loading={i === 0 ? "eager" : "lazy"} />
+                  <Image
+                    src={cover}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 896px"
+                    quality={i === 0 ? 80 : 70}
+                    priority={i === 0}
+                  />
                 </div>
               ) : (
                 <div
@@ -101,6 +104,6 @@ export default async function ServicesPage() {
           Ana sayfa
         </Link>
       </div>
-    </div>
+    </PageContainer>
   );
 }

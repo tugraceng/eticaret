@@ -1,6 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { apiJson } from "@/lib/api";
+import { PageContainer } from "@/components/site/PageContainer";
 
 type Post = {
   title: string;
@@ -23,7 +25,7 @@ export default async function BlogPostPage({
     notFound();
   }
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+    <PageContainer as="article" width="narrow" className="py-12 sm:py-16">
       <Link href="/blog" className="link-underline text-sm text-slate-600 hover:text-slate-900">
         ← Bloga dön
       </Link>
@@ -37,25 +39,28 @@ export default async function BlogPostPage({
           })}
         </p>
       )}
-      <h1 className="mt-2 text-4xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-5xl">
+      <h1 className="mt-2 text-3xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-4xl">
         {post.title}
       </h1>
-      {post.excerpt && (
-        <p className="mt-4 text-lg leading-relaxed text-slate-600">{post.excerpt}</p>
-      )}
+      {post.excerpt ? <p className="mt-4 text-base text-slate-600">{post.excerpt}</p> : null}
 
-      {post.coverImageUrl && (
-        <div
-          className="mt-8 aspect-[16/9] w-full overflow-hidden rounded-3xl bg-slate-100 bg-cover bg-center shadow-lg"
-          style={{ backgroundImage: `url(${post.coverImageUrl})` }}
-          role="img"
-          aria-label=""
-        />
-      )}
+      {post.coverImageUrl ? (
+        <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-2xl bg-slate-100">
+          <Image
+            src={post.coverImageUrl}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 768px"
+            quality={80}
+            priority
+          />
+        </div>
+      ) : null}
 
-      <article className="fade-up mt-10 whitespace-pre-wrap text-base leading-[1.75] text-slate-700">
+      <div className="prose prose-slate mt-10 max-w-none whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
         {post.body}
-      </article>
-    </div>
+      </div>
+    </PageContainer>
   );
 }

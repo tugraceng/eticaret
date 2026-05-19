@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateActio
 import { ProductFormWizard } from "../components/forms/ProductFormWizard";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { ProductVariantRow } from "./ProductVariantRow";
+import { SeoFieldsForm } from "@/components/admin/SeoFieldsForm";
 import { AdminCard, Field, Icon } from "../ui";
 import type { CategoryRow, ProductRow } from "../types";
 
@@ -28,6 +29,9 @@ export function ProductsPanel({
   editMetaTitle,
   editMetaDescription,
   editSeoKeywords,
+  editSeoCanonicalUrl,
+  editSeoOgImageUrl,
+  editSeoNoIndex,
   editFeatured,
   editNew,
   imgAlt,
@@ -45,6 +49,9 @@ export function ProductsPanel({
   setEditMetaTitle,
   setEditMetaDescription,
   setEditSeoKeywords,
+  setEditSeoCanonicalUrl,
+  setEditSeoOgImageUrl,
+  setEditSeoNoIndex,
   setEditFeatured,
   setEditNew,
   setImgAlt,
@@ -100,6 +107,9 @@ export function ProductsPanel({
   editMetaTitle: string;
   editMetaDescription: string;
   editSeoKeywords: string;
+  editSeoCanonicalUrl: string;
+  editSeoOgImageUrl: string;
+  editSeoNoIndex: boolean;
   editFeatured: boolean;
   editNew: boolean;
   imgAlt: string;
@@ -117,6 +127,9 @@ export function ProductsPanel({
   setEditMetaTitle: Dispatch<SetStateAction<string>>;
   setEditMetaDescription: Dispatch<SetStateAction<string>>;
   setEditSeoKeywords: Dispatch<SetStateAction<string>>;
+  setEditSeoCanonicalUrl: Dispatch<SetStateAction<string>>;
+  setEditSeoOgImageUrl: Dispatch<SetStateAction<string>>;
+  setEditSeoNoIndex: Dispatch<SetStateAction<boolean>>;
   setEditFeatured: Dispatch<SetStateAction<boolean>>;
   setEditNew: Dispatch<SetStateAction<boolean>>;
   setImgAlt: Dispatch<SetStateAction<string>>;
@@ -438,23 +451,30 @@ export function ProductsPanel({
 
           <div className="mt-4 space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">SEO ve rozetler</p>
-            <div className="grid gap-3 md:grid-cols-2">
-              <Field label="Meta başlık">
-                <input className="input-soft" value={editMetaTitle} onChange={(e) => setEditMetaTitle(e.target.value)} maxLength={200} />
-              </Field>
-              <Field label="Anahtar kelimeler" hint="Virgülle ayırın">
-                <input className="input-soft" value={editSeoKeywords} onChange={(e) => setEditSeoKeywords(e.target.value)} maxLength={4000} />
-              </Field>
-            </div>
-            <Field label="Meta açıklama">
-              <textarea
-                className="input-soft min-h-[72px] resize-y"
-                value={editMetaDescription}
-                onChange={(e) => setEditMetaDescription(e.target.value)}
-                maxLength={8000}
-              />
-            </Field>
-            <div className="flex flex-wrap gap-4">
+            <p className="text-xs text-slate-500">
+              Boş alanlarda ürün adı, açıklama özeti ve ana görsel otomatik kullanılır.
+            </p>
+            <SeoFieldsForm
+              values={{
+                metaTitle: editMetaTitle,
+                metaDescription: editMetaDescription,
+                seoKeywords: editSeoKeywords,
+                seoCanonicalUrl: editSeoCanonicalUrl,
+                seoOgImageUrl: editSeoOgImageUrl,
+                seoNoIndex: editSeoNoIndex,
+              }}
+              onChange={(patch) => {
+                if (patch.metaTitle !== undefined) setEditMetaTitle(patch.metaTitle);
+                if (patch.metaDescription !== undefined) setEditMetaDescription(patch.metaDescription);
+                if (patch.seoKeywords !== undefined) setEditSeoKeywords(patch.seoKeywords);
+                if (patch.seoCanonicalUrl !== undefined) setEditSeoCanonicalUrl(patch.seoCanonicalUrl);
+                if (patch.seoOgImageUrl !== undefined) setEditSeoOgImageUrl(patch.seoOgImageUrl);
+                if (patch.seoNoIndex !== undefined) setEditSeoNoIndex(patch.seoNoIndex);
+              }}
+              titleHint="Boşsa ürün adı kullanılır."
+              descriptionHint="Boşsa ürün açıklamasının kısaltması kullanılır."
+            />
+            <div className="flex flex-wrap gap-4 pt-2">
               <label className="flex items-center gap-2 text-sm text-slate-700">
                 <input type="checkbox" checked={editFeatured} onChange={(e) => setEditFeatured(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
                 Öne çıkan

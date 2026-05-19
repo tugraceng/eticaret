@@ -63,6 +63,7 @@ export function HomeEditorialProductGrid({ products, markFirstAsNew = true }: Pr
                       src={second}
                       alt={alt2}
                       fill
+                      quality={55}
                       className="object-cover opacity-0 transition-all duration-500 ease-out group-hover:scale-[1.02] group-hover:opacity-100"
                       sizes="(max-width: 768px) 50vw, 25vw"
                     />
@@ -78,6 +79,7 @@ export function HomeEditorialProductGrid({ products, markFirstAsNew = true }: Pr
                       src={cover}
                       alt={alt}
                       fill
+                      quality={78}
                       className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
                       sizes="(max-width: 768px) 50vw, 25vw"
                     />

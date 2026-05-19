@@ -30,7 +30,7 @@ export function HomeTrustStrip({ items: itemsFromConfig }: { items?: unknown }) 
   const items = parseTrustItems(itemsFromConfig);
   return (
     <section className="border-y border-slate-200/80 bg-white py-10">
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 sm:grid-cols-3 sm:px-6">
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:grid-cols-3 sm:px-6 lg:px-8">
         {items.map((x, i) => (
           <div
             key={`${x.title}-${i}`}

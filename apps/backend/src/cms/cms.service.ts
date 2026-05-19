@@ -336,7 +336,26 @@ export class CmsService {
     return this.prisma.page.findUnique({ where: { slug } });
   }
 
-  async upsertPage(data: { slug: string; title: string; content?: unknown; isPublished?: boolean }) {
+  async upsertPage(data: {
+    slug: string;
+    title: string;
+    content?: unknown;
+    isPublished?: boolean;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    seoKeywords?: string | null;
+    seoCanonicalUrl?: string | null;
+    seoOgImageUrl?: string | null;
+    seoNoIndex?: boolean;
+  }) {
+    const seo = {
+      metaTitle: data.metaTitle?.trim() ? data.metaTitle.trim() : null,
+      metaDescription: data.metaDescription?.trim() ? data.metaDescription.trim() : null,
+      seoKeywords: data.seoKeywords?.trim() ? data.seoKeywords.trim() : null,
+      seoCanonicalUrl: data.seoCanonicalUrl?.trim() ? data.seoCanonicalUrl.trim() : null,
+      seoOgImageUrl: data.seoOgImageUrl?.trim() ? data.seoOgImageUrl.trim() : null,
+      seoNoIndex: data.seoNoIndex ?? undefined,
+    };
     const result = await this.prisma.page.upsert({
       where: { slug: data.slug },
       create: {
@@ -344,11 +363,19 @@ export class CmsService {
         title: data.title,
         content: data.content as object | undefined,
         isPublished: data.isPublished ?? true,
+        ...seo,
+        seoNoIndex: data.seoNoIndex ?? false,
       },
       update: {
         title: data.title,
         content: data.content as object | undefined,
         isPublished: data.isPublished,
+        ...(data.metaTitle !== undefined ? { metaTitle: seo.metaTitle } : {}),
+        ...(data.metaDescription !== undefined ? { metaDescription: seo.metaDescription } : {}),
+        ...(data.seoKeywords !== undefined ? { seoKeywords: seo.seoKeywords } : {}),
+        ...(data.seoCanonicalUrl !== undefined ? { seoCanonicalUrl: seo.seoCanonicalUrl } : {}),
+        ...(data.seoOgImageUrl !== undefined ? { seoOgImageUrl: seo.seoOgImageUrl } : {}),
+        ...(data.seoNoIndex !== undefined ? { seoNoIndex: Boolean(data.seoNoIndex) } : {}),
       },
     });
     this.cache.delPrefix("cms:pages:");

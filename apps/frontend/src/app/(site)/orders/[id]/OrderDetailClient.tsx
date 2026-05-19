@@ -106,12 +106,12 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
   );
 
   if (phase === "loading") {
-    return <main className="mx-auto max-w-4xl px-4 py-12 text-sm text-slate-600 sm:px-6">Sipariş doğrulanıyor...</main>;
+    return <main className="mx-auto max-w-7xl px-4 py-12 text-sm text-slate-600 sm:px-6 lg:px-8">Sipariş doğrulanıyor...</main>;
   }
 
   if (phase === "login" || !order) {
     return (
-      <main className="mx-auto max-w-xl px-4 py-12 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="section-shell p-6 sm:p-8">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Sipariş takibi</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Hesabınıza giriş yapın</h1>
@@ -133,7 +133,7 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <Link href="/" className="link-underline text-sm text-slate-600 hover:text-slate-900">Alışverişe dön</Link>
 
       <div className="fade-up section-shell mt-6 flex flex-wrap items-start justify-between gap-4">

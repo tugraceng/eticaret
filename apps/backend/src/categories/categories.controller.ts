@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
-import { IsInt, IsOptional, IsString, Min, MinLength } from "class-validator";
+import { IsBoolean, IsInt, IsOptional, IsString, MaxLength, Min, MinLength } from "class-validator";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { CategoriesService } from "./categories.service";
@@ -48,6 +48,33 @@ class UpdateCategoryDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  metaTitle?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(8000)
+  metaDescription?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  seoKeywords?: string | null;
+
+  @IsOptional()
+  @IsString()
+  seoCanonicalUrl?: string | null;
+
+  @IsOptional()
+  @IsString()
+  seoOgImageUrl?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  seoNoIndex?: boolean;
 }
 
 @Controller("categories")

@@ -1,4 +1,11 @@
 import type { SiteSettings } from "@/lib/settings";
+import {
+  DEFAULT_HERO_IMAGE_DISPLAY,
+  parseHeroImageDisplay,
+  type HeroImageDisplay,
+  type HeroImageFit,
+  type HeroImagePosition,
+} from "@/components/home/homeHeroImage";
 
 export type HomeHeroSlide = {
   eyebrow: string;
@@ -9,7 +16,10 @@ export type HomeHeroSlide = {
   secondaryHref: string;
   secondaryLabel: string;
   image: string;
-};
+} & HeroImageDisplay;
+
+export type { HeroImageFit, HeroImagePosition };
+export { DEFAULT_HERO_IMAGE_DISPLAY };
 
 export function defaultHeroSlides(
   settings: Pick<SiteSettings, "defaultMetaDesc">,
@@ -27,6 +37,7 @@ export function defaultHeroSlides(
       secondaryLabel: "Daha fazla bilgi",
       image:
         "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?auto=format&fit=crop&w=2000&q=80",
+      ...DEFAULT_HERO_IMAGE_DISPLAY,
     },
     {
       eyebrow: "Hediye",
@@ -39,6 +50,7 @@ export function defaultHeroSlides(
       secondaryLabel: "Bize ulaşın",
       image:
         "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=2000&q=80",
+      ...DEFAULT_HERO_IMAGE_DISPLAY,
     },
     {
       eyebrow: "Ev & ofis",
@@ -51,6 +63,7 @@ export function defaultHeroSlides(
       secondaryLabel: "Vitrin",
       image:
         "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=2000&q=80",
+      ...DEFAULT_HERO_IMAGE_DISPLAY,
     },
   ];
 }
@@ -64,6 +77,7 @@ export function parseHeroSlides(raw: unknown): HomeHeroSlide[] | null {
     const title = typeof o.title === "string" ? o.title.trim() : "";
     const image = typeof o.image === "string" ? o.image.trim() : "";
     if (!title || !image) continue;
+    const display = parseHeroImageDisplay(o);
     out.push({
       eyebrow: typeof o.eyebrow === "string" ? o.eyebrow : "",
       title,
@@ -77,6 +91,7 @@ export function parseHeroSlides(raw: unknown): HomeHeroSlide[] | null {
           ? o.secondaryLabel
           : "Tümü",
       image,
+      ...display,
     });
   }
   return out.length > 0 ? out : null;

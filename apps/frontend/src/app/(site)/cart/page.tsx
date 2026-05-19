@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { PageContainer } from "@/components/site/PageContainer";
+import { ThumbImage } from "@/components/site/ThumbImage";
 import { useEffect, useMemo, useState } from "react";
 import { ConfirmDialog } from "@/components/site/ConfirmDialog";
 import { apiUrl } from "@/lib/api";
@@ -123,7 +125,7 @@ export default function CartPage() {
       : 0;
 
   return (
-    <main className="mx-auto max-w-6xl px-3 py-8 sm:px-6 sm:py-12 md:py-14">
+    <PageContainer as="main" className="py-8 sm:py-12 md:py-14">
       <div className="section-shell">
         <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-sky-50/70 to-transparent" aria-hidden />
         <div className="relative">
@@ -189,8 +191,7 @@ export default function CartPage() {
                   <div className="flex gap-4 sm:min-w-0 sm:flex-1">
                     <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-slate-200/80 sm:h-28 sm:w-28">
                       {l.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={l.imageUrl} alt={l.title} className="h-full w-full object-cover" />
+                        <ThumbImage src={l.imageUrl} alt={l.title} size={112} />
                       ) : (
                         <div className="grid h-full w-full place-items-center text-2xl text-slate-400" aria-hidden>
                           📦
@@ -336,6 +337,6 @@ export default function CartPage() {
           if (removeLineKey) removeProductLine(removeLineKey);
         }}
       />
-    </main>
+    </PageContainer>
   );
 }

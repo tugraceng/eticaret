@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function OrderTrackEntryPage() {
   return (
-    <main className="mx-auto max-w-xl px-4 py-12 sm:px-6">
+    <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="section-shell p-6 sm:p-8">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
           Sipariş takip

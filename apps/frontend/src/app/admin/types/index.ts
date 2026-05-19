@@ -8,6 +8,9 @@ export type ProductRow = {
   metaTitle?: string | null;
   metaDescription?: string | null;
   seoKeywords?: string | null;
+  seoCanonicalUrl?: string | null;
+  seoOgImageUrl?: string | null;
+  seoNoIndex?: boolean;
   priceCents: number;
   compareAtCents?: number | null;
   sku?: string | null;
@@ -101,8 +104,27 @@ export type CategoryRow = {
   id: string;
   name: string;
   slug: string;
+  description?: string | null;
   parentId?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  seoKeywords?: string | null;
+  seoCanonicalUrl?: string | null;
+  seoOgImageUrl?: string | null;
+  seoNoIndex?: boolean;
   _count?: { products: number };
+};
+
+export type CategoryUpdatePayload = {
+  name: string;
+  slug: string;
+  parentId: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  seoKeywords?: string | null;
+  seoCanonicalUrl?: string | null;
+  seoOgImageUrl?: string | null;
+  seoNoIndex?: boolean;
 };
 
 export type NotificationRow = {

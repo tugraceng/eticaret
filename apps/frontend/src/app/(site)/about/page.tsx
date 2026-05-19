@@ -1,7 +1,21 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { apiJsonSafe } from "@/lib/api";
+import { getSiteSettings } from "@/lib/settings";
+import { buildPageMetadata, breadcrumbJsonLd, organizationJsonLd, seoExcerpt } from "@/lib/seo";
+import { getMetadataBase } from "@/lib/site-url";
+import { PageContainer, PageHeader } from "@/components/site/PageContainer";
 
-type CmsPage = { title: string; content: unknown };
+type CmsPage = {
+  title: string;
+  content: unknown;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  seoKeywords?: string | null;
+  seoCanonicalUrl?: string | null;
+  seoOgImageUrl?: string | null;
+  seoNoIndex?: boolean;
+};
 
 const defaultPillars = [
   {
@@ -58,10 +72,47 @@ function readBizKimiz(raw: unknown): { title: string; body: string } {
   return { title, body };
 }
 
-export const metadata = { title: "Hakkımızda" };
+export async function generateMetadata(): Promise<Metadata> {
+  const [page, settings] = await Promise.all([
+    apiJsonSafe<CmsPage>("/cms/pages/about"),
+    getSiteSettings(),
+  ]);
+  const c = page?.content && typeof page.content === "object" && !Array.isArray(page.content)
+    ? (page.content as Record<string, unknown>)
+    : null;
+  const lead =
+    typeof c?.lead === "string" && c.lead.trim()
+      ? c.lead.trim()
+      : "Küçük ve orta ölçekli işletmeler için modern e-ticaret ve kurumsal vitrin çözümü sunuyoruz.";
+  return buildPageMetadata({
+    title: page?.title?.trim() || "Hakkımızda",
+    description: seoExcerpt(lead),
+    path: "/about",
+    siteOgImage: settings.ogImageUrl,
+    fields: page
+      ? {
+          metaTitle: page.metaTitle,
+          metaDescription: page.metaDescription,
+          seoKeywords: page.seoKeywords,
+          seoCanonicalUrl: page.seoCanonicalUrl,
+          seoOgImageUrl: page.seoOgImageUrl,
+          seoNoIndex: page.seoNoIndex,
+        }
+      : null,
+  });
+}
 
 export default async function AboutPage() {
-  const page = await apiJsonSafe<CmsPage>("/cms/pages/about");
+  const [page, settings] = await Promise.all([
+    apiJsonSafe<CmsPage>("/cms/pages/about"),
+    getSiteSettings(),
+  ]);
+  const base = getMetadataBase().toString().replace(/\/$/, "");
+  const orgLd = organizationJsonLd(settings);
+  const crumbsLd = breadcrumbJsonLd([
+    { name: "Ana sayfa", item: base },
+    { name: page?.title?.trim() || "Hakkımızda", item: `${base}/about` },
+  ]);
   const c = contentRecord(page?.content);
   const lead =
     typeof c?.lead === "string" && c.lead.trim()
@@ -70,71 +121,63 @@ export default async function AboutPage() {
   const pillars = readPillars(c?.pillars);
   const bizKimiz = readBizKimiz(c?.bizKimiz);
   const body = typeof c?.body === "string" && c.body.trim() ? c.body.trim() : null;
+  const contactHref = settings.contactNavHref?.trim() || "/contact";
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-      <div className="fade-up">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-          Kurumsal
-        </p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-          {page?.title ?? "Hakkımızda"}
-        </h1>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600">{lead}</p>
-      </div>
+    <PageContainer className="py-12 sm:py-16">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbsLd) }} />
+      <PageHeader eyebrow="Kurumsal" title={page?.title ?? "Hakkımızda"} description={lead} />
 
       <section
         id="biz-kimiz"
-        className="scroll-mt-28 fade-up mt-14 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8"
+        className="scroll-mt-28 fade-up mt-10 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm sm:mt-12 sm:p-8"
       >
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Biz kimiz</p>
         <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">{bizKimiz.title}</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">{bizKimiz.body}</p>
+        <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">{bizKimiz.body}</p>
       </section>
 
-      <ul className="mt-12 grid gap-5 md:grid-cols-3">
+      <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {pillars.map((p, i) => (
           <li
             key={`${i}-${p.title}`}
-            className="card-soft fade-up p-6"
+            className="card-soft fade-up flex min-h-[220px] flex-col p-6"
             style={{ animationDelay: `${i * 80}ms` }}
           >
             <span className="text-2xl" aria-hidden>
               {p.icon}
             </span>
             <h2 className="mt-4 text-lg font-semibold text-slate-900">{p.title}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">{p.body}</p>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{p.body}</p>
           </li>
         ))}
       </ul>
 
       {body ? (
-        <article className="fade-up mt-14 card-soft p-6">
+        <article className="fade-up mt-10 card-soft p-6 sm:mt-12 sm:p-8">
           <h2 className="text-lg font-semibold text-slate-900">Detaylar</h2>
           <div className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{body}</div>
         </article>
       ) : (
         <div
-          className="fade-up mt-14 rounded-3xl p-8 text-white sm:p-12"
+          className="fade-up mt-10 rounded-2xl p-8 text-white sm:mt-12 sm:p-10"
           style={{
-            backgroundImage:
-              "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))",
+            backgroundImage: "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))",
           }}
         >
-          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            Bizimle çalışmak ister misiniz?
-          </h2>
-          <p className="mt-2 max-w-xl text-sm text-white/80">
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Bizimle çalışmak ister misiniz?</h2>
+          <p className="mt-2 max-w-xl text-sm text-white/85">
             İletişim formumuz üzerinden bize ulaşın; size en kısa sürede dönelim.
           </p>
           <Link
-            href="/contact"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-lg transition-transform duration-300 ease-spring hover:-translate-y-0.5 hover:scale-[1.03]"
+            href={contactHref}
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-lg transition-transform duration-300 ease-spring hover:-translate-y-0.5"
           >
             İletişime geç <span aria-hidden>→</span>
           </Link>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

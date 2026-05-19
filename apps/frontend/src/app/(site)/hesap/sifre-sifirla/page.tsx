@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
+import { PageContainer } from "@/components/site/PageContainer";
 
 function ResetPasswordInner() {
   const params = useSearchParams();
@@ -47,7 +48,7 @@ function ResetPasswordInner() {
   };
 
   return (
-    <div className="mx-auto max-w-md px-4 py-12 sm:px-6">
+    <PageContainer width="narrow" className="py-10 sm:py-12">
       <div className="fade-up section-shell text-center">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
           Hesabım
@@ -107,7 +108,7 @@ function ResetPasswordInner() {
           </button>
         </form>
       )}
-    </div>
+    </PageContainer>
   );
 }
 
@@ -115,7 +116,9 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="mx-auto max-w-md px-4 py-14 text-sm text-slate-600">Yükleniyor…</div>
+        <PageContainer width="narrow" className="py-14 text-sm text-slate-600">
+          Yükleniyor…
+        </PageContainer>
       }
     >
       <ResetPasswordInner />

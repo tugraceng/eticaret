@@ -36,6 +36,9 @@ export function HomeCmsHero({ section, settings }: Props) {
           secondaryHref: "/shop",
           secondaryLabel: "Tümü",
           image: apiAssetUrl(section.mediaUrl) ?? "",
+          imageFit: "cover",
+          imagePosition: "center center",
+          imagePositionMobile: null,
         },
       ];
     }
@@ -75,7 +78,7 @@ export function HomeCmsHero({ section, settings }: Props) {
       >
         <motion.div
           key={index}
-          className="mx-auto w-full max-w-[1400px] md:py-6"
+          className="mx-auto w-full max-w-7xl md:py-6"
           initial={reduceMotion ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{

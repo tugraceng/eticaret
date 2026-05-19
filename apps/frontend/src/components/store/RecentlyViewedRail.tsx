@@ -65,7 +65,7 @@ export function RecentlyViewedRail() {
   if (!show) return null;
 
   return (
-    <section className="mx-auto mt-16 w-full max-w-6xl border-t border-slate-200 px-4 pt-10 sm:px-6">
+    <section className="mx-auto mt-16 w-full max-w-7xl border-t border-slate-200 px-4 pt-10 sm:px-6">
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">

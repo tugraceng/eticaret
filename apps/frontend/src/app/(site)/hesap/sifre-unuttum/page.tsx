@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { PageContainer } from "@/components/site/PageContainer";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 
 export default function ForgotPasswordPage() {
@@ -34,7 +35,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md px-4 py-12 sm:px-6">
+    <PageContainer width="narrow" className="py-10 sm:py-12">
       <div className="fade-up section-shell text-center">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
           Hesabım
@@ -96,6 +97,6 @@ export default function ForgotPasswordPage() {
           </p>
         </form>
       )}
-    </div>
+    </PageContainer>
   );
 }

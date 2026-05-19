@@ -1,5 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { SiteSettings } from "@/lib/settings";
+import { siteContainerClass } from "@/components/site/PageContainer";
+import { cn } from "@/lib/cn";
 import { SiteFooterNewsletter } from "./SiteFooterNewsletter";
 import { SocialNetworkIcon } from "./SocialNetworkIcon";
 
@@ -60,7 +63,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
       id="site-footer"
       className="mt-auto border-t border-neutral-200 bg-white pb-[calc(4.75rem+env(safe-area-inset-bottom))] text-neutral-900 md:pb-0"
     >
-      <div className="mx-auto max-w-[1400px] px-4 py-14 sm:px-8 md:px-12 lg:px-16">
+      <div className={cn(siteContainerClass, "py-14")}>
         <div className="flex flex-col gap-10 border-b border-neutral-200 pb-12 md:flex-row md:items-start md:justify-between md:gap-16">
           <div className="max-w-md">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-neutral-500">
@@ -85,8 +88,15 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
                 className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight text-neutral-900"
               >
                 {settings.logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={settings.logoUrl} alt={settings.siteName} className="h-[5.5rem] w-auto object-contain sm:h-24" />
+                  <Image
+                    src={settings.logoUrl}
+                    alt={settings.siteName}
+                    width={160}
+                    height={96}
+                    className="h-[5.5rem] w-auto object-contain sm:h-24"
+                    quality={80}
+                    sizes="160px"
+                  />
                 ) : (
                   <span className="text-xl font-semibold uppercase tracking-[0.12em]">{settings.siteName}</span>
                 )}

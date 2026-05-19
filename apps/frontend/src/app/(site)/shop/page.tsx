@@ -1,9 +1,70 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { apiJson } from "@/lib/api";
 import type { CategoryApiRow } from "@/lib/category-nav";
+import { getSiteSettings } from "@/lib/settings";
+import { buildPageMetadata, seoExcerpt } from "@/lib/seo";
 import type { CatalogPayload } from "./ShopCatalogGrid";
 import { ShopPageClient } from "@/components/store/ShopPageClient";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; categoryId?: string; q?: string }>;
+}): Promise<Metadata> {
+  const sp = await searchParams;
+  const settings = await getSiteSettings();
+  const categories = await apiJson<CategoryApiRow[]>("/categories").catch(() => [] as CategoryApiRow[]);
+  const categorySlug = sp.category?.trim();
+  const category = categorySlug
+    ? categories.find((c) => c.slug === categorySlug)
+    : sp.categoryId?.trim()
+      ? categories.find((c) => c.id === sp.categoryId?.trim())
+      : undefined;
+
+  if (category) {
+    const desc =
+      category.metaDescription?.trim() ||
+      category.description?.trim() ||
+      `${category.name} kategorisindeki ürünleri keşfedin.`;
+    return buildPageMetadata({
+      title: category.metaTitle?.trim() || category.name,
+      description: seoExcerpt(desc),
+      path: `/shop?category=${encodeURIComponent(category.slug)}`,
+      siteOgImage: settings.shopOgImageUrl ?? settings.ogImageUrl,
+      fields: {
+        metaTitle: category.metaTitle,
+        metaDescription: category.metaDescription,
+        seoKeywords: category.seoKeywords,
+        seoCanonicalUrl: category.seoCanonicalUrl,
+        seoOgImageUrl: category.seoOgImageUrl,
+        seoNoIndex: category.seoNoIndex,
+      },
+    });
+  }
+
+  const siteName = settings.siteName;
+  return buildPageMetadata({
+    title: settings.shopMetaTitle?.trim() || `Mağaza · ${siteName}`,
+    description: seoExcerpt(
+      settings.shopMetaDesc?.trim() ||
+        settings.defaultMetaDesc?.trim() ||
+        `${siteName} ürün kataloğu.`,
+    ),
+    path: "/shop",
+    siteOgImage: settings.shopOgImageUrl ?? settings.ogImageUrl,
+    fields: {
+      metaTitle: settings.shopMetaTitle,
+      metaDescription: settings.shopMetaDesc,
+      seoKeywords: settings.shopSeoKeywords,
+      seoCanonicalUrl: settings.shopCanonicalUrl,
+      seoOgImageUrl: settings.shopOgImageUrl,
+      seoNoIndex: settings.shopNoIndex,
+    },
+  });
+}
 type SortKey = "newest" | "price_asc" | "price_desc" | "popular" | "bestseller";
 
 const SORTS: Array<{ key: SortKey; label: string }> = [
@@ -56,6 +117,7 @@ export default async function ShopPage({
 }: {
   searchParams: Promise<{
     q?: string;
+    category?: string;
     categoryId?: string;
     sort?: SortKey;
     minPriceCents?: string;
@@ -71,7 +133,22 @@ export default async function ShopPage({
 }) {
   const sp = await searchParams;
   const q = sp.q?.trim();
-  const categoryId = sp.categoryId?.trim();
+  const categorySlugParam = sp.category?.trim();
+  let categoryId = sp.categoryId?.trim();
+
+  const categoriesEarly = await apiJson<CategoryApiRow[]>("/categories");
+  if (categorySlugParam) {
+    categoryId = categoriesEarly.find((c) => c.slug === categorySlugParam)?.id ?? categoryId;
+  } else if (categoryId) {
+    const byId = categoriesEarly.find((c) => c.id === categoryId);
+    if (byId) {
+      const p = new URLSearchParams();
+      if (q) p.set("q", q);
+      p.set("category", byId.slug);
+      if (sp.sort) p.set("sort", sp.sort);
+      redirect(`/shop?${p.toString()}`);
+    }
+  }
   const sort = SORTS.some((s) => s.key === sp.sort) ? (sp.sort as SortKey) : "newest";
   const minPriceCents = asPositiveInt(sp.minPriceCents);
   const maxPriceCents = asPositiveInt(sp.maxPriceCents);
@@ -96,10 +173,8 @@ export default async function ShopPage({
     newOnly,
   });
 
-  const [categories, catalog] = await Promise.all([
-    apiJson<CategoryApiRow[]>("/categories"),
-    apiJson<CatalogPayload>(`/products/catalog?${catalogQs}&page=${page}`),
-  ]);
+  const catalog = await apiJson<CatalogPayload>(`/products/catalog?${catalogQs}&page=${page}`);
+  const categories = categoriesEarly;
 
   const titleBits = [
     q ? `"${q}"` : null,

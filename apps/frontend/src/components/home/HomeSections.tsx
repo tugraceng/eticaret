@@ -49,7 +49,7 @@ function CatalogRail({
   const href = section.ctaHref?.trim() || defaultHref;
   return (
     <section className="bg-white pb-2 pt-2">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {section.subtitle ? (
           <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
             {section.subtitle}
@@ -123,7 +123,7 @@ function Banners({ section }: { section: HomeSection }) {
     : [];
   if (items.length === 0) return null;
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <SectionHeading subtitle={section.subtitle} title={section.title} />
       <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {items.map((b, idx) => {
@@ -196,7 +196,7 @@ async function FeaturedProducts({ section }: { section: HomeSection }) {
   if (products.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <SectionHeading subtitle={section.subtitle} title={section.title ?? "Öne çıkan ürünler"} />
         {ctaButton(section, "ghost")}
@@ -225,7 +225,7 @@ async function FeaturedCategories({ section }: { section: HomeSection }) {
 
   return (
     <section className="relative isolate bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <SectionHeading subtitle={section.subtitle} title={section.title ?? "Kategoriler"} />
           {ctaButton(section, "ghost")}
@@ -292,7 +292,7 @@ async function BlogTeaser({ section }: { section: HomeSection }) {
   if (list.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <SectionHeading subtitle={section.subtitle} title={section.title ?? "Blog"} />
         {ctaButton(section, "ghost")}
@@ -354,7 +354,7 @@ function Testimonials({ section }: { section: HomeSection }) {
         }}
         aria-hidden
       />
-      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <SectionHeading
           subtitle={section.subtitle}
           title={section.title ?? "Müşterilerimiz ne diyor?"}
@@ -387,7 +387,7 @@ function Testimonials({ section }: { section: HomeSection }) {
 
 function CTA({ section }: { section: HomeSection }) {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <div
         className="relative isolate overflow-hidden rounded-3xl px-6 py-14 text-white shadow-xl sm:px-12"
         style={{

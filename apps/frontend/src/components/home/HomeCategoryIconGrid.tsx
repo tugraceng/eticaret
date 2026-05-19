@@ -18,7 +18,7 @@ export function HomeCategoryIconGrid({
   if (!show.length) return null;
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-1 text-center sm:text-left">
         {kicker ? (
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">{kicker}</p>

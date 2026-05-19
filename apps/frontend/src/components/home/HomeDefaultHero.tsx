@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { HomeHeroArrows } from "@/components/home/HomeHeroArrows";
 import { HomeHeroBackdrop } from "@/components/home/HomeHeroBackdrop";
 import { heroContentLayoutClass, heroContentPaddingClass, heroSectionMinHeightClass } from "@/components/home/homeHeroLayout";
+import { DEFAULT_HERO_IMAGE_DISPLAY } from "@/components/home/homeHeroImage";
 import type { SiteSettings } from "@/lib/settings";
 
 type Props = {
@@ -27,6 +28,7 @@ export function HomeDefaultHero({ settings }: Props) {
       secondaryLabel: "Daha fazla bilgi",
       image:
         "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?auto=format&fit=crop&w=2000&q=80",
+      ...DEFAULT_HERO_IMAGE_DISPLAY,
     },
     {
       eyebrow: "Hediye ve günlük kullanım",
@@ -38,6 +40,7 @@ export function HomeDefaultHero({ settings }: Props) {
       secondaryLabel: "Özel talep",
       image:
         "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=2000&q=80",
+      ...DEFAULT_HERO_IMAGE_DISPLAY,
     },
     {
       eyebrow: "Ev ve masaüstü",
@@ -49,8 +52,9 @@ export function HomeDefaultHero({ settings }: Props) {
       secondaryLabel: "Tüm ürünler",
       image:
         "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=2000&q=80",
+      ...DEFAULT_HERO_IMAGE_DISPLAY,
     },
-  ] as const;
+  ];
 
   const [index, setIndex] = useState(0);
   const reduceMotion = useReducedMotion();
@@ -79,7 +83,7 @@ export function HomeDefaultHero({ settings }: Props) {
       >
         <motion.div
           key={index}
-          className="mx-auto w-full max-w-[1400px] md:py-6"
+          className="mx-auto w-full max-w-7xl md:py-6"
           initial={reduceMotion ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { adminFetch, adminUploadFile } from "../../api";
 import { AdminCard, Field, Icon } from "../../ui";
 import { parseTryToCents, parseTryToCentsOptional } from "../../utils/money";
+import { SeoFieldsForm } from "@/components/admin/SeoFieldsForm";
 import { slugifyTr } from "../../utils/slug";
 
 type Cat = { id: string; name: string; slug: string };
@@ -62,6 +63,9 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
   const [seoKeywords, setSeoKeywords] = useState("");
+  const [seoCanonicalUrl, setSeoCanonicalUrl] = useState("");
+  const [seoOgImageUrl, setSeoOgImageUrl] = useState("");
+  const [seoNoIndex, setSeoNoIndex] = useState(false);
 
   const [isPublished, setIsPublished] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
@@ -195,6 +199,10 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
         return false;
       }
     }
+    if (s === 3 && imageFiles.length > 0 && !firstImageAlt.trim()) {
+      onError("İlk görsel için alt metin (erişilebilirlik / SEO) zorunludur.");
+      return false;
+    }
     if (s === 4) {
       for (const v of variants) {
         if (v.galleryImageIndex == null) continue;
@@ -239,6 +247,9 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
           metaTitle: metaTitle.trim() || null,
           metaDescription: metaDescription.trim() || null,
           seoKeywords: seoKeywords.trim() || null,
+          seoCanonicalUrl: seoCanonicalUrl.trim() || null,
+          seoOgImageUrl: seoOgImageUrl.trim() || null,
+          seoNoIndex,
           priceCents: price.cents,
           compareAtCents: comp.cents,
           sku: sku.trim() || null,
@@ -270,7 +281,7 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
           method: "POST",
           body: JSON.stringify({
             url,
-            alt: i === 0 && firstImageAlt.trim() ? firstImageAlt.trim() : undefined,
+            alt: i === 0 ? firstImageAlt.trim() : `${name.trim()} — görsel ${i + 1}`,
           }),
         })) as { id?: string };
         if (typeof imgRow?.id === "string") uploadedImageIds.push(imgRow.id);
@@ -635,36 +646,28 @@ export function ProductFormWizard({ token, categories, onSuccess, onError, onFin
       {step === 5 ? (
         <div className="space-y-4">
           <p className="text-sm text-slate-600">
-            Boş bıraktığınız alanlarda mağaza, ürün adı ve açıklamadan otomatik özet üretir. Anahtar kelimeleri
-            virgülle ayırın.
+            Boş bıraktığınız alanlarda ürün adı, açıklama özeti ve ana görsel otomatik kullanılır.
           </p>
-          <Field label="Meta başlık (isteğe bağlı)" hint="Arama sonuçlarında görünen başlık; önerilen en fazla ~60 karakter.">
-            <input
-              className="input-soft"
-              value={metaTitle}
-              onChange={(e) => setMetaTitle(e.target.value)}
-              placeholder="Boşsa ürün adı kullanılır"
-              maxLength={200}
-            />
-          </Field>
-          <Field label="Meta açıklama (isteğe bağlı)" hint="Arama snippet&apos;i; önerilen ~150–160 karakter.">
-            <textarea
-              className="input-soft min-h-[88px] resize-y"
-              value={metaDescription}
-              onChange={(e) => setMetaDescription(e.target.value)}
-              placeholder="Boşsa ürün açıklamasının kısaltması kullanılır"
-              maxLength={8000}
-            />
-          </Field>
-          <Field label="Ek anahtar kelimeler (isteğe bağlı)" hint="Virgülle ayırın. Örn. el yapımı, hediye, doğal ahşap">
-            <input
-              className="input-soft"
-              value={seoKeywords}
-              onChange={(e) => setSeoKeywords(e.target.value)}
-              placeholder="örn. hediye, el yapımı"
-              maxLength={4000}
-            />
-          </Field>
+          <SeoFieldsForm
+            values={{
+              metaTitle,
+              metaDescription,
+              seoKeywords,
+              seoCanonicalUrl,
+              seoOgImageUrl,
+              seoNoIndex,
+            }}
+            onChange={(patch) => {
+              if (patch.metaTitle !== undefined) setMetaTitle(patch.metaTitle);
+              if (patch.metaDescription !== undefined) setMetaDescription(patch.metaDescription);
+              if (patch.seoKeywords !== undefined) setSeoKeywords(patch.seoKeywords);
+              if (patch.seoCanonicalUrl !== undefined) setSeoCanonicalUrl(patch.seoCanonicalUrl);
+              if (patch.seoOgImageUrl !== undefined) setSeoOgImageUrl(patch.seoOgImageUrl);
+              if (patch.seoNoIndex !== undefined) setSeoNoIndex(patch.seoNoIndex);
+            }}
+            titleHint="Boşsa ürün adı kullanılır."
+            descriptionHint="Boşsa ürün açıklamasının kısaltması kullanılır."
+          />
         </div>
       ) : null}
 

@@ -1,51 +1,84 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import * as nodemailer from "nodemailer";
+import { PrismaService } from "../prisma/prisma.service";
 
 type Transport = nodemailer.Transporter | null;
+type SmtpEncryption = "tls" | "ssl" | "none";
 
-/**
- * SMTP yapılandırıldıysa (SMTP_HOST tanımlı) gerçek e-posta gönderir,
- * aksi halde geliştirici logunda stub olarak çalışır.
- */
 @Injectable()
 export class EmailService implements OnModuleInit {
   private readonly logger = new Logger(EmailService.name);
   private transporter: Transport = null;
   private fromAddress = "";
   private adminEmails: string[] = [];
+  private smtpConfigured = false;
+  private smtpEnabledInDb = false;
+
+  constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
-    const host = process.env.SMTP_HOST;
-    if (!host) {
-      this.logger.log("SMTP_HOST tanımlı değil — e-postalar stub olarak loglanacak.");
+    await this.reloadFromSettings();
+  }
+
+  /** SiteSettings veya .env değişince çağrılır. */
+  async reloadFromSettings(): Promise<void> {
+    const s = await this.prisma.siteSettings.findFirst();
+    const host = s?.smtpHost?.trim() || process.env.SMTP_HOST?.trim() || "";
+    const enabled = Boolean(s?.smtpEnabled) || Boolean(process.env.SMTP_HOST?.trim());
+    this.smtpEnabledInDb = Boolean(s?.smtpEnabled);
+
+    if (!host || !enabled) {
+      this.transporter = null;
+      this.smtpConfigured = false;
+      if (!host) {
+        this.logger.log("SMTP yapılandırılmadı — e-postalar stub olarak loglanacak.");
+      }
       return;
     }
-    const port = Number(process.env.SMTP_PORT ?? 587);
-    const secure = (process.env.SMTP_SECURE ?? "").toLowerCase() === "true" || port === 465;
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
-    this.fromAddress =
-      process.env.SMTP_FROM ??
-      (user ? `${process.env.SITE_NAME ?? "Mağaza"} <${user}>` : "no-reply@example.com");
+
+    const port = s?.smtpPort ?? Number(process.env.SMTP_PORT ?? 587);
+    const enc = (s?.smtpEncryption?.trim() || process.env.SMTP_ENCRYPTION || "tls").toLowerCase() as SmtpEncryption;
+    const user = s?.smtpUsername?.trim() || process.env.SMTP_USER?.trim() || "";
+    const pass = s?.smtpPassword?.trim() || process.env.SMTP_PASS?.trim() || "";
+    const fromEmail = s?.smtpFromEmail?.trim() || process.env.SMTP_FROM_EMAIL?.trim() || user;
+    const fromName = s?.smtpFromName?.trim() || process.env.SMTP_FROM_NAME?.trim() || s?.siteName || process.env.SITE_NAME || "Mağaza";
+
+    this.fromAddress = fromEmail
+      ? fromName
+        ? `${fromName} <${fromEmail}>`
+        : fromEmail
+      : process.env.SMTP_FROM ?? "no-reply@example.com";
+
     this.adminEmails = (process.env.ADMIN_EMAILS ?? "")
       .split(",")
-      .map((s) => s.trim())
+      .map((x) => x.trim())
       .filter(Boolean);
+
+    const secure = enc === "ssl" || port === 465;
+    const requireTLS = enc === "tls";
+
     try {
       this.transporter = nodemailer.createTransport({
         host,
         port,
         secure,
+        requireTLS: requireTLS && !secure,
         auth: user && pass ? { user, pass } : undefined,
       });
       await this.transporter.verify();
-      this.logger.log(`SMTP hazır (${host}:${port}${secure ? ", tls" : ""}).`);
+      this.smtpConfigured = true;
+      this.logger.log(`SMTP hazır (${host}:${port}, ${enc}).`);
     } catch (e) {
       this.transporter = null;
+      this.smtpConfigured = false;
       this.logger.warn(
-        `SMTP bağlantısı kurulamadı, stub moduna düşüldü: ${e instanceof Error ? e.message : e}`,
+        `SMTP bağlantısı kurulamadı: ${e instanceof Error ? e.message : e}`,
       );
     }
+  }
+
+  isSmtpReady(): boolean {
+    return Boolean(this.transporter);
   }
 
   private async send(
@@ -53,10 +86,10 @@ export class EmailService implements OnModuleInit {
     subject: string,
     html: string,
     text?: string,
-  ): Promise<void> {
+  ): Promise<{ ok: true } | { ok: false; error: string }> {
     if (!this.transporter) {
       this.logger.log(`[email:stub] to=${Array.isArray(to) ? to.join(",") : to} subject="${subject}"`);
-      return;
+      return { ok: false, error: "SMTP yapılandırılmamış" };
     }
     try {
       await this.transporter.sendMail({
@@ -66,14 +99,22 @@ export class EmailService implements OnModuleInit {
         html,
         text: text ?? html.replace(/<[^>]+>/g, ""),
       });
+      return { ok: true };
     } catch (e) {
-      this.logger.warn(
-        `E-posta gönderilemedi (${subject}): ${e instanceof Error ? e.message : e}`,
-      );
+      const msg = e instanceof Error ? e.message : String(e);
+      this.logger.warn(`E-posta gönderilemedi (${subject}): ${msg}`);
+      return { ok: false, error: msg };
     }
   }
 
-  /** Pazarlama toplu gönderiminde alıcı bazlı sonuç için (stub modunda her zaman başarılı). */
+  async sendTestMail(to: string): Promise<{ ok: true } | { ok: false; error: string }> {
+    return this.send(
+      to,
+      "SMTP test mesajı",
+      "<p>Bu bir test e-postasıdır. SMTP ayarlarınız çalışıyor.</p>",
+    );
+  }
+
   async sendMarketingMail(
     to: string,
     subject: string,
@@ -83,18 +124,7 @@ export class EmailService implements OnModuleInit {
       this.logger.log(`[email:stub] marketing to=${to} subject="${subject}"`);
       return { ok: true };
     }
-    try {
-      await this.transporter.sendMail({
-        from: this.fromAddress,
-        to,
-        subject,
-        html,
-        text: html.replace(/<[^>]+>/g, ""),
-      });
-      return { ok: true };
-    } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : String(e) };
-    }
+    return this.send(to, subject, html);
   }
 
   async campaignEmail(payload: {
@@ -224,15 +254,73 @@ export class EmailService implements OnModuleInit {
     );
   }
 
-  passwordReset(payload: { email: string; resetUrl: string }) {
+  async passwordReset(payload: {
+    email: string;
+    resetUrl: string;
+  }): Promise<{ ok: true } | { ok: false; error: string; userFacing: string }> {
     const subject = "Şifre sıfırlama talebi";
     const html = `
       <h2>Şifre sıfırlama</h2>
       <p>Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın (1 saat içinde geçerli):</p>
       <p><a href="${payload.resetUrl}">${payload.resetUrl}</a></p>
       <p>Bu talebi siz yapmadıysanız bu e-postayı görmezden gelebilirsiniz.</p>`;
-    void this.send(payload.email, subject, html);
-    this.logger.log(`şifre sıfırlama -> ${payload.email}`);
+
+    if (!this.transporter) {
+      this.logger.log(`[email:stub] şifre sıfırlama -> ${payload.email} url=${payload.resetUrl}`);
+      if (this.smtpEnabledInDb) {
+        return {
+          ok: false,
+          error: "SMTP not ready",
+          userFacing:
+            "E-posta sunucusu şu an kullanılamıyor. Lütfen daha sonra tekrar deneyin veya mağaza ile iletişime geçin.",
+        };
+      }
+      return { ok: true };
+    }
+
+    const r = await this.send(payload.email, subject, html);
+    if (!r.ok) {
+      return {
+        ok: false,
+        error: r.error,
+        userFacing:
+          "Sıfırlama bağlantısı şu an gönderilemedi. Lütfen birkaç dakika sonra tekrar deneyin.",
+      };
+    }
+    this.logger.log(`şifre sıfırlama gönderildi -> ${payload.email}`);
+    return { ok: true };
+  }
+
+  async contactFormMail(payload: {
+    to: string;
+    name: string;
+    email: string;
+    message: string;
+  }): Promise<{ ok: true } | { ok: false; error: string; userFacing: string }> {
+    const subject = `İletişim formu · ${payload.name}`;
+    const html = `
+      <h2>Yeni iletişim mesajı</h2>
+      <p><strong>Ad:</strong> ${payload.name}</p>
+      <p><strong>E-posta:</strong> ${payload.email}</p>
+      <p><strong>Mesaj:</strong></p>
+      <p>${payload.message.replace(/\n/g, "<br>")}</p>`;
+    if (!this.transporter) {
+      this.logger.log(`[email:stub] contact from=${payload.email}`);
+      return {
+        ok: false,
+        error: "SMTP not configured",
+        userFacing: "Mesajınız şu an iletilemiyor. Lütfen telefon veya e-posta ile doğrudan bize ulaşın.",
+      };
+    }
+    const r = await this.send(payload.to, subject, html, undefined);
+    if (!r.ok) {
+      return {
+        ok: false,
+        error: r.error,
+        userFacing: "Mesajınız gönderilemedi. Lütfen daha sonra tekrar deneyin.",
+      };
+    }
+    return { ok: true };
   }
 
   stockAlert(payload: { productName: string; stock: number; outOfStock: boolean }) {

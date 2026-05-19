@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import * as crypto from "crypto";
@@ -125,9 +131,16 @@ export class AuthService {
     });
     const base = process.env.PUBLIC_WEB_URL ?? "http://localhost:3001";
     const resetUrl = `${base}/hesap/sifre-sifirla?token=${token}`;
-    this.email.passwordReset({ email, resetUrl });
+    await this.email.reloadFromSettings();
+    const sent = await this.email.passwordReset({ email, resetUrl });
     const debug = process.env.NODE_ENV !== "production";
-    return debug ? { ok: true, devResetUrl: resetUrl } : { ok: true };
+    if (!sent.ok) {
+      if (debug && !this.email.isSmtpReady()) {
+        return { ok: true, devResetUrl: resetUrl };
+      }
+      throw new ServiceUnavailableException(sent.userFacing);
+    }
+    return debug && !this.email.isSmtpReady() ? { ok: true, devResetUrl: resetUrl } : { ok: true };
   }
 
   async resetPassword(token: string, newPassword: string) {

@@ -33,6 +33,12 @@ export class CategoriesService {
     description?: string;
     parentId?: string;
     sortOrder?: number;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    seoKeywords?: string | null;
+    seoCanonicalUrl?: string | null;
+    seoOgImageUrl?: string | null;
+    seoNoIndex?: boolean;
   }) {
     if (data.parentId) {
       const parent = await this.prisma.category.findUnique({ where: { id: data.parentId } });
@@ -46,6 +52,12 @@ export class CategoriesService {
         description: data.description?.trim(),
         parentId: data.parentId,
         sortOrder: data.sortOrder ?? 0,
+        metaTitle: data.metaTitle?.trim() ? data.metaTitle.trim() : null,
+        metaDescription: data.metaDescription?.trim() ? data.metaDescription.trim() : null,
+        seoKeywords: data.seoKeywords?.trim() ? data.seoKeywords.trim() : null,
+        seoCanonicalUrl: data.seoCanonicalUrl?.trim() ? data.seoCanonicalUrl.trim() : null,
+        seoOgImageUrl: data.seoOgImageUrl?.trim() ? data.seoOgImageUrl.trim() : null,
+        seoNoIndex: data.seoNoIndex ?? false,
       },
     });
     this.invalidate();
@@ -60,10 +72,31 @@ export class CategoriesService {
       description: string | null;
       parentId: string | null;
       sortOrder: number;
+      metaTitle: string | null;
+      metaDescription: string | null;
+      seoKeywords: string | null;
+      seoCanonicalUrl: string | null;
+      seoOgImageUrl: string | null;
+      seoNoIndex: boolean;
     }>,
   ) {
     await this.ensure(id);
     const patch = { ...data };
+    if (patch.metaTitle !== undefined) {
+      patch.metaTitle = patch.metaTitle?.trim() ? patch.metaTitle.trim() : null;
+    }
+    if (patch.metaDescription !== undefined) {
+      patch.metaDescription = patch.metaDescription?.trim() ? patch.metaDescription.trim() : null;
+    }
+    if (patch.seoKeywords !== undefined) {
+      patch.seoKeywords = patch.seoKeywords?.trim() ? patch.seoKeywords.trim() : null;
+    }
+    if (patch.seoCanonicalUrl !== undefined) {
+      patch.seoCanonicalUrl = patch.seoCanonicalUrl?.trim() ? patch.seoCanonicalUrl.trim() : null;
+    }
+    if (patch.seoOgImageUrl !== undefined) {
+      patch.seoOgImageUrl = patch.seoOgImageUrl?.trim() ? patch.seoOgImageUrl.trim() : null;
+    }
     if (patch.slug) patch.slug = patch.slug.trim().toLowerCase();
     if (patch.name) patch.name = patch.name.trim();
     if (patch.parentId !== undefined && patch.parentId !== null) {

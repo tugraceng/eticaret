@@ -630,6 +630,9 @@ export class ProductsService {
     metaTitle?: string | null;
     metaDescription?: string | null;
     seoKeywords?: string | null;
+    seoCanonicalUrl?: string | null;
+    seoOgImageUrl?: string | null;
+    seoNoIndex?: boolean;
     priceCents: number;
     compareAtCents?: number | null;
     sku?: string | null;
@@ -650,6 +653,9 @@ export class ProductsService {
         metaTitle: data.metaTitle?.trim() ? data.metaTitle.trim() : null,
         metaDescription: data.metaDescription?.trim() ? data.metaDescription.trim() : null,
         seoKeywords: data.seoKeywords?.trim() ? data.seoKeywords.trim() : null,
+        seoCanonicalUrl: data.seoCanonicalUrl?.trim() ? data.seoCanonicalUrl.trim() : null,
+        seoOgImageUrl: data.seoOgImageUrl?.trim() ? data.seoOgImageUrl.trim() : null,
+        seoNoIndex: data.seoNoIndex ?? false,
         priceCents: data.priceCents,
         compareAtCents: data.compareAtCents ?? undefined,
         sku: data.sku?.trim() ? data.sku.trim() : null,
@@ -675,6 +681,9 @@ export class ProductsService {
       metaTitle: string | null;
       metaDescription: string | null;
       seoKeywords: string | null;
+      seoCanonicalUrl: string | null;
+      seoOgImageUrl: string | null;
+      seoNoIndex: boolean;
       priceCents: number;
       compareAtCents: number | null;
       sku: string | null;
@@ -688,7 +697,16 @@ export class ProductsService {
     }>,
   ) {
     await this.ensure(id);
-    const { metaTitle, metaDescription, seoKeywords, slug: slugIn, ...rest } = data;
+    const {
+      metaTitle,
+      metaDescription,
+      seoKeywords,
+      seoCanonicalUrl,
+      seoOgImageUrl,
+      seoNoIndex,
+      slug: slugIn,
+      ...rest
+    } = data;
     const patch: Prisma.ProductUpdateInput = { ...rest };
     if (slugIn !== undefined) {
       const normalized = this.normalizeProductSlug(slugIn);
@@ -717,6 +735,15 @@ export class ProductsService {
     }
     if (seoKeywords !== undefined) {
       patch.seoKeywords = seoKeywords?.trim() ? seoKeywords.trim() : null;
+    }
+    if (seoCanonicalUrl !== undefined) {
+      patch.seoCanonicalUrl = seoCanonicalUrl?.trim() ? seoCanonicalUrl.trim() : null;
+    }
+    if (seoOgImageUrl !== undefined) {
+      patch.seoOgImageUrl = seoOgImageUrl?.trim() ? seoOgImageUrl.trim() : null;
+    }
+    if (seoNoIndex !== undefined) {
+      patch.seoNoIndex = Boolean(seoNoIndex);
     }
     const updated = await this.prisma.product.update({ where: { id }, data: patch });
     this.invalidate();

@@ -47,7 +47,7 @@ export function HomeRetailSection({
     return (
       <section
         id="urunler"
-        className="home-retail mx-auto w-full max-w-6xl px-3 py-10 sm:px-6 sm:py-14 md:py-16"
+        className="home-retail mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 sm:py-14 md:py-16"
       >
         <div className="section-shell">
           <div
@@ -105,7 +105,7 @@ export function HomeRetailSection({
 
   return (
     <div className="home-retail bg-white">
-      <section id="urunler" className="mx-auto max-w-[1400px] px-4 py-16 sm:px-8 md:px-12 lg:px-16">
+      <section id="urunler" className="mx-auto max-w-7xl px-4 py-16 sm:px-8 md:px-12 lg:px-16">
         <div className="text-center">
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-neutral-500">
             Öne çıkan

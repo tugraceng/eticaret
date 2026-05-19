@@ -3,8 +3,16 @@ export type CategoryApiRow = {
   id: string;
   name: string;
   slug: string;
+  description?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  seoKeywords?: string | null;
+  seoCanonicalUrl?: string | null;
+  seoOgImageUrl?: string | null;
+  seoNoIndex?: boolean;
   parentId: string | null;
   sortOrder: number;
+  updatedAt?: string;
   _count?: { products: number };
 };
 

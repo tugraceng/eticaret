@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  emptySeoFormValues,
+  SeoFieldsForm,
+  seoFormFromApi,
+  seoFormToApi,
+  type SeoFormValues,
+} from "@/components/admin/SeoFieldsForm";
 import { adminFetch, adminUploadFile } from "../api";
 import { formatAdminCaughtError } from "../admin-api-error";
 import { AdminCard, Field, Icon } from "../ui";
@@ -156,6 +163,7 @@ export function CmsPanel({
   const [pillars, setPillars] = useState(() => ABOUT_DEFAULT_PILLARS.map((p) => ({ ...p })));
   const [svcEyebrow, setSvcEyebrow] = useState("");
   const [svcIntro, setSvcIntro] = useState("");
+  const [aboutSeo, setAboutSeo] = useState<SeoFormValues>(emptySeoFormValues);
 
   useEffect(() => {
     if (!token) return;
@@ -169,6 +177,12 @@ export function CmsPanel({
           title?: string;
           isPublished?: boolean;
           content?: unknown;
+          metaTitle?: string | null;
+          metaDescription?: string | null;
+          seoKeywords?: string | null;
+          seoCanonicalUrl?: string | null;
+          seoOgImageUrl?: string | null;
+          seoNoIndex?: boolean;
         } | null;
         if (cancelled) return;
         setPageTitle(raw?.title ?? (slug === "about" ? "Hakkımızda" : "Hizmetler"));
@@ -178,6 +192,7 @@ export function CmsPanel({
             ? (raw.content as Record<string, unknown>)
             : {};
         if (slug === "about") {
+          setAboutSeo(seoFormFromApi(raw));
           setAboutLead(typeof cr.lead === "string" ? cr.lead : "");
           setAboutBody(typeof cr.body === "string" ? cr.body : "");
           const biz =
@@ -245,6 +260,7 @@ export function CmsPanel({
           title: pageTitle.trim() || (slug === "about" ? "Hakkımızda" : "Hizmetler"),
           content,
           isPublished: pagePublish,
+          ...(slug === "about" ? seoFormToApi(aboutSeo) : {}),
         }),
       });
       window.alert("Sayfa kaydedildi.");
@@ -697,6 +713,20 @@ export function CmsPanel({
               onChange={(e) => setAboutBody(e.target.value)}
             />
           </Field>
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">SEO</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Boş alanlarda sayfa başlığı ve giriş paragrafı arama sonuçları için kullanılır.
+            </p>
+            <div className="mt-4">
+              <SeoFieldsForm
+                values={aboutSeo}
+                onChange={(patch) => setAboutSeo((prev) => ({ ...prev, ...patch }))}
+                titleHint="Boşsa sayfa başlığı (Hakkımızda) kullanılır."
+                descriptionHint="Boşsa giriş paragrafının kısaltması kullanılır."
+              />
+            </div>
+          </div>
           <div className="mt-4">
             <button
               type="button"

@@ -159,50 +159,36 @@ export function CustomerLoginForm({
         </p>
       }
     >
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          disabled={!googleLoginEnabled || busy}
-          title={googleLoginEnabled ? "Google ile giriş" : "Backend’de Google OAuth tanımlayıp NEXT_PUBLIC_GOOGLE_LOGIN=1 yapın"}
-          onClick={() => {
-            if (!googleLoginEnabled || busy) return;
-            window.location.assign(apiUrl("/auth/oauth/google"));
-          }}
-          className={
-            googleLoginEnabled
-              ? "flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-60"
-              : "flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-400"
-          }
-        >
-          <span className="text-base font-bold" aria-hidden>
-            G
-          </span>
-          Google
-        </button>
-        <button
-          type="button"
-          disabled
-          title="Apple Sign In ayrı yapılandırma gerektirir"
-          className="flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-400"
-        >
-          <span className="text-base" aria-hidden>
-            
-          </span>
-          Apple
-        </button>
-      </div>
-      <p className="text-center text-[11px] text-slate-400">
-        {googleLoginEnabled ? "Google: önce sitede aynı e-posta ile kayıt olmalısınız." : "Google için .env; Apple yakında."}
-      </p>
-
-      <div className="relative py-1">
-        <div className="absolute inset-0 flex items-center" aria-hidden>
-          <div className="w-full border-t border-slate-200" />
-        </div>
-        <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-          <span className="bg-white px-2">veya e-posta</span>
-        </div>
-      </div>
+      {googleLoginEnabled ? (
+        <>
+          <button
+            type="button"
+            disabled={busy}
+            title="Google ile giriş"
+            onClick={() => {
+              if (busy) return;
+              window.location.assign(apiUrl("/auth/oauth/google"));
+            }}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-60"
+          >
+            <span className="text-base font-bold" aria-hidden>
+              G
+            </span>
+            Google ile devam et
+          </button>
+          <p className="text-center text-[11px] text-slate-400">
+            Önce sitede aynı e-posta ile kayıt olmalısınız.
+          </p>
+          <div className="relative py-1">
+            <div className="absolute inset-0 flex items-center" aria-hidden>
+              <div className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              <span className="bg-white px-2">veya e-posta</span>
+            </div>
+          </div>
+        </>
+      ) : null}
 
       <form
         onSubmit={(e) => {
@@ -212,13 +198,18 @@ export function CustomerLoginForm({
         className="space-y-4"
       >
         <div>
-          <label className="text-xs font-semibold text-slate-800">E-posta</label>
+          <label className="text-xs font-semibold text-slate-800" htmlFor="login-email">
+            E-posta
+          </label>
           <input
+            id="login-email"
+            name="email"
             type="email"
+            inputMode="email"
             className="input-soft mt-1.5 w-full"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            autoComplete="username"
+            autoComplete="username email"
             placeholder="ornek@email.com"
             required
           />
@@ -234,6 +225,8 @@ export function CustomerLoginForm({
             </Link>
           </div>
           <input
+            id="login-password"
+            name="password"
             type="password"
             className="input-soft mt-1.5 w-full"
             value={password}

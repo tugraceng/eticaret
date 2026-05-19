@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageContainer } from "@/components/site/PageContainer";
 
 type SearchParams = {
   orderId?: string;
@@ -15,7 +16,7 @@ export default async function IyzicoReturnPage({
   const ok = status === "success";
 
   return (
-    <main className="mx-auto max-w-xl px-4 py-20 sm:px-6">
+    <PageContainer as="main" width="narrow" className="py-16 sm:py-20">
       <div
         className={`card-soft p-8 text-center ${
           ok ? "ring-2 ring-emerald-300" : "ring-2 ring-rose-300"
@@ -56,6 +57,6 @@ export default async function IyzicoReturnPage({
           </Link>
         </div>
       </div>
-    </main>
+    </PageContainer>
   );
 }

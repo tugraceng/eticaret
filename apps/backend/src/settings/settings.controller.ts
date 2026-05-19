@@ -26,6 +26,7 @@ import {
 import { HomeSectionKind } from "@prisma/client";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
+import { EmailService } from "../email/email.service";
 import { SettingsService } from "./settings.service";
 
 class UpdateSettingsDto {
@@ -85,6 +86,63 @@ class UpdateSettingsDto {
   @IsOptional()
   @IsString()
   ogImageUrl?: string | null;
+
+  @IsOptional()
+  @IsString()
+  homeMetaTitle?: string | null;
+  @IsOptional()
+  @IsString()
+  homeMetaDesc?: string | null;
+  @IsOptional()
+  @IsString()
+  homeSeoKeywords?: string | null;
+  @IsOptional()
+  @IsString()
+  homeCanonicalUrl?: string | null;
+  @IsOptional()
+  @IsString()
+  homeOgImageUrl?: string | null;
+  @IsOptional()
+  @IsBoolean()
+  homeNoIndex?: boolean;
+
+  @IsOptional()
+  @IsString()
+  shopMetaTitle?: string | null;
+  @IsOptional()
+  @IsString()
+  shopMetaDesc?: string | null;
+  @IsOptional()
+  @IsString()
+  shopSeoKeywords?: string | null;
+  @IsOptional()
+  @IsString()
+  shopCanonicalUrl?: string | null;
+  @IsOptional()
+  @IsString()
+  shopOgImageUrl?: string | null;
+  @IsOptional()
+  @IsBoolean()
+  shopNoIndex?: boolean;
+
+  @IsOptional()
+  @IsString()
+  contactMetaTitle?: string | null;
+  @IsOptional()
+  @IsString()
+  contactMetaDesc?: string | null;
+  @IsOptional()
+  @IsString()
+  contactSeoKeywords?: string | null;
+  @IsOptional()
+  @IsString()
+  contactCanonicalUrl?: string | null;
+  @IsOptional()
+  @IsString()
+  contactOgImageUrl?: string | null;
+  @IsOptional()
+  @IsBoolean()
+  contactNoIndex?: boolean;
 
   @IsOptional()
   @IsInt()
@@ -161,6 +219,37 @@ class UpdateSettingsDto {
   @IsOptional()
   @IsString()
   netgsmShippedMessageTemplate?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  smtpEnabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  smtpHost?: string | null;
+
+  @IsOptional()
+  smtpPort?: number;
+
+  @IsOptional()
+  @IsString()
+  smtpUsername?: string | null;
+
+  @IsOptional()
+  @IsString()
+  smtpPassword?: string | null;
+
+  @IsOptional()
+  @IsString()
+  smtpEncryption?: string;
+
+  @IsOptional()
+  @IsString()
+  smtpFromEmail?: string | null;
+
+  @IsOptional()
+  @IsString()
+  smtpFromName?: string | null;
 
   @IsOptional()
   @IsBoolean()
@@ -406,7 +495,10 @@ class ReorderDto {
 
 @Controller()
 export class SettingsController {
-  constructor(private readonly settings: SettingsService) {}
+  constructor(
+    private readonly settings: SettingsService,
+    private readonly email: EmailService,
+  ) {}
 
   @Get("settings")
   getSettings() {
@@ -421,8 +513,10 @@ export class SettingsController {
 
   @Patch("settings")
   @UseGuards(JwtAuthGuard, AdminGuard)
-  updateSettings(@Body() dto: UpdateSettingsDto) {
-    return this.settings.updateSettings(dto);
+  async updateSettings(@Body() dto: UpdateSettingsDto) {
+    const updated = await this.settings.updateSettings(dto);
+    await this.email.reloadFromSettings();
+    return updated;
   }
 
   @Get("home-sections")

@@ -6,6 +6,7 @@ import { ADMIN_TOKEN_KEY, AdminSessionTerminated } from "@/lib/platform-session"
 import { adminFetch, adminUploadFile } from "./api";
 import { OrderDetailPanel } from "./OrderDetailPanel";
 import { CategoriesPanel, CmsPanel, NotificationsPanel, OrdersPanel, ProductsPanel } from "./AdminTabPanels";
+import type { CategoryUpdatePayload } from "./types";
 import { ADMIN_NAV_GROUPS } from "./config/nav";
 import { AdminMobileMenu } from "./components/layout/AdminMobileMenu";
 import {
@@ -144,6 +145,9 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   const [editMetaTitle, setEditMetaTitle] = useState("");
   const [editMetaDescription, setEditMetaDescription] = useState("");
   const [editSeoKeywords, setEditSeoKeywords] = useState("");
+  const [editSeoCanonicalUrl, setEditSeoCanonicalUrl] = useState("");
+  const [editSeoOgImageUrl, setEditSeoOgImageUrl] = useState("");
+  const [editSeoNoIndex, setEditSeoNoIndex] = useState(false);
   const [editFeatured, setEditFeatured] = useState(false);
   const [editNew, setEditNew] = useState(false);
 
@@ -432,7 +436,7 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
   );
 
   const updateCategory = useCallback(
-    async (id: string, payload: { name: string; slug: string; parentId: string | null }) => {
+    async (id: string, payload: CategoryUpdatePayload) => {
       if (!token) return;
       setBusy(true);
       setError(null);
@@ -443,6 +447,12 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
             name: payload.name.trim(),
             slug: payload.slug.trim().toLowerCase(),
             parentId: payload.parentId,
+            ...(payload.metaTitle !== undefined ? { metaTitle: payload.metaTitle } : {}),
+            ...(payload.metaDescription !== undefined ? { metaDescription: payload.metaDescription } : {}),
+            ...(payload.seoKeywords !== undefined ? { seoKeywords: payload.seoKeywords } : {}),
+            ...(payload.seoCanonicalUrl !== undefined ? { seoCanonicalUrl: payload.seoCanonicalUrl } : {}),
+            ...(payload.seoOgImageUrl !== undefined ? { seoOgImageUrl: payload.seoOgImageUrl } : {}),
+            ...(payload.seoNoIndex !== undefined ? { seoNoIndex: payload.seoNoIndex } : {}),
           }),
         });
         await loadCategories();
@@ -927,6 +937,9 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
     setEditMetaTitle(p.metaTitle ?? "");
     setEditMetaDescription(p.metaDescription ?? "");
     setEditSeoKeywords(p.seoKeywords ?? "");
+    setEditSeoCanonicalUrl(p.seoCanonicalUrl ?? "");
+    setEditSeoOgImageUrl(p.seoOgImageUrl ?? "");
+    setEditSeoNoIndex(Boolean(p.seoNoIndex));
     setEditFeatured(Boolean(p.isFeatured));
     setEditNew(Boolean(p.isNew));
     setImgAlt("");
@@ -978,6 +991,9 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
             metaTitle: editMetaTitle.trim() || null,
             metaDescription: editMetaDescription.trim() || null,
             seoKeywords: editSeoKeywords.trim() || null,
+            seoCanonicalUrl: editSeoCanonicalUrl.trim() || null,
+            seoOgImageUrl: editSeoOgImageUrl.trim() || null,
+            seoNoIndex: editSeoNoIndex,
             priceCents,
             compareAtCents: compareParsed.cents,
             sku: editSku.trim() || null,
@@ -1020,6 +1036,9 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
       editMetaTitle,
       editMetaDescription,
       editSeoKeywords,
+      editSeoCanonicalUrl,
+      editSeoOgImageUrl,
+      editSeoNoIndex,
       editFeatured,
       editNew,
       imgAlt,
@@ -1325,6 +1344,9 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               editMetaTitle={editMetaTitle}
               editMetaDescription={editMetaDescription}
               editSeoKeywords={editSeoKeywords}
+              editSeoCanonicalUrl={editSeoCanonicalUrl}
+              editSeoOgImageUrl={editSeoOgImageUrl}
+              editSeoNoIndex={editSeoNoIndex}
               editFeatured={editFeatured}
               editNew={editNew}
               imgAlt={imgAlt}
@@ -1342,6 +1364,9 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
               setEditMetaTitle={setEditMetaTitle}
               setEditMetaDescription={setEditMetaDescription}
               setEditSeoKeywords={setEditSeoKeywords}
+              setEditSeoCanonicalUrl={setEditSeoCanonicalUrl}
+              setEditSeoOgImageUrl={setEditSeoOgImageUrl}
+              setEditSeoNoIndex={setEditSeoNoIndex}
               setEditFeatured={setEditFeatured}
               setEditNew={setEditNew}
               setImgAlt={setImgAlt}

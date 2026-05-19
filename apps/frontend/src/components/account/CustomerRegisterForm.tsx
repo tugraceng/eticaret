@@ -153,11 +153,16 @@ export function CustomerRegisterForm({
           void submit();
         }}
         className="space-y-4"
+        autoComplete="on"
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-xs font-semibold text-slate-800">Ad *</label>
+            <label className="text-xs font-semibold text-slate-800" htmlFor="register-given-name">
+              Ad *
+            </label>
             <input
+              id="register-given-name"
+              name="given-name"
               type="text"
               className="input-soft mt-1.5 w-full"
               value={name}
@@ -167,8 +172,12 @@ export function CustomerRegisterForm({
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-800">Soyad *</label>
+            <label className="text-xs font-semibold text-slate-800" htmlFor="register-family-name">
+              Soyad *
+            </label>
             <input
+              id="register-family-name"
+              name="family-name"
               type="text"
               className="input-soft mt-1.5 w-full"
               value={surname}
@@ -180,9 +189,14 @@ export function CustomerRegisterForm({
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-slate-800">E-posta *</label>
+          <label className="text-xs font-semibold text-slate-800" htmlFor="register-email">
+            E-posta *
+          </label>
           <input
+            id="register-email"
+            name="email"
             type="email"
+            inputMode="email"
             className="input-soft mt-1.5 w-full"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -193,9 +207,14 @@ export function CustomerRegisterForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-xs font-semibold text-slate-800">Telefon *</label>
+            <label className="text-xs font-semibold text-slate-800" htmlFor="register-phone">
+              Telefon *
+            </label>
             <input
+              id="register-phone"
+              name="phone"
               type="tel"
+              inputMode="tel"
               className="input-soft mt-1.5 w-full"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -205,12 +224,17 @@ export function CustomerRegisterForm({
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-800">Doğum tarihi *</label>
+            <label className="text-xs font-semibold text-slate-800" htmlFor="register-bday">
+              Doğum tarihi *
+            </label>
             <input
+              id="register-bday"
+              name="bday"
               type="date"
               className="input-soft mt-1.5 w-full"
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
+              autoComplete="bday"
               max={today}
               required
             />
@@ -219,8 +243,12 @@ export function CustomerRegisterForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-xs font-semibold text-slate-800">Şifre *</label>
+            <label className="text-xs font-semibold text-slate-800" htmlFor="register-password">
+              Şifre *
+            </label>
             <input
+              id="register-password"
+              name="password"
               type="password"
               className="input-soft mt-1.5 w-full"
               value={password}
@@ -231,8 +259,12 @@ export function CustomerRegisterForm({
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-800">Şifre (tekrar) *</label>
+            <label className="text-xs font-semibold text-slate-800" htmlFor="register-password-confirm">
+              Şifre (tekrar) *
+            </label>
             <input
+              id="register-password-confirm"
+              name="new-password-confirm"
               type="password"
               className="input-soft mt-1.5 w-full"
               value={passwordConfirm}

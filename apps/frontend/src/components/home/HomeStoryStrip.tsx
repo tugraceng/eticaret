@@ -20,7 +20,7 @@ export function HomeStoryStrip({
 
   return (
     <section className="border-y border-slate-200 bg-gradient-to-b from-white to-slate-50/90 py-10">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-1 text-center sm:text-left">
           {kicker ? (
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">{kicker}</p>

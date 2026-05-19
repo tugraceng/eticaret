@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  emptySeoFormValues,
+  SeoFieldsForm,
+  seoFormFromApi,
+  seoFormToApi,
+  type SeoFormValues,
+} from "@/components/admin/SeoFieldsForm";
 import { slugifyTr } from "../utils/slug";
 import { AdminCard, Field, Icon } from "../ui";
-import type { CategoryRow } from "../types";
+import type { CategoryRow, CategoryUpdatePayload } from "../types";
 
 function collectDescendantIds(rows: CategoryRow[], rootId: string): Set<string> {
   const byParent = new Map<string | null, string[]>();
@@ -46,14 +53,16 @@ export function CategoriesPanel({
   setCatParentId: Dispatch<SetStateAction<string>>;
   createCategory: () => Promise<void>;
   deleteCategory: (id: string, name: string) => Promise<void>;
-  updateCategory: (id: string, payload: { name: string; slug: string; parentId: string | null }) => Promise<void>;
+  updateCategory: (id: string, payload: CategoryUpdatePayload) => Promise<void>;
 }) {
   const newSlugTouched = useRef(false);
   const [q, setQ] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
+  const [editTab, setEditTab] = useState<"general" | "seo">("general");
   const [editName, setEditName] = useState("");
   const [editSlug, setEditSlug] = useState("");
   const [editParentId, setEditParentId] = useState("");
+  const [editSeo, setEditSeo] = useState<SeoFormValues>(emptySeoFormValues);
 
   useEffect(() => {
     if (!catName && !catSlug) newSlugTouched.current = false;
@@ -81,14 +90,24 @@ export function CategoriesPanel({
 
   const openEdit = (c: CategoryRow) => {
     setEditId(c.id);
+    setEditTab("general");
     setEditName(c.name);
     setEditSlug(c.slug);
     setEditParentId(c.parentId ?? "");
+    setEditSeo(seoFormFromApi(c));
+  };
+
+  const closeEdit = () => {
+    setEditId(null);
+    setEditTab("general");
   };
 
   return (
     <div className="space-y-6">
-      <AdminCard title="Yeni kategori" description="Ad yazıldığında slug otomatik önerilir; isterseniz slug alanını kendiniz düzenleyin. Üst kategori seçmezseniz kök kategori oluşur.">
+      <AdminCard
+        title="Yeni kategori"
+        description="Ad yazıldığında slug otomatik önerilir; SEO alanlarını düzenleme ekranından yönetebilirsiniz."
+      >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
           <input
             placeholder="Ad"
@@ -201,37 +220,72 @@ export function CategoriesPanel({
 
       {editId ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-slate-900">Kategori düzenle</h3>
-            <p className="mt-1 text-xs text-slate-500">Ad ve adres (slug) güncellenir.</p>
-            <div className="mt-4 space-y-3">
-              <Field label="Ad">
-                <input className="input-soft" value={editName} onChange={(e) => setEditName(e.target.value)} />
-              </Field>
-              <Field label="Slug">
-                <input
-                  className="input-soft font-mono text-sm"
-                  value={editSlug}
-                  onChange={(e) => setEditSlug(e.target.value)}
-                />
-              </Field>
-              <Field label="Üst kategori">
-                <select
-                  className="input-soft"
-                  value={editParentId}
-                  onChange={(e) => setEditParentId(e.target.value)}
+          <div className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="border-b border-slate-100 px-6 py-4">
+              <h3 className="text-lg font-semibold text-slate-900">Kategori düzenle</h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Boş SEO alanlarında mağaza kategori adı ve açıklaması kullanılır.
+              </p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditTab("general")}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+                    editTab === "general" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"
+                  }`}
                 >
-                  <option value="">— Kök —</option>
-                  {editParentOptions.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+                  Genel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditTab("seo")}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+                    editTab === "seo" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"
+                  }`}
+                >
+                  SEO
+                </button>
+              </div>
             </div>
-            <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <button type="button" className="btn-ghost" onClick={() => setEditId(null)}>
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {editTab === "general" ? (
+                <div className="space-y-3">
+                  <Field label="Ad">
+                    <input className="input-soft" value={editName} onChange={(e) => setEditName(e.target.value)} />
+                  </Field>
+                  <Field label="Slug">
+                    <input
+                      className="input-soft font-mono text-sm"
+                      value={editSlug}
+                      onChange={(e) => setEditSlug(e.target.value)}
+                    />
+                  </Field>
+                  <Field label="Üst kategori">
+                    <select
+                      className="input-soft"
+                      value={editParentId}
+                      onChange={(e) => setEditParentId(e.target.value)}
+                    >
+                      <option value="">— Kök —</option>
+                      {editParentOptions.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+              ) : (
+                <SeoFieldsForm
+                  values={editSeo}
+                  onChange={(patch) => setEditSeo((prev) => ({ ...prev, ...patch }))}
+                  titleHint="Boşsa kategori adı kullanılır."
+                  descriptionHint="Boşsa kategori açıklamasının kısaltması kullanılır."
+                />
+              )}
+            </div>
+            <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 px-6 py-4">
+              <button type="button" className="btn-ghost" onClick={closeEdit}>
                 Vazgeç
               </button>
               <button
@@ -243,7 +297,8 @@ export function CategoriesPanel({
                     name: editName,
                     slug: editSlug,
                     parentId: editParentId.trim() ? editParentId.trim() : null,
-                  }).then(() => setEditId(null))
+                    ...seoFormToApi(editSeo),
+                  }).then(closeEdit)
                 }
               >
                 Kaydet

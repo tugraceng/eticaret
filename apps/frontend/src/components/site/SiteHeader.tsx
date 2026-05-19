@@ -13,6 +13,8 @@ import {
   type CSSProperties,
 } from "react";
 import { SiteHeaderSearch } from "@/components/site/SiteHeaderSearch";
+import { CategoryMegaMenu } from "@/components/site/CategoryMegaMenu";
+import { SiteNavTab } from "@/components/site/SiteNavTab";
 import { shopCategoryHref, type HeaderNavCategory } from "@/lib/category-nav";
 import { parseHeaderNav, type HeaderNavLink } from "@/lib/header-nav";
 import type { SiteSettings } from "@/lib/settings";
@@ -476,31 +478,21 @@ export function SiteHeader({
             const tailActive =
               pathname === item.href || (isInternal && pathname.startsWith(`${item.href}/`));
             return (
-              <Link
+              <SiteNavTab
                 key={`before-${item.href}-${item.label}`}
                 href={item.href}
+                active={tailActive}
+                muted={item.muted}
                 onMouseEnter={collapseMega}
-                className={cn(
-                  "border-b-2 border-transparent px-2.5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:text-slate-900",
-                  item.muted && !tailActive ? "text-slate-400" : "text-slate-600",
-                  tailActive && "border-sky-600 text-slate-900",
-                )}
               >
                 {item.label}
-              </Link>
+              </SiteNavTab>
             );
           })}
           {categoryNav.length === 0 ? (
-            <Link
-              href="/shop"
-              onMouseEnter={collapseMega}
-              className={cn(
-                "border-b-2 border-transparent px-2.5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600 transition-colors hover:text-slate-900",
-                pathname.startsWith("/shop") && "border-sky-600 text-slate-900",
-              )}
-            >
+            <SiteNavTab href="/shop" active={pathname.startsWith("/shop")} onMouseEnter={collapseMega}>
               Ürünler
-            </Link>
+            </SiteNavTab>
           ) : null}
           {categoryNav.map((cat) => {
             const catActive = activeShopCategoryId === cat.id;
@@ -514,12 +506,13 @@ export function SiteHeader({
                   else collapseMega();
                 }}
               >
-                <Link
+                <SiteNavTab
                   href={shopCategoryHref(cat.id)}
-                  className={cn(
-                    "inline-flex items-center gap-1 border-b-2 border-transparent px-2.5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:text-slate-900",
-                    catActive || megaOpen ? "border-sky-600 text-slate-900" : "text-slate-600",
-                  )}
+                  active={catActive || megaOpen}
+                  onMouseEnter={() => {
+                    if (cat.children.length > 0) openMegaCategory(cat.id);
+                    else collapseMega();
+                  }}
                 >
                   {cat.name}
                   {cat.children.length > 0 ? (
@@ -530,7 +523,7 @@ export function SiteHeader({
                       )}
                     />
                   ) : null}
-                </Link>
+                </SiteNavTab>
               </div>
             );
           })}
@@ -539,74 +532,35 @@ export function SiteHeader({
             const tailActive =
               pathname === item.href || (isInternal && pathname.startsWith(`${item.href}/`));
             return (
-              <Link
+              <SiteNavTab
                 key={`after-${item.href}-${item.label}`}
                 href={item.href}
+                active={tailActive}
+                muted={item.muted}
                 onMouseEnter={collapseMega}
-                className={cn(
-                  "border-b-2 border-transparent px-2.5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:text-slate-900",
-                  item.muted && !tailActive ? "text-slate-400" : "text-slate-600",
-                  tailActive && "border-sky-600 text-slate-900",
-                )}
               >
                 {item.label}
-              </Link>
+              </SiteNavTab>
             );
           })}
-          <Link
+          <SiteNavTab
             href={contactNavItem.href}
+            active={contactNavActive}
             onMouseEnter={collapseMega}
-            className={cn(
-              "border-b-2 border-transparent px-2.5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:text-slate-900",
-              contactNavActive ? "border-sky-600 text-slate-900" : "text-slate-600",
-            )}
           >
             {contactNavItem.label}
-          </Link>
+          </SiteNavTab>
         </div>
 
         {megaCategory ? (
-          <div
-            className="absolute inset-x-0 top-full z-[80] border-t border-slate-100 bg-white shadow-[0_28px_56px_-24px_rgba(15,23,42,0.22)]"
-            onMouseEnter={clearMegaCloseTimer}
-            onMouseLeave={scheduleMegaClose}
-          >
-            <div className="mx-auto max-w-7xl px-4 pb-10 pt-8 sm:px-6 lg:px-8">
-              <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-100 pb-6">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                    Alt koleksiyonlar
-                  </p>
-                  <p className="mt-1 text-lg font-semibold tracking-tight text-slate-900">{megaCategory.name}</p>
-                </div>
-                <Link
-                  href={shopCategoryHref(megaCategory.id)}
-                  className="shrink-0 text-xs font-semibold uppercase tracking-wider text-sky-700 transition-colors hover:text-sky-900"
-                >
-                  Tümünü gör →
-                </Link>
-              </div>
-              <ul
-                className={cn(
-                  "mt-6 grid gap-2",
-                  megaCategory.children.length > 8
-                    ? "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                    : "sm:grid-cols-2 lg:grid-cols-3",
-                )}
-              >
-                {megaCategory.children.map((sub) => (
-                  <li key={sub.id}>
-                    <Link
-                      href={shopCategoryHref(sub.id)}
-                      className="flex min-h-[3rem] items-center rounded-2xl border border-slate-100 bg-slate-50/90 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-sky-200 hover:bg-white hover:text-slate-950"
-                    >
-                      {sub.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <CategoryMegaMenu
+            categories={categoryNav}
+            activeCategory={megaCategory}
+            activeCategoryId={megaCategoryId ?? megaCategory.id}
+            onHoverCategory={openMegaCategory}
+            onMouseEnterPanel={clearMegaCloseTimer}
+            onMouseLeavePanel={scheduleMegaClose}
+          />
         ) : null}
       </nav>
 
@@ -682,7 +636,7 @@ export function SiteHeader({
                           <div className="flex flex-wrap items-end justify-between gap-3">
                             <div className="min-w-0">
                               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                                Alt koleksiyonlar
+                                Kategori
                               </p>
                               <p className="mt-0.5 truncate text-base font-semibold tracking-tight text-slate-900">
                                 {cat.name}

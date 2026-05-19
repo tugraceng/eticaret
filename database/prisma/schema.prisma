@@ -135,6 +135,27 @@ model SiteSettings {
   defaultMetaTitle String?
   defaultMetaDesc  String?  @db.Text
   ogImageUrl       String?
+  /// Ana sayfa SEO (boşsa site varsayılanları)
+  homeMetaTitle    String?
+  homeMetaDesc     String?  @db.Text
+  homeSeoKeywords  String?  @db.Text
+  homeCanonicalUrl String?
+  homeOgImageUrl   String?
+  homeNoIndex      Boolean  @default(false)
+  /// Mağaza /shop SEO
+  shopMetaTitle    String?
+  shopMetaDesc     String?  @db.Text
+  shopSeoKeywords  String?  @db.Text
+  shopCanonicalUrl String?
+  shopOgImageUrl   String?
+  shopNoIndex      Boolean  @default(false)
+  /// İletişim sayfası SEO
+  contactMetaTitle    String?
+  contactMetaDesc     String?  @db.Text
+  contactSeoKeywords  String?  @db.Text
+  contactCanonicalUrl String?
+  contactOgImageUrl   String?
+  contactNoIndex      Boolean  @default(false)
   // Kargo
   shippingFeeCents           Int @default(0)
   freeShippingThresholdCents Int @default(0) // 0 ise eşik yok
@@ -160,6 +181,16 @@ model SiteSettings {
   netgsmSmsFilter               String   @default("0")
   /// Boşsa varsayılan kargo SMS metni kullanılır; {ad} {siparis} {takip} {tasiyici}
   netgsmShippedMessageTemplate  String?  @db.Text
+  // SMTP — şifre sıfırlama, iletişim formu, bildirimler
+  smtpEnabled     Boolean @default(false)
+  smtpHost        String?
+  smtpPort        Int     @default(587)
+  smtpUsername    String?
+  smtpPassword    String?
+  /// tls | ssl | none
+  smtpEncryption  String  @default("tls")
+  smtpFromEmail   String?
+  smtpFromName    String?
   // Promosyon popup (anasayfa / tüm site)
   popupEnabled            Boolean @default(false)
   popupTitle              String?
@@ -245,15 +276,22 @@ model HomeSection {
 }
 
 model Category {
-  id          String     @id @default(cuid())
-  name        String
-  slug        String     @unique
-  description String?
-  parentId    String?
-  sortOrder   Int        @default(0)
-  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
-  children    Category[] @relation("CategoryTree")
-  products    Product[]
+  id               String     @id @default(cuid())
+  name             String
+  slug             String     @unique
+  description      String?
+  metaTitle        String?
+  metaDescription  String?    @db.Text
+  seoKeywords      String?    @db.Text
+  seoCanonicalUrl  String?
+  seoOgImageUrl    String?
+  seoNoIndex       Boolean    @default(false)
+  parentId         String?
+  sortOrder        Int        @default(0)
+  updatedAt        DateTime   @updatedAt
+  parent           Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children         Category[] @relation("CategoryTree")
+  products         Product[]
 }
 
 model Product {
@@ -266,7 +304,10 @@ model Product {
   metaTitle      String?
   metaDescription String?       @db.Text
   /// Virgülle ayrılmış ek anahtar kelimeler (SEO)
-  seoKeywords    String?        @db.Text
+  seoKeywords      String?        @db.Text
+  seoCanonicalUrl  String?
+  seoOgImageUrl    String?
+  seoNoIndex       Boolean        @default(false)
   priceCents     Int
   compareAtCents Int?
   sku            String?
@@ -519,11 +560,17 @@ model StockMovement {
 
 /// CMS: flexible pages (About, custom landings) with structured JSON blocks
 model Page {
-  id          String  @id @default(cuid())
-  slug        String  @unique
-  title       String
-  content     Json?
-  isPublished Boolean @default(true)
+  id              String  @id @default(cuid())
+  slug            String  @unique
+  title           String
+  content         Json?
+  metaTitle       String?
+  metaDescription String? @db.Text
+  seoKeywords     String? @db.Text
+  seoCanonicalUrl String?
+  seoOgImageUrl   String?
+  seoNoIndex      Boolean @default(false)
+  isPublished     Boolean @default(true)
 }
 
 model BlogPost {

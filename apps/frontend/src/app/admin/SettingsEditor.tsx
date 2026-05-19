@@ -5,6 +5,11 @@ import { AdminImageUpload } from "./AdminImageUpload";
 import { adminFetch } from "./api";
 import { formatAdminCaughtError } from "./admin-api-error";
 import { AdminCard, Field, Icon, Toast } from "./ui";
+import {
+  emptySeoFormValues,
+  SeoFieldsForm,
+  type SeoFormValues,
+} from "@/components/admin/SeoFieldsForm";
 import { parseHeaderNavForEditor, type HeaderNavLink } from "@/lib/header-nav";
 
 type Settings = {
@@ -23,6 +28,24 @@ type Settings = {
   defaultMetaTitle: string | null;
   defaultMetaDesc: string | null;
   ogImageUrl: string | null;
+  homeMetaTitle?: string | null;
+  homeMetaDesc?: string | null;
+  homeSeoKeywords?: string | null;
+  homeCanonicalUrl?: string | null;
+  homeOgImageUrl?: string | null;
+  homeNoIndex?: boolean;
+  shopMetaTitle?: string | null;
+  shopMetaDesc?: string | null;
+  shopSeoKeywords?: string | null;
+  shopCanonicalUrl?: string | null;
+  shopOgImageUrl?: string | null;
+  shopNoIndex?: boolean;
+  contactMetaTitle?: string | null;
+  contactMetaDesc?: string | null;
+  contactSeoKeywords?: string | null;
+  contactCanonicalUrl?: string | null;
+  contactOgImageUrl?: string | null;
+  contactNoIndex?: boolean;
   shippingFeeCents?: number;
   freeShippingThresholdCents?: number;
   taxRateBp?: number;
@@ -41,6 +64,14 @@ type Settings = {
   netgsmMsgHeader?: string | null;
   netgsmSmsFilter?: string;
   netgsmShippedMessageTemplate?: string | null;
+  smtpEnabled?: boolean;
+  smtpHost?: string | null;
+  smtpPort?: number;
+  smtpUsername?: string | null;
+  smtpPassword?: string | null;
+  smtpEncryption?: string;
+  smtpFromEmail?: string | null;
+  smtpFromName?: string | null;
   popupEnabled?: boolean;
   popupTitle?: string | null;
   popupBody?: string | null;
@@ -264,6 +295,9 @@ export function SettingsEditor({ token }: { token: string }) {
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDesc, setMetaDesc] = useState("");
   const [ogImageUrl, setOgImageUrl] = useState("");
+  const [homeSeo, setHomeSeo] = useState<SeoFormValues>(emptySeoFormValues);
+  const [shopSeo, setShopSeo] = useState<SeoFormValues>(emptySeoFormValues);
+  const [contactSeo, setContactSeo] = useState<SeoFormValues>(emptySeoFormValues);
   const [shippingFee, setShippingFee] = useState(0);
   const [freeThreshold, setFreeThreshold] = useState(0);
   const [taxRate, setTaxRate] = useState(0);
@@ -282,6 +316,17 @@ export function SettingsEditor({ token }: { token: string }) {
   const [netgsmMsgHeader, setNetgsmMsgHeader] = useState("");
   const [netgsmSmsFilter, setNetgsmSmsFilter] = useState("0");
   const [netgsmShippedTemplate, setNetgsmShippedTemplate] = useState("");
+  const [smtpEnabled, setSmtpEnabled] = useState(false);
+  const [smtpHost, setSmtpHost] = useState("");
+  const [smtpPort, setSmtpPort] = useState(587);
+  const [smtpUsername, setSmtpUsername] = useState("");
+  const [smtpPassword, setSmtpPassword] = useState("");
+  const [smtpEncryption, setSmtpEncryption] = useState("tls");
+  const [smtpFromEmail, setSmtpFromEmail] = useState("");
+  const [smtpFromName, setSmtpFromName] = useState("");
+  const [testSmtpTo, setTestSmtpTo] = useState("");
+  const [testSmtpBusy, setTestSmtpBusy] = useState(false);
+  const [testSmtpOk, setTestSmtpOk] = useState(false);
   const [testSmsPhone, setTestSmsPhone] = useState("");
   const [testSmsMessage, setTestSmsMessage] = useState("");
   const [testSmsBusy, setTestSmsBusy] = useState(false);
@@ -404,6 +449,30 @@ export function SettingsEditor({ token }: { token: string }) {
       setMetaTitle(s.defaultMetaTitle ?? "");
       setMetaDesc(s.defaultMetaDesc ?? "");
       setOgImageUrl(s.ogImageUrl ?? "");
+      setHomeSeo({
+        metaTitle: s.homeMetaTitle ?? "",
+        metaDescription: s.homeMetaDesc ?? "",
+        seoKeywords: s.homeSeoKeywords ?? "",
+        seoCanonicalUrl: s.homeCanonicalUrl ?? "",
+        seoOgImageUrl: s.homeOgImageUrl ?? "",
+        seoNoIndex: Boolean(s.homeNoIndex),
+      });
+      setShopSeo({
+        metaTitle: s.shopMetaTitle ?? "",
+        metaDescription: s.shopMetaDesc ?? "",
+        seoKeywords: s.shopSeoKeywords ?? "",
+        seoCanonicalUrl: s.shopCanonicalUrl ?? "",
+        seoOgImageUrl: s.shopOgImageUrl ?? "",
+        seoNoIndex: Boolean(s.shopNoIndex),
+      });
+      setContactSeo({
+        metaTitle: s.contactMetaTitle ?? "",
+        metaDescription: s.contactMetaDesc ?? "",
+        seoKeywords: s.contactSeoKeywords ?? "",
+        seoCanonicalUrl: s.contactCanonicalUrl ?? "",
+        seoOgImageUrl: s.contactOgImageUrl ?? "",
+        seoNoIndex: Boolean(s.contactNoIndex),
+      });
       setShippingFee((s.shippingFeeCents ?? 0) / 100);
       setFreeThreshold((s.freeShippingThresholdCents ?? 0) / 100);
       setTaxRate((s.taxRateBp ?? 0) / 100);
@@ -422,6 +491,14 @@ export function SettingsEditor({ token }: { token: string }) {
       setNetgsmMsgHeader(s.netgsmMsgHeader ?? "");
       setNetgsmSmsFilter((s.netgsmSmsFilter ?? "0").trim() || "0");
       setNetgsmShippedTemplate(s.netgsmShippedMessageTemplate ?? "");
+      setSmtpEnabled(Boolean(s.smtpEnabled));
+      setSmtpHost(s.smtpHost ?? "");
+      setSmtpPort(typeof s.smtpPort === "number" ? s.smtpPort : 587);
+      setSmtpUsername(s.smtpUsername ?? "");
+      setSmtpPassword(s.smtpPassword ?? "");
+      setSmtpEncryption((s.smtpEncryption ?? "tls").trim() || "tls");
+      setSmtpFromEmail(s.smtpFromEmail ?? "");
+      setSmtpFromName(s.smtpFromName ?? "");
       setPopupEnabled(Boolean(s.popupEnabled));
       setPopupTitle(s.popupTitle ?? "");
       setPopupBody(s.popupBody ?? "");
@@ -504,6 +581,24 @@ export function SettingsEditor({ token }: { token: string }) {
         defaultMetaTitle: metaTitle.trim() || null,
         defaultMetaDesc: metaDesc.trim() || null,
         ogImageUrl: ogImageUrl.trim() || null,
+        homeMetaTitle: homeSeo.metaTitle.trim() || null,
+        homeMetaDesc: homeSeo.metaDescription.trim() || null,
+        homeSeoKeywords: homeSeo.seoKeywords.trim() || null,
+        homeCanonicalUrl: homeSeo.seoCanonicalUrl.trim() || null,
+        homeOgImageUrl: homeSeo.seoOgImageUrl.trim() || null,
+        homeNoIndex: homeSeo.seoNoIndex,
+        shopMetaTitle: shopSeo.metaTitle.trim() || null,
+        shopMetaDesc: shopSeo.metaDescription.trim() || null,
+        shopSeoKeywords: shopSeo.seoKeywords.trim() || null,
+        shopCanonicalUrl: shopSeo.seoCanonicalUrl.trim() || null,
+        shopOgImageUrl: shopSeo.seoOgImageUrl.trim() || null,
+        shopNoIndex: shopSeo.seoNoIndex,
+        contactMetaTitle: contactSeo.metaTitle.trim() || null,
+        contactMetaDesc: contactSeo.metaDescription.trim() || null,
+        contactSeoKeywords: contactSeo.seoKeywords.trim() || null,
+        contactCanonicalUrl: contactSeo.seoCanonicalUrl.trim() || null,
+        contactOgImageUrl: contactSeo.seoOgImageUrl.trim() || null,
+        contactNoIndex: contactSeo.seoNoIndex,
         shippingFeeCents: Math.round(Math.max(0, Number(shippingFee) || 0) * 100),
         freeShippingThresholdCents: Math.round(Math.max(0, Number(freeThreshold) || 0) * 100),
         taxRateBp: Math.round(Math.max(0, Number(taxRate) || 0) * 100),
@@ -522,6 +617,14 @@ export function SettingsEditor({ token }: { token: string }) {
         netgsmMsgHeader: netgsmMsgHeader.trim() || null,
         netgsmSmsFilter: netgsmSmsFilter.trim() || "0",
         netgsmShippedMessageTemplate: netgsmShippedTemplate.trim() || null,
+        smtpEnabled,
+        smtpHost: smtpHost.trim() || null,
+        smtpPort: Number.isFinite(smtpPort) ? smtpPort : 587,
+        smtpUsername: smtpUsername.trim() || null,
+        smtpPassword: smtpPassword.trim() || null,
+        smtpEncryption: smtpEncryption.trim() || "tls",
+        smtpFromEmail: smtpFromEmail.trim() || null,
+        smtpFromName: smtpFromName.trim() || null,
         popupEnabled: popupEnabled,
         popupTitle: popupTitle.trim() || null,
         popupBody: popupBody.trim() || null,
@@ -596,6 +699,9 @@ export function SettingsEditor({ token }: { token: string }) {
     metaTitle,
     metaDesc,
     ogImageUrl,
+    homeSeo,
+    shopSeo,
+    contactSeo,
     shippingFee,
     freeThreshold,
     taxRate,
@@ -614,6 +720,14 @@ export function SettingsEditor({ token }: { token: string }) {
     netgsmMsgHeader,
     netgsmSmsFilter,
     netgsmShippedTemplate,
+    smtpEnabled,
+    smtpHost,
+    smtpPort,
+    smtpUsername,
+    smtpPassword,
+    smtpEncryption,
+    smtpFromEmail,
+    smtpFromName,
     popupEnabled,
     popupTitle,
     popupBody,
@@ -1482,6 +1596,103 @@ export function SettingsEditor({ token }: { token: string }) {
       </AdminCard>
 
       <AdminCard
+        title="SMTP / E-posta"
+        description="Şifre sıfırlama, iletişim formu ve sipariş bildirimleri için. Şifre kayıtlı tutulur; herkese açık ayarlarda gösterilmez."
+      >
+        <label className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={smtpEnabled}
+            onChange={(e) => setSmtpEnabled(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300"
+          />
+          <span className="font-semibold text-slate-900">SMTP etkin</span>
+        </label>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <Field label="Sunucu (host)">
+            <input className="input-soft font-mono text-xs" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} placeholder="smtp.example.com" />
+          </Field>
+          <Field label="Port">
+            <input
+              type="number"
+              className="input-soft"
+              value={smtpPort}
+              onChange={(e) => setSmtpPort(Number(e.target.value) || 587)}
+              min={1}
+              max={65535}
+            />
+          </Field>
+          <Field label="Kullanıcı adı">
+            <input className="input-soft font-mono text-xs" value={smtpUsername} onChange={(e) => setSmtpUsername(e.target.value)} autoComplete="off" />
+          </Field>
+          <Field label="Şifre" hint="Boş bırakırsanız mevcut şifre korunur">
+            <input
+              type="password"
+              className="input-soft font-mono text-xs"
+              value={smtpPassword}
+              onChange={(e) => setSmtpPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+          </Field>
+          <Field label="Şifreleme">
+            <select className="input-soft" value={smtpEncryption} onChange={(e) => setSmtpEncryption(e.target.value)}>
+              <option value="tls">TLS (STARTTLS, port 587)</option>
+              <option value="ssl">SSL (port 465)</option>
+              <option value="none">Yok</option>
+            </select>
+          </Field>
+          <Field label="Gönderen e-posta">
+            <input className="input-soft" value={smtpFromEmail} onChange={(e) => setSmtpFromEmail(e.target.value)} placeholder="no-reply@magaza.com" />
+          </Field>
+          <Field label="Gönderen adı" className="md:col-span-2">
+            <input className="input-soft" value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} placeholder="Mağaza Adı" />
+          </Field>
+        </div>
+        <div className="mt-6 border-t border-slate-200 pt-5">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Test e-postası</p>
+          {testSmtpOk ? (
+            <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">Test e-postası gönderildi.</p>
+          ) : null}
+          <div className="mt-3 flex flex-wrap items-end gap-3">
+            <Field label="Alıcı" className="min-w-[200px] flex-1">
+              <input
+                type="email"
+                className="input-soft"
+                value={testSmtpTo}
+                onChange={(e) => setTestSmtpTo(e.target.value)}
+                placeholder="siz@email.com"
+                disabled={testSmtpBusy}
+              />
+            </Field>
+            <button
+              type="button"
+              disabled={testSmtpBusy || busy}
+              onClick={async () => {
+                const to = testSmtpTo.trim();
+                if (!to) return;
+                setTestSmtpBusy(true);
+                setTestSmtpOk(false);
+                try {
+                  await adminFetch("/admin/smtp/test", token, {
+                    method: "POST",
+                    body: JSON.stringify({ to }),
+                  });
+                  setTestSmtpOk(true);
+                } catch (e) {
+                  setError(formatAdminCaughtError(e, "Test e-postası gönderilemedi") ?? "Test e-postası gönderilemedi");
+                } finally {
+                  setTestSmtpBusy(false);
+                }
+              }}
+              className="rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+            >
+              {testSmtpBusy ? "Gönderiliyor…" : "Test gönder"}
+            </button>
+          </div>
+        </div>
+      </AdminCard>
+
+      <AdminCard
         title="Promosyon popup"
         description="Ziyaretçilere kısa süre sonra açılan, boyutu ve buton linki ayarlanabilir bilgi penceresi. X, Escape veya arka plan (isteğe bağlı) ile kapanır."
       >
@@ -1591,17 +1802,21 @@ export function SettingsEditor({ token }: { token: string }) {
         </Field>
       </AdminCard>
 
-      <AdminCard title="SEO meta" description="Arama sonuçları ve paylaşım önizlemeleri.">
-        <Field label="Varsayılan başlık">
+      <AdminCard
+        title="SEO"
+        description="Site geneli varsayılanlar ve sayfa bazlı SEO. Boş alanlarda ilgili sayfa içeriği veya site adı kullanılır."
+      >
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Site varsayılanları</p>
+        <Field label="Varsayılan başlık" className="mt-2">
           <input
             className="input-soft"
             value={metaTitle}
             onChange={(e) => setMetaTitle(e.target.value)}
           />
         </Field>
-        <Field label="Açıklama" className="mt-3">
+        <Field label="Varsayılan açıklama" className="mt-3">
           <textarea
-            rows={3}
+            rows={2}
             className="input-soft resize-y"
             value={metaDesc}
             onChange={(e) => setMetaDesc(e.target.value)}
@@ -1610,10 +1825,40 @@ export function SettingsEditor({ token }: { token: string }) {
         <div className="mt-3">
           <AdminImageUpload
             token={token}
-            label="Open Graph görseli"
+            label="Varsayılan OG görseli"
             value={ogImageUrl}
             onChange={setOgImageUrl}
-            hint="Sosyal paylaşımlarda kullanılır; geniş görsel önerilir."
+            hint="Sayfa özel görseli yoksa sosyal paylaşımlarda kullanılır."
+          />
+        </div>
+
+        <p className="mt-8 text-xs font-semibold uppercase tracking-wider text-slate-500">Ana sayfa (/)</p>
+        <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+          <SeoFieldsForm
+            values={homeSeo}
+            onChange={(patch) => setHomeSeo((prev) => ({ ...prev, ...patch }))}
+            titleHint="Boşsa site varsayılan başlığı veya site adı."
+            descriptionHint="Boşsa site varsayılan açıklaması."
+          />
+        </div>
+
+        <p className="mt-8 text-xs font-semibold uppercase tracking-wider text-slate-500">Mağaza (/shop)</p>
+        <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+          <SeoFieldsForm
+            values={shopSeo}
+            onChange={(patch) => setShopSeo((prev) => ({ ...prev, ...patch }))}
+            titleHint="Boşsa «Mağaza · site adı»."
+            descriptionHint="Boşsa site varsayılan açıklaması."
+          />
+        </div>
+
+        <p className="mt-8 text-xs font-semibold uppercase tracking-wider text-slate-500">İletişim (/contact)</p>
+        <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+          <SeoFieldsForm
+            values={contactSeo}
+            onChange={(patch) => setContactSeo((prev) => ({ ...prev, ...patch }))}
+            titleHint="Boşsa «İletişim»."
+            descriptionHint="Boşsa iletişim / site açıklaması."
           />
         </div>
       </AdminCard>

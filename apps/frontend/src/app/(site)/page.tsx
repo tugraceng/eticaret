@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Fragment, type ReactNode } from "react";
 import { HomeSectionRenderer } from "@/components/home/HomeSections";
 import type { HomeRenderContext } from "@/components/home/HomeSections";
@@ -6,10 +7,36 @@ import { RecentlyViewedRail } from "@/components/store/RecentlyViewedRail";
 import { apiJsonSafe } from "@/lib/api";
 import { IMPLICIT_RETAIL_BEFORE_KINDS } from "@/lib/homeLayout";
 import { getHomeSections, getSiteSettings } from "@/lib/settings";
+import { buildPageMetadata, seoExcerpt } from "@/lib/seo";
 import type { ProductCardData } from "@/components/site/ProductCard";
 import type { ShopCategory } from "./shop/CategoryStrip";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  const siteName = settings.siteName;
+  const title = settings.homeMetaTitle?.trim() || settings.defaultMetaTitle?.trim() || siteName;
+  const description = seoExcerpt(
+    settings.homeMetaDesc?.trim() ||
+      settings.defaultMetaDesc?.trim() ||
+      `${siteName} — ürünler, kampanyalar ve güvenli alışveriş.`,
+  );
+  return buildPageMetadata({
+    title,
+    description,
+    path: "/",
+    siteOgImage: settings.homeOgImageUrl ?? settings.ogImageUrl,
+    fields: {
+      metaTitle: settings.homeMetaTitle,
+      metaDescription: settings.homeMetaDesc,
+      seoKeywords: settings.homeSeoKeywords,
+      seoCanonicalUrl: settings.homeCanonicalUrl,
+      seoOgImageUrl: settings.homeOgImageUrl,
+      seoNoIndex: settings.homeNoIndex,
+    },
+  });
+}
 
 function productApiPath(q?: string, categoryId?: string) {
   const p = new URLSearchParams();
@@ -122,7 +149,7 @@ export default async function HomePage({
   return (
     <div className="home-page flex flex-col">
       {!filtering && visible.length === 0 ? (
-        <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+        <section className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
             <p className="text-2xl font-semibold text-slate-900">Henüz vitrin içeriği eklenmedi</p>
             <p className="mt-2 text-sm text-slate-600">

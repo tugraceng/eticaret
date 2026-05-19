@@ -158,7 +158,7 @@ export function ShopPageClient({
   );
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
+    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
       <header className="mb-6 flex flex-col gap-4 lg:mb-10 lg:gap-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
           <div className="min-w-0">

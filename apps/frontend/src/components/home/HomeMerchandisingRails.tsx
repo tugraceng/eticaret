@@ -13,7 +13,7 @@ export function HomeMerchandisingRails({ bestsellers, popular, newest }: Props) 
 
   return (
     <section className="bg-white pb-4 pt-2">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-2 text-center sm:text-left">
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Mağaza</p>
           <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Ürün şeritleri</h2>

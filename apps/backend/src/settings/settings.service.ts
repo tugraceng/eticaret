@@ -45,6 +45,7 @@ export class SettingsService {
       whatsappShippedTemplate: _tpl,
       whatsappTemplateLang: _waTplLang,
       netgsmPassword: _netgsmPw,
+      smtpPassword: _smtpPw,
       birthdayCouponAutomationEnabled: _birthdayAuto,
       lowStockThreshold: _lowStock,
       ...safe
@@ -54,6 +55,7 @@ export class SettingsService {
     void _tpl;
     void _waTplLang;
     void _netgsmPw;
+    void _smtpPw;
     void _birthdayAuto;
     void _lowStock;
     return safe;
@@ -75,6 +77,24 @@ export class SettingsService {
       defaultMetaTitle: string | null;
       defaultMetaDesc: string | null;
       ogImageUrl: string | null;
+      homeMetaTitle: string | null;
+      homeMetaDesc: string | null;
+      homeSeoKeywords: string | null;
+      homeCanonicalUrl: string | null;
+      homeOgImageUrl: string | null;
+      homeNoIndex: boolean;
+      shopMetaTitle: string | null;
+      shopMetaDesc: string | null;
+      shopSeoKeywords: string | null;
+      shopCanonicalUrl: string | null;
+      shopOgImageUrl: string | null;
+      shopNoIndex: boolean;
+      contactMetaTitle: string | null;
+      contactMetaDesc: string | null;
+      contactSeoKeywords: string | null;
+      contactCanonicalUrl: string | null;
+      contactOgImageUrl: string | null;
+      contactNoIndex: boolean;
       shippingFeeCents: number;
       freeShippingThresholdCents: number;
       taxRateBp: number;
@@ -93,6 +113,14 @@ export class SettingsService {
       netgsmMsgHeader: string | null;
       netgsmSmsFilter: string;
       netgsmShippedMessageTemplate: string | null;
+      smtpEnabled: boolean;
+      smtpHost: string | null;
+      smtpPort: number;
+      smtpUsername: string | null;
+      smtpPassword: string | null;
+      smtpEncryption: string;
+      smtpFromEmail: string | null;
+      smtpFromName: string | null;
       popupEnabled: boolean;
       popupTitle: string | null;
       popupBody: string | null;
@@ -134,11 +162,17 @@ export class SettingsService {
     }>,
   ) {
     const current = await this.getSettings();
-    const { socialLinks, headerNav, ...rest } = data;
+    const { socialLinks, headerNav, smtpPassword, netgsmPassword, ...rest } = data;
     const updated = await this.prisma.siteSettings.update({
       where: { id: current.id },
       data: {
         ...rest,
+        ...(smtpPassword !== undefined && smtpPassword !== null && smtpPassword.trim() !== ""
+          ? { smtpPassword: smtpPassword.trim() }
+          : {}),
+        ...(netgsmPassword !== undefined && netgsmPassword !== null && netgsmPassword.trim() !== ""
+          ? { netgsmPassword: netgsmPassword.trim() }
+          : {}),
         ...(socialLinks !== undefined ? { socialLinks: socialLinks as Prisma.InputJsonValue } : {}),
         ...(headerNav !== undefined ? { headerNav: headerNav as Prisma.InputJsonValue } : {}),
       },

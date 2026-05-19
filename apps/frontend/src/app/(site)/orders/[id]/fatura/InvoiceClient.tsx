@@ -98,12 +98,12 @@ export function InvoiceClient({ orderId }: { orderId: string }) {
   const taxIncluded = settings?.taxIncluded ?? true;
 
   if (phase === "loading") {
-    return <main className="mx-auto max-w-3xl px-4 py-10 text-sm text-slate-600 sm:px-6">Fatura doğrulanıyor...</main>;
+    return <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 text-sm text-slate-600 sm:px-6">Fatura doğrulanıyor...</main>;
   }
 
   if (phase === "login" || !order) {
     return (
-      <main className="mx-auto max-w-xl px-4 py-12 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="section-shell space-y-4 p-6 sm:p-8">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Faturayı görüntülemek için giriş yapın</h1>
           <p className="text-sm text-slate-600">
@@ -119,7 +119,7 @@ export function InvoiceClient({ orderId }: { orderId: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 print:py-0 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 print:py-0 sm:px-6">
       <style>{`@media print {.no-print{display:none!important}body{background:#fff}}`}</style>
       <div className="no-print mb-6 flex items-center justify-between">
         <Link href={`/orders/${order.id}`} className="text-sm text-slate-600 hover:text-slate-900">

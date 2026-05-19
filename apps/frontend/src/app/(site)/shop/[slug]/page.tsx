@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { apiAssetUrl, apiJson } from "@/lib/api";
 import { ProductCard, type ProductCardData } from "@/components/site/ProductCard";
 import { absoluteFromSite } from "@/lib/site-url";
+import { buildPageMetadata, seoExcerpt } from "@/lib/seo";
 import { AddToCart } from "./ui";
 import { Reviews } from "./Reviews";
 import { RecentlyViewedTracker } from "./RecentlyViewedTracker";
@@ -34,6 +35,9 @@ type Product = {
   metaTitle?: string | null;
   metaDescription?: string | null;
   seoKeywords?: string | null;
+  seoCanonicalUrl?: string | null;
+  seoOgImageUrl?: string | null;
+  seoNoIndex?: boolean;
   isFeatured?: boolean;
   isNew?: boolean;
   /** Mağazada stok adedi / düşük stok uyarısı gösterilsin mi */
@@ -58,39 +62,24 @@ export async function generateMetadata({
   try {
     const { slug } = await params;
     const product = await getProductBySlug(slug);
-    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
-    const canonical = `${siteUrl}/shop/${product.slug}`;
-    const title = (product.metaTitle?.trim() || product.name).slice(0, 200);
-    const rawDesc =
-      product.metaDescription?.trim() ||
-      product.description?.trim() ||
-      `${product.name} ürününü inceleyin ve güvenle sipariş verin.`;
-    const description = rawDesc.slice(0, 200);
-    const image = absoluteFromSite(product.images?.[0]?.url);
-    const kw = product.seoKeywords
-      ?.split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .slice(0, 24);
-    return {
-      title,
-      description,
-      keywords: kw?.length ? kw : undefined,
-      alternates: { canonical },
-      openGraph: {
-        url: canonical,
-        title,
-        description,
-        type: "website",
-        ...(image ? { images: [{ url: image, width: 1200, height: 630 }] } : {}),
+    const heroImage = product.images?.[0]?.url ?? null;
+    return buildPageMetadata({
+      title: product.name,
+      description: seoExcerpt(
+        product.metaDescription?.trim() ||
+          product.description?.trim() ||
+          `${product.name} ürününü inceleyin ve güvenle sipariş verin.`,
+      ),
+      path: `/shop/${product.slug}`,
+      fields: {
+        metaTitle: product.metaTitle,
+        metaDescription: product.metaDescription,
+        seoKeywords: product.seoKeywords,
+        seoCanonicalUrl: product.seoCanonicalUrl,
+        seoOgImageUrl: product.seoOgImageUrl || heroImage,
+        seoNoIndex: product.seoNoIndex,
       },
-      twitter: {
-        card: image ? "summary_large_image" : "summary",
-        title,
-        description,
-        ...(image ? { images: [image] } : {}),
-      },
-    };
+    });
   } catch {
     return {
       title: "Ürün",
@@ -220,7 +209,7 @@ export default async function ProductPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
       <ProductViewTracker productId={product.id} name={product.name} priceCents={product.priceCents} />
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:max-w-7xl">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <RecentlyViewedTracker productId={product.id} />
 
         <nav

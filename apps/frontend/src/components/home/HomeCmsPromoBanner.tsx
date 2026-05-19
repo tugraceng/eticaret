@@ -19,7 +19,7 @@ export function HomeCmsPromoBanner({ eyebrow, title, body, ctaLabel, ctaHref }: 
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(56,189,248,0.12),transparent_45%)]"
         aria-hidden
       />
-      <div className="relative mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:max-w-7xl">
+      <div className="relative mx-auto flex max-w-7xl flex-col items-start gap-6 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:max-w-7xl">
         <div className="max-w-xl space-y-2">
           {eyebrow ? (
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sky-200/90">{eyebrow}</p>

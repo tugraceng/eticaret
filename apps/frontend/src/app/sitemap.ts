@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/services`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/projects`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/blog`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
+    { url: `${base}/shop`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     { url: `${base}/contact`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: `${base}/kvkk`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: `${base}/gizlilik`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
@@ -46,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const categoryEntries: MetadataRoute.Sitemap =
     categories?.map((c) => ({
-      url: `${base}/?categoryId=${encodeURIComponent(c.slug)}#urunler`,
+      url: `${base}/shop?category=${encodeURIComponent(c.slug)}`,
       lastModified: c.updatedAt ? new Date(c.updatedAt) : now,
       changeFrequency: "weekly",
       priority: 0.6,
