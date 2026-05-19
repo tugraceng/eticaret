@@ -10,10 +10,17 @@ import { GlobalExceptionFilter } from "./common/http/global-exception.filter";
 import { perfMiddleware } from "./common/perf/perf.middleware";
 import { UploadsService } from "./uploads/uploads.service";
 
-/** PM2 cwd apps/backend olsa bile repo kökü uploads/ (dist → ../../../uploads) */
+/** .env içindeki UPLOAD_DIR=uploads → apps/backend/uploads hatasını önler */
 function ensureUploadDirEnv(): void {
-  if (process.env.UPLOAD_DIR?.trim()) return;
-  process.env.UPLOAD_DIR = resolve(__dirname, "../../../uploads");
+  const repo = resolve(__dirname, "../../../uploads");
+  const d = process.env.UPLOAD_DIR?.trim();
+  if (!d || d === "uploads" || d === "./uploads") {
+    process.env.UPLOAD_DIR = repo;
+    return;
+  }
+  if (!d.startsWith("/") && !/^[a-zA-Z]:[/\\]/.test(d)) {
+    process.env.UPLOAD_DIR = repo;
+  }
 }
 
 function parseOriginList(raw: string | undefined): string[] {
@@ -66,7 +73,6 @@ async function bootstrap() {
   app.use(
     "/uploads",
     express.static(uploadDir, {
-      fallthrough: false,
       index: false,
       maxAge: "7d",
     }),
