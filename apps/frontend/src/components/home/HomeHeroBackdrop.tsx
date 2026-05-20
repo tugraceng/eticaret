@@ -11,8 +11,6 @@ import {
 } from "@/components/home/homeHeroImage";
 import { useHeroObjectPosition } from "@/components/home/useHeroObjectPosition";
 import { apiAssetUrl } from "@/lib/api";
-import { cn } from "@/lib/cn";
-
 /** Metin okunabilirliği */
 const HERO_OVERLAY =
   "linear-gradient(105deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 38%, rgba(0,0,0,0.2) 100%)";
@@ -35,40 +33,72 @@ function slideDisplay(slide: HeroBackdropSlide | undefined): HeroImageDisplay {
   };
 }
 
-function objectFitStyle(fit: HeroImageFit): CSSProperties["objectFit"] {
-  return fit === "contain" || fit === "contain_blur" ? "contain" : "cover";
+function cssBackgroundUrl(src: string): string {
+  const escaped = src.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  return `url("${escaped}")`;
 }
 
-/** next/image fill + inline object-fit admin ayarlarını ezebiliyor; native img kullan */
+/** contain_blur — background-size/position masaüstünde img relative hatasından etkilenmez */
+function HeroContainBlurLayer({
+  src,
+  desktop,
+  mobile,
+}: {
+  src: string;
+  desktop: HeroImagePosition;
+  mobile: HeroImagePosition | null;
+}) {
+  const backgroundPosition = useHeroObjectPosition(desktop, mobile);
+  const bg = cssBackgroundUrl(src);
+  const base: CSSProperties = {
+    backgroundImage: bg,
+    backgroundRepeat: "no-repeat",
+    backgroundPosition,
+  };
+
+  return (
+    <div className="absolute inset-0">
+      <div
+        className="absolute inset-0 scale-110 blur-2xl brightness-[0.35] saturate-[0.85]"
+        style={{ ...base, backgroundSize: "cover" }}
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 z-[1]"
+        style={{ ...base, backgroundSize: "contain" }}
+        aria-hidden
+      />
+    </div>
+  );
+}
+
 function HeroNativeImage({
   src,
   alt,
   fit,
   desktop,
   mobile,
-  className,
   priority,
 }: {
   src: string;
   alt: string;
-  fit: HeroImageFit;
+  fit: Exclude<HeroImageFit, "contain_blur">;
   desktop: HeroImagePosition;
   mobile: HeroImagePosition | null;
-  className?: string;
   priority?: boolean;
 }) {
   const objectPosition = useHeroObjectPosition(desktop, mobile);
-  const objectFit = objectFitStyle(fit);
+  const objectFit: CSSProperties["objectFit"] = fit === "contain" ? "contain" : "cover";
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- hero: tam object-fit/position kontrolü
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
       alt={alt}
       decoding="async"
       loading={priority ? "eager" : "lazy"}
       fetchPriority={priority ? "high" : "auto"}
-      className={cn("absolute inset-0 h-full w-full", className)}
+      className="absolute inset-0 h-full w-full"
       style={{ objectFit, objectPosition }}
     />
   );
@@ -90,28 +120,7 @@ function HeroImageLayer({
   priority?: boolean;
 }) {
   if (fit === "contain_blur") {
-    return (
-      <div className="absolute inset-0" aria-hidden={!alt}>
-        <HeroNativeImage
-          src={src}
-          alt=""
-          fit="cover"
-          desktop={desktop}
-          mobile={mobile}
-          className="scale-110 blur-2xl brightness-[0.35] saturate-[0.85]"
-          priority={priority}
-        />
-        <HeroNativeImage
-          src={src}
-          alt={alt}
-          fit="contain"
-          desktop={desktop}
-          mobile={mobile}
-          className="relative z-[1]"
-          priority={priority}
-        />
-      </div>
-    );
+    return <HeroContainBlurLayer src={src} desktop={desktop} mobile={mobile} />;
   }
 
   return (
