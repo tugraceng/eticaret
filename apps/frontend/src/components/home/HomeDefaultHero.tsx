@@ -7,6 +7,7 @@ import { DEFAULT_HERO_IMAGE_DISPLAY } from "@/components/home/homeHeroImage";
 import {
   heroContentLayoutClass,
   heroContentPaddingClass,
+  heroContentShellClass,
   heroGridClass,
   heroSectionMinHeightClass,
   heroVisualPanelClass,
@@ -42,7 +43,7 @@ export function HomeDefaultHero() {
         <HomeHeroBackdrop slides={slides} index={index} />
       </div>
 
-      <div className={`relative z-10 flex flex-1 flex-col ${heroContentPaddingClass}`}>
+      <div className={`${heroContentShellClass} ${heroContentPaddingClass}`}>
         <div className={heroGridClass}>
           <motion.div
             className={heroContentLayoutClass}
@@ -64,7 +65,6 @@ export function HomeDefaultHero() {
               </Link>
             </div>
           </motion.div>
-          <div className="hidden min-h-[12rem] lg:block" aria-hidden />
         </div>
       </div>
     </section>

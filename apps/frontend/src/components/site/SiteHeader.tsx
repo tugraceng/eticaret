@@ -372,6 +372,7 @@ export function SiteHeader({
   );
 
   const headerPosition = isHome ? "fixed inset-x-0 top-0" : "sticky top-0";
+  const headerRef = useRef<HTMLElement>(null);
 
   const logoSrc = settings.logoUrl?.trim() || DEFAULT_HEADER_LOGO;
   const accent = settings.secondaryColor?.trim() || "#0ea5e9";
@@ -393,8 +394,30 @@ export function SiteHeader({
     ...({ "--top-promo-marquee-duration": `${topPromoMarqueeSec}s` } as CSSProperties),
   };
 
+  useLayoutEffect(() => {
+    if (!isHome) {
+      document.documentElement.style.removeProperty("--si-site-header-h");
+      return;
+    }
+    const el = headerRef.current;
+    if (!el) return;
+    const sync = () => {
+      document.documentElement.style.setProperty("--si-site-header-h", `${el.offsetHeight}px`);
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    window.addEventListener("resize", sync);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", sync);
+      document.documentElement.style.removeProperty("--si-site-header-h");
+    };
+  }, [isHome, headerCompact, topPromoLines.length]);
+
   return (
     <header
+      ref={headerRef}
       style={style}
       data-compact={headerCompact ? "" : undefined}
       className={cn(headerPosition, "z-50 flex flex-col", headerSurface)}

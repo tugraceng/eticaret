@@ -13,6 +13,7 @@ import { HomeHeroTitle } from "@/components/home/HomeHeroTitle";
 import {
   heroContentLayoutClass,
   heroContentPaddingClass,
+  heroContentShellClass,
   heroGridClass,
   heroSectionMinHeightClass,
   heroVisualPanelClass,
@@ -89,7 +90,7 @@ export function HomeCmsHero({ section, settings }: Props) {
 
       <HomeHeroArrows visible={slides.length > 1} onPrev={goPrev} onNext={goNext} />
 
-      <div className={`relative z-10 flex flex-1 flex-col ${heroContentPaddingClass}`}>
+      <div className={`${heroContentShellClass} ${heroContentPaddingClass}`}>
         <div className={heroGridClass}>
           <motion.div
             key={index}
@@ -100,7 +101,7 @@ export function HomeCmsHero({ section, settings }: Props) {
           >
             {eyebrow ? <p className="si-kicker mb-3">{eyebrow}</p> : null}
 
-            <h1 className="si-display max-w-[14ch] text-balance">
+            <h1 className="si-display max-w-[14ch] text-balance lg:max-w-[12ch]">
               <HomeHeroTitle title={active.title} />
             </h1>
 
@@ -135,7 +136,6 @@ export function HomeCmsHero({ section, settings }: Props) {
               </div>
             ) : null}
           </motion.div>
-          <div className="hidden min-h-[12rem] lg:block" aria-hidden />
         </div>
       </div>
     </section>

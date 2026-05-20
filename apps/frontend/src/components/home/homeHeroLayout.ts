@@ -1,18 +1,23 @@
 /**
- * Hero — kompakt first-fold, sol metin / sağ ürün, premium collectible vitrin.
+ * Hero — header altından başlar, görsel tam panel, metin solda.
+ * Yükseklik: --si-site-header-h (SiteHeader ResizeObserver ile set edilir).
  */
 
+/** Görsel + metin toplam yükseklik (header hariç alan dahil) */
 export const heroSectionMinHeightClass =
-  "min-h-[min(26rem,76svh)] sm:min-h-[28rem] lg:min-h-[min(34rem,88svh)] lg:max-h-[42rem]";
+  "min-h-[max(34rem,calc(var(--si-site-header-h,9.5rem)+26rem))] sm:min-h-[max(38rem,calc(var(--si-site-header-h,10rem)+28rem))] lg:min-h-[max(42rem,calc(var(--si-site-header-h,11rem)+30rem))] xl:min-h-[max(46rem,calc(var(--si-site-header-h,11rem)+32rem))]";
 
-export const heroContentPaddingClass = "px-4 sm:px-6 lg:px-8";
+/** Görsel header çizgisinin altından footer’a kadar */
+export const heroVisualPanelClass = "si-hero-visual pointer-events-none absolute inset-x-0 bottom-0 z-[1]";
+
+/** Metin katmanı — header yüksekliği kadar üst boşluk */
+export const heroContentShellClass =
+  "si-hero-shell relative z-10 flex min-h-[inherit] flex-1 flex-col";
+
+export const heroContentPaddingClass = "px-4 pb-8 sm:px-6 sm:pb-10 lg:px-8 lg:pb-12";
 
 export const heroContentLayoutClass =
-  "flex w-full flex-col justify-end pb-6 pt-[max(4.75rem,env(safe-area-inset-top,0px)+3.25rem)] sm:pb-7 lg:max-w-[26rem] lg:justify-center lg:py-8 xl:max-w-[28rem]";
+  "flex w-full flex-col justify-end pb-2 pt-4 sm:pt-6 lg:max-w-[32rem] lg:justify-center lg:py-6 xl:max-w-[34rem]";
 
 export const heroGridClass =
-  "relative z-10 mx-auto grid h-full w-full max-w-7xl flex-1 grid-cols-1 lg:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] lg:items-center lg:gap-8 xl:gap-12";
-
-/** Mobil: alt yarı; masaüstü: sağ panel — ürün önde */
-export const heroVisualPanelClass =
-  "pointer-events-none absolute inset-x-0 bottom-0 top-[36%] z-[1] sm:top-[30%] lg:inset-y-0 lg:left-[38%] lg:right-0 lg:top-0";
+  "mx-auto grid h-full w-full max-w-7xl flex-1 grid-cols-1 content-end lg:content-center lg:grid-cols-[minmax(0,38%)_1fr] lg:items-center lg:gap-8 xl:gap-12";

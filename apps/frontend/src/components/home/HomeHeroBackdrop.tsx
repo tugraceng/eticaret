@@ -14,9 +14,9 @@ import { apiAssetUrl } from "@/lib/api";
 
 function heroOverlayGradient(strength: number): string {
   const t = Math.min(100, Math.max(0, strength)) / 100;
-  const a = (0.42 + t * 0.32).toFixed(3);
-  const b = (0.18 + t * 0.22).toFixed(3);
-  return `linear-gradient(100deg, rgba(10,12,16,${a}) 0%, rgba(10,12,16,${b}) 38%, transparent 62%)`;
+  const a = (0.5 + t * 0.35).toFixed(3);
+  const b = (0.22 + t * 0.2).toFixed(3);
+  return `linear-gradient(95deg, rgba(10,12,16,${a}) 0%, rgba(10,12,16,${b}) 32%, transparent 52%)`;
 }
 
 function heroOverlayMobile(strength: number): string {
@@ -87,12 +87,8 @@ function HeroContainBlurLayer({
         aria-hidden
       />
       <div
-        className="absolute inset-[4%] z-[2] sm:inset-[6%] lg:inset-[5%_3%_5%_8%]"
-        style={{ ...base, backgroundSize: "contain" }}
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-[4%] z-[3] sm:inset-[6%] lg:inset-[5%_3%_5%_8%] rounded-2xl shadow-[inset_0_0_120px_rgba(255,255,255,0.04)] ring-1 ring-white/[0.06]"
+        className="absolute inset-0 z-[2]"
+        style={{ ...base, backgroundSize: "cover" }}
         aria-hidden
       />
     </div>
@@ -118,18 +114,16 @@ function HeroNativeImage({
   const objectFit: CSSProperties["objectFit"] = fit === "contain" ? "contain" : "cover";
 
   return (
-    <div className="absolute inset-[4%] z-[2] sm:inset-[6%] lg:inset-[5%_2%_5%_6%]">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={alt}
-        decoding="async"
-        loading={priority ? "eager" : "lazy"}
-        fetchPriority={priority ? "high" : "auto"}
-        className="h-full w-full drop-shadow-[0_24px_48px_rgba(0,0,0,0.45)]"
-        style={{ objectFit, objectPosition }}
-      />
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      decoding="async"
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
+      className="absolute inset-0 z-[2] h-full w-full"
+      style={{ objectFit, objectPosition }}
+    />
   );
 }
 
@@ -220,7 +214,7 @@ function HeroOverlays({ strength }: { strength: number }) {
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0 z-[5] bg-[radial-gradient(ellipse_80%_70%_at_50%_50%,transparent_42%,rgba(8,10,14,0.55)_100%)]"
+        className="pointer-events-none absolute inset-0 z-[5] bg-[radial-gradient(ellipse_90%_80%_at_65%_50%,transparent_35%,rgba(8,10,14,0.35)_100%)]"
         aria-hidden
       />
       <div

@@ -64,6 +64,14 @@
   }
 }
 
+.site-theme-stoneiron .si-hero-visual {
+  top: var(--si-site-header-h, 9.5rem);
+}
+
+.site-theme-stoneiron .si-hero-shell {
+  padding-top: var(--si-site-header-h, 9.5rem);
+}
+
 .site-theme-stoneiron .si-hero-tagline {
   font-size: 0.9375rem;
   line-height: 1.55;
@@ -672,9 +680,9 @@
 }
 
 @media (max-width: 639px) {
-  .site-theme-stoneiron .si-display {
-    font-size: 1.65rem;
-    max-width: 18ch;
+  .site-theme-stoneiron .si-hero .si-display {
+    font-size: 1.75rem;
+    max-width: 16ch;
   }
 }
 

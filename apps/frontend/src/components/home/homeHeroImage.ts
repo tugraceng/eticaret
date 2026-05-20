@@ -25,7 +25,7 @@ export type HeroImageDisplay = {
 };
 
 export const DEFAULT_HERO_IMAGE_DISPLAY: HeroImageDisplay = {
-  imageFit: "contain",
+  imageFit: "cover",
   imagePosition: "center center",
   imagePositionMobile: null,
   overlayStrength: 58,
