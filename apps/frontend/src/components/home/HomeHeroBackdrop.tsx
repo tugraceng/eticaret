@@ -1,24 +1,21 @@
 "use client";
 
-import Image from "next/image";
 import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import {
   DEFAULT_HERO_IMAGE_DISPLAY,
-  heroImagePositionVars,
   type HeroImageDisplay,
   type HeroImageFit,
   type HeroImagePosition,
 } from "@/components/home/homeHeroImage";
 import { useHeroObjectPosition } from "@/components/home/useHeroObjectPosition";
 import { apiAssetUrl } from "@/lib/api";
+import { cn } from "@/lib/cn";
 
 /** Metin okunabilirliği */
 const HERO_OVERLAY =
   "linear-gradient(105deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 38%, rgba(0,0,0,0.2) 100%)";
-
-const HERO_SIZES = "100vw";
 
 export type HeroBackdropSlide = {
   image: string;
@@ -38,37 +35,41 @@ function slideDisplay(slide: HeroBackdropSlide | undefined): HeroImageDisplay {
   };
 }
 
-function HeroPositionedImage({
+function objectFitStyle(fit: HeroImageFit): CSSProperties["objectFit"] {
+  return fit === "contain" || fit === "contain_blur" ? "contain" : "cover";
+}
+
+/** next/image fill + inline object-fit admin ayarlarını ezebiliyor; native img kullan */
+function HeroNativeImage({
   src,
   alt,
-  className,
+  fit,
   desktop,
   mobile,
-  hostStyle,
+  className,
   priority,
-  quality,
 }: {
   src: string;
   alt: string;
-  className: string;
+  fit: HeroImageFit;
   desktop: HeroImagePosition;
   mobile: HeroImagePosition | null;
-  hostStyle: CSSProperties;
+  className?: string;
   priority?: boolean;
-  quality?: number;
 }) {
   const objectPosition = useHeroObjectPosition(desktop, mobile);
+  const objectFit = objectFitStyle(fit);
 
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element -- hero: tam object-fit/position kontrolü
+    <img
       src={src}
       alt={alt}
-      fill
-      sizes={HERO_SIZES}
-      quality={quality}
-      priority={priority}
-      className={className}
-      style={{ ...hostStyle, objectPosition }}
+      decoding="async"
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
+      className={cn("absolute inset-0 h-full w-full", className)}
+      style={{ objectFit, objectPosition }}
     />
   );
 }
@@ -79,67 +80,49 @@ function HeroImageLayer({
   fit,
   desktop,
   mobile,
-  positionVars,
   priority,
-  quality,
 }: {
   src: string;
   alt: string;
   fit: HeroImageFit;
   desktop: HeroImagePosition;
   mobile: HeroImagePosition | null;
-  positionVars: Record<string, string>;
   priority?: boolean;
-  quality?: number;
 }) {
-  const hostStyle = positionVars as CSSProperties;
-
   if (fit === "contain_blur") {
     return (
-      <div
-        className="hero-image-position-host absolute inset-0"
-        style={hostStyle}
-        aria-hidden
-      >
-        <HeroPositionedImage
+      <div className="absolute inset-0" aria-hidden={!alt}>
+        <HeroNativeImage
           src={src}
           alt=""
+          fit="cover"
           desktop={desktop}
           mobile={mobile}
-          hostStyle={hostStyle}
+          className="scale-110 blur-2xl brightness-[0.35] saturate-[0.85]"
           priority={priority}
-          quality={45}
-          className="scale-110 object-cover blur-2xl brightness-[0.35] saturate-[0.85]"
         />
-        <HeroPositionedImage
+        <HeroNativeImage
           src={src}
           alt={alt}
+          fit="contain"
           desktop={desktop}
           mobile={mobile}
-          hostStyle={hostStyle}
+          className="relative z-[1]"
           priority={priority}
-          quality={quality ?? 78}
-          className="relative z-[1] object-contain"
         />
       </div>
     );
   }
 
-  const objectFitClass = fit === "contain" ? "object-contain" : "object-cover";
-
   return (
-    <div className="hero-image-position-host absolute inset-0" style={hostStyle}>
-      <HeroPositionedImage
-        src={src}
-        alt={alt}
-        desktop={desktop}
-        mobile={mobile}
-        hostStyle={hostStyle}
-        priority={priority}
-        quality={quality ?? (fit === "cover" ? 82 : 78)}
-        className={objectFitClass}
-      />
-    </div>
+    <HeroNativeImage
+      src={src}
+      alt={alt}
+      fit={fit}
+      desktop={desktop}
+      mobile={mobile}
+      priority={priority}
+    />
   );
 }
 
@@ -155,7 +138,6 @@ function SingleHeroLayer({
   const url = imageUrl(slide, fallback);
   if (!url) return null;
   const { imageFit, imagePosition, imagePositionMobile } = slideDisplay(slide);
-  const positionVars = heroImagePositionVars(imagePosition, imagePositionMobile);
 
   return (
     <HeroImageLayer
@@ -164,7 +146,6 @@ function SingleHeroLayer({
       fit={imageFit}
       desktop={imagePosition}
       mobile={imagePositionMobile}
-      positionVars={positionVars}
       priority={priority}
     />
   );
