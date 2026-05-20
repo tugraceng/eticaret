@@ -21,6 +21,7 @@ export type ProductRow = {
   isPublished: boolean;
   isFeatured?: boolean;
   isNew?: boolean;
+  linkClickCount?: number;
   categoryId?: string | null;
   category?: { id: string; name: string; slug: string } | null;
   images?: Array<{ id: string; url: string; alt?: string | null; sortOrder: number }>;

@@ -6,6 +6,7 @@ import { memo } from "react";
 import type { ProductCardData } from "@/components/site/ProductCard";
 import { ProductInlineCartQty } from "@/components/site/ProductInlineCartQty";
 import { apiAssetUrl } from "@/lib/api";
+import { trackProductLinkClick } from "@/lib/product-link-click";
 
 type Props = { product: ProductCardData };
 
@@ -23,6 +24,7 @@ export const ProductListRow = memo(function ProductListRow({ product }: Props) {
         prefetch={false}
         href={`/shop/${product.slug}`}
         className="relative h-24 w-24 shrink-0 overflow-hidden rounded-ds-lg bg-[var(--ds-surface-muted)] sm:h-28 sm:w-28"
+        onClick={() => trackProductLinkClick(product.slug)}
       >
         {cover ? (
           <Image src={cover} alt={alt} fill className="object-cover" sizes="112px" />
@@ -31,7 +33,12 @@ export const ProductListRow = memo(function ProductListRow({ product }: Props) {
         )}
       </Link>
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
-        <Link prefetch={false} href={`/shop/${product.slug}`} className="text-h3 text-[var(--ds-text)] hover:underline">
+        <Link
+          prefetch={false}
+          href={`/shop/${product.slug}`}
+          className="text-h3 text-[var(--ds-text)] hover:underline"
+          onClick={() => trackProductLinkClick(product.slug)}
+        >
           {product.name}
         </Link>
         {product.description ? (

@@ -7,6 +7,7 @@ import { ShopToolbar } from "@/app/(site)/shop/ShopToolbar";
 import { ShopCatalogGrid, type CatalogPayload } from "@/app/(site)/shop/ShopCatalogGrid";
 import type { CategoryApiRow } from "@/lib/category-nav";
 import { cn } from "@/lib/cn";
+import { isPersonalizedCategory, PERSONALIZED_ORDER_NOTICE } from "@/lib/personalized-category";
 
 function sortCategories(a: CategoryApiRow, b: CategoryApiRow) {
   const o = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
@@ -84,6 +85,7 @@ export function ShopPageClient({
   page,
   view,
   hasActiveCatalogFilters,
+  activeCategory,
 }: {
   title: string;
   categories: CategoryApiRow[];
@@ -104,7 +106,9 @@ export function ShopPageClient({
   page: number;
   view: "grid" | "list";
   hasActiveCatalogFilters: boolean;
+  activeCategory?: CategoryApiRow | null;
 }) {
+  const showPersonalizedNotice = isPersonalizedCategory(activeCategory ?? null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersSheetCloseRef = useRef<HTMLButtonElement>(null);
   const rootCategories = categories.filter((c) => !c.parentId).slice().sort(sortCategories);
@@ -177,6 +181,12 @@ export function ShopPageClient({
         </div>
       </header>
 
+      {showPersonalizedNotice ? (
+        <div className="si-personalized-notice mb-6" role="note">
+          <p className="text-sm leading-relaxed">{PERSONALIZED_ORDER_NOTICE}</p>
+        </div>
+      ) : null}
+
       <div
         className={cn(
           "fixed inset-0 z-[55] bg-[var(--ds-text)]/35 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden",
@@ -223,7 +233,7 @@ export function ShopPageClient({
               key={`${catalogQs}|${page}`}
               method="GET"
               action="/shop"
-              className="space-y-3 p-4 pb-6 max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+              className="si-shop-filters-form space-y-3 p-4 pb-6 max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom))]"
               onSubmit={() => setFiltersOpen(false)}
             >
               <p className="hidden text-h3 lg:block">Filtreler</p>

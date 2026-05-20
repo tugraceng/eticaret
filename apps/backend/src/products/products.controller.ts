@@ -432,6 +432,11 @@ export class ProductsController {
     return this.products.createVariant(id, dto);
   }
 
+  @Post(":slug/track-click")
+  trackLinkClick(@Param("slug") slug: string) {
+    return this.products.incrementLinkClick(slug);
+  }
+
   @Get(":slug")
   bySlug(@Param("slug") slug: string) {
     return this.products.bySlug(slug);

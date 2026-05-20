@@ -84,7 +84,7 @@ export function ShopCatalogGrid({
           ) : (
             items.map((p) => (
               <li key={p.id} className="flex h-full min-h-0">
-                <ProductCard product={p} showCategory={!hasActiveFilters} />
+                <ProductCard product={p} showCategory={!hasActiveFilters} showDescription />
               </li>
             ))
           )}

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { memo, type JSX } from "react";
@@ -5,6 +7,8 @@ import { WishlistButton } from "@/app/(site)/shop/[slug]/ui";
 import { apiAssetUrl } from "@/lib/api";
 import { ProductCardAddToCart } from "@/components/site/ProductCardAddToCart";
 import { cn } from "@/lib/cn";
+import { trackProductLinkClick } from "@/lib/product-link-click";
+import { seoExcerpt } from "@/lib/seo";
 
 export type ProductCardData = {
   id: string;
@@ -25,6 +29,8 @@ type ProductCardProps = {
   product: ProductCardData;
   /** Kategori sayfasında tekrarlayan etiket gösterme */
   showCategory?: boolean;
+  /** Izgara modunda kısa açıklama */
+  showDescription?: boolean;
 };
 
 function Stars({ value }: { value: number }) {
@@ -57,7 +63,11 @@ function priceFmt(cents: number) {
   return (cents / 100).toLocaleString("tr-TR", { style: "currency", currency: "TRY" });
 }
 
-function ProductCardInner({ product, showCategory = false }: ProductCardProps) {
+function ProductCardInner({ product, showCategory = false, showDescription = false }: ProductCardProps) {
+  const excerpt =
+    showDescription && product.description?.trim()
+      ? seoExcerpt(product.description.trim(), 100)
+      : null;
   const cover = apiAssetUrl(product.images?.[0]?.url) ?? undefined;
   const second = apiAssetUrl(product.images?.[1]?.url) ?? undefined;
   const alt = product.images?.[0]?.alt ?? product.name;
@@ -108,6 +118,7 @@ function ProductCardInner({ product, showCategory = false }: ProductCardProps) {
         href={productHref}
         className="absolute inset-0 z-[1] rounded-[inherit] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1e2736]"
         aria-label={`${product.name} — ürüne git`}
+        onClick={() => trackProductLinkClick(product.slug)}
       />
 
       <div className="relative z-[2] flex min-h-0 flex-1 flex-col pointer-events-none">
@@ -178,8 +189,13 @@ function ProductCardInner({ product, showCategory = false }: ProductCardProps) {
           <p className="si-product-name line-clamp-2 min-h-[2.5rem]">
             <span className="pointer-events-none">{product.name}</span>
           </p>
+          {excerpt ? (
+            <p className="si-product-excerpt pointer-events-none mt-1 line-clamp-2 min-h-[2.25rem] text-xs leading-snug text-slate-500">
+              {excerpt}
+            </p>
+          ) : null}
 
-          <div className="mt-2 flex h-5 items-center gap-1.5">
+          <div className={cn("flex h-5 items-center gap-1.5", excerpt ? "mt-1.5" : "mt-2")}>
             {hasReviews ? (
               <>
                 <Stars value={product.avgRating ?? 0} />

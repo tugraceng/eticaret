@@ -723,6 +723,47 @@
   color: #f1f5f9;
 }
 
+.site-theme-stoneiron .si-shop-filters-form .input-soft,
+.site-theme-stoneiron .si-shop-filters-form select.input-soft {
+  width: 100%;
+  color-scheme: dark;
+  background-color: #0a0f18;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e8edf5;
+  box-shadow: none;
+}
+
+.site-theme-stoneiron .si-shop-filters-form .input-soft:focus,
+.site-theme-stoneiron .si-shop-filters-form select.input-soft:focus {
+  border-color: rgba(56, 189, 248, 0.45);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.12);
+}
+
+.site-theme-stoneiron .si-shop-filters-form .btn-primary {
+  border-radius: 0.75rem;
+  background: #e8edf5;
+  color: #0c0e12;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.site-theme-stoneiron .si-shop-filters-form .btn-primary:hover {
+  background: #fff;
+}
+
+.site-theme-stoneiron .si-personalized-notice {
+  border-radius: 0.875rem;
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  background: linear-gradient(135deg, rgba(30, 58, 90, 0.45) 0%, rgba(15, 20, 28, 0.9) 100%);
+  padding: 1rem 1.25rem;
+  color: #cbd5e1;
+}
+
+.site-theme-stoneiron .si-product-excerpt {
+  color: #94a3b8;
+}
+
 .site-theme-stoneiron .si-shop-list-row {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: var(--si-bg-card);

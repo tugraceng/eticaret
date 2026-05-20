@@ -230,6 +230,7 @@ export default async function ShopPage({
       page={page}
       view={view}
       hasActiveCatalogFilters={hasActiveCatalogFilters}
+      activeCategory={categoryId ? categories.find((c) => c.id === categoryId) ?? null : null}
     />
   );
 }

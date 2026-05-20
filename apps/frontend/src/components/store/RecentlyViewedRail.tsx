@@ -6,14 +6,16 @@ import { apiUrl } from "@/lib/api";
 import { ProductCard, type ProductCardData } from "@/components/site/ProductCard";
 import { RECENT_PRODUCTS_STORAGE_KEY, RECENT_PRODUCTS_UPDATE_EVENT } from "@/lib/recent-products";
 
-const MAX = 12;
+const STORAGE_MAX = 24;
+const INITIAL_VISIBLE = 4;
+const LOAD_MORE_STEP = 4;
 
 function readRecentIds(): string[] {
   try {
     const raw = localStorage.getItem(RECENT_PRODUCTS_STORAGE_KEY);
     const parsed = raw ? (JSON.parse(raw) as unknown[]) : [];
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((x): x is string => typeof x === "string").slice(0, MAX);
+    return parsed.filter((x): x is string => typeof x === "string").slice(0, STORAGE_MAX);
   } catch {
     return [];
   }
@@ -22,6 +24,7 @@ function readRecentIds(): string[] {
 export function RecentlyViewedRail() {
   const [items, setItems] = useState<ProductCardData[]>([]);
   const [ready, setReady] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
   const load = useCallback(() => {
     const ids = readRecentIds();
@@ -39,6 +42,7 @@ export function RecentlyViewedRail() {
         const map = new Map((Array.isArray(data) ? data : []).map((p) => [p.id, p]));
         const ordered = ids.map((id) => map.get(id)).filter(Boolean) as ProductCardData[];
         setItems(ordered);
+        setVisibleCount(INITIAL_VISIBLE);
       } catch {
         setItems([]);
       } finally {
@@ -61,7 +65,10 @@ export function RecentlyViewedRail() {
     };
   }, [load]);
 
+  const visible = useMemo(() => items.slice(0, visibleCount), [items, visibleCount]);
+  const hasMore = items.length > visibleCount;
   const show = useMemo(() => ready && items.length > 0, [ready, items.length]);
+
   if (!show) return null;
 
   return (
@@ -79,13 +86,26 @@ export function RecentlyViewedRail() {
             Tüm ürünler →
           </Link>
         </div>
-        <ul className="mt-6 grid auto-rows-fr grid-cols-2 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-4">
-          {items.slice(0, 8).map((p) => (
+        <ul className="mt-6 grid auto-rows-fr grid-cols-2 gap-4 md:gap-5 lg:grid-cols-4">
+          {visible.map((p) => (
             <li key={p.id} className="flex min-h-0">
-              <ProductCard product={p} />
+              <ProductCard product={p} showDescription />
             </li>
           ))}
         </ul>
+        {hasMore ? (
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={() =>
+                setVisibleCount((n) => Math.min(n + LOAD_MORE_STEP, items.length))
+              }
+              className="btn-ghost min-h-11 px-6"
+            >
+              Daha fazla göster ({items.length - visibleCount} kaldı)
+            </button>
+          </div>
+        ) : null}
         <Link
           href="/shop"
           className="mt-4 inline-flex text-sm font-semibold text-sky-400/90 hover:text-sky-300 sm:hidden"

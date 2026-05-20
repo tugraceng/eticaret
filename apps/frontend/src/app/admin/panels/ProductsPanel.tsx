@@ -903,6 +903,7 @@ export function ProductsPanel({
                   <th className="px-2 py-2">Varyant</th>
                   <th className="px-2 py-2">Ad</th>
                   <th className="px-2 py-2">Fiyat</th>
+                  <th className="px-2 py-2">Link tık</th>
                   <th className="px-2 py-2">Stok</th>
                   <th className="px-2 py-2">Yayın</th>
                   <th className="px-2 py-2">Kategori</th>
@@ -938,6 +939,9 @@ export function ProductsPanel({
                       {typeof p.compareAtCents === "number" ? (
                         <span className="ml-1 text-xs text-rose-600 line-through">{priceFmt(p.compareAtCents)}</span>
                       ) : null}
+                    </td>
+                    <td className="px-2 py-3 tabular-nums text-slate-700">
+                      {typeof p.linkClickCount === "number" ? p.linkClickCount.toLocaleString("tr-TR") : "0"}
                     </td>
                     <td className="px-2 py-3">
                       <span

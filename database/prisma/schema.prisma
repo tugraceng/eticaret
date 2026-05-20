@@ -319,6 +319,8 @@ model Product {
   showPublicStockCount Boolean  @default(true)
   isFeatured     Boolean        @default(false)
   isNew          Boolean        @default(false)
+  /// Mağaza / vitrin ürün linkine tıklama (admin)
+  linkClickCount Int            @default(0)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   category       Category?      @relation(fields: [categoryId], references: [id])
@@ -337,6 +339,7 @@ model Product {
   @@index([isPublished, updatedAt])
   @@index([isPublished, priceCents])
   @@index([categoryId, isPublished, updatedAt])
+  @@index([linkClickCount])
 }
 
 /// Ürün seçenekleri (renk/beden vb.). priceCents null ise ürün fiyatı kullanılır.

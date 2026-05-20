@@ -560,6 +560,21 @@ export class ProductsService {
     return this.withRatings(products);
   }
 
+  async incrementLinkClick(slug: string) {
+    const trimmed = slug.trim();
+    if (!trimmed) return { ok: false };
+    const product = await this.prisma.product.findFirst({
+      where: { slug: { equals: trimmed, mode: "insensitive" }, isPublished: true },
+      select: { id: true },
+    });
+    if (!product) return { ok: false };
+    await this.prisma.product.update({
+      where: { id: product.id },
+      data: { linkClickCount: { increment: 1 } },
+    });
+    return { ok: true };
+  }
+
   async bySlug(slug: string) {
     const value = await this.cache.getOrSet(
       `products:bySlug:slug=${slug}`,
