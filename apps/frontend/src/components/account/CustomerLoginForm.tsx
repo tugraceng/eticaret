@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { AuthSplitShell, type AuthPagePanel } from "@/components/account/AuthSplitShell";
-import { GoogleIcon } from "@/components/account/GoogleIcon";
+import { GoogleAuthButton } from "@/components/account/GoogleAuthButton";
 import { mergeGuestCartIntoServerCart } from "@/lib/cart-sync";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import {
@@ -16,28 +16,35 @@ import {
 export function CustomerLoginForm({
   siteName,
   authPanel,
-  returnTo: returnToProp,
+  returnTo: safeReturn = "/hesap",
+  googleLoginEnabled = false,
+  initialOauthError,
 }: {
   siteName: string;
   authPanel?: AuthPagePanel;
-  /** Sunucudan güvenli yol (ör. `/sepet`). URL `callbackUrl` / `from` ile de verilebilir. */
   returnTo?: string;
+  googleLoginEnabled?: boolean;
+  initialOauthError?: string;
 }) {
   const router = useRouter();
-  const sp = useSearchParams();
-  const safeReturn = useMemo(() => {
-    if (returnToProp && returnToProp.startsWith("/") && !returnToProp.startsWith("//")) {
-      return returnToProp;
-    }
-    const raw = sp.get("callbackUrl") ?? sp.get("from") ?? "";
-    if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
-    return "/hesap";
-  }, [returnToProp, sp]);
-  const googleLoginEnabled = process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "1";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!initialOauthError) return;
+    setError(
+      initialOauthError === "1"
+        ? "Google ile giriş tamamlanamadı. E-postanızla kayıtlı bir hesabınız yoksa önce kayıt olun."
+        : "Google ile giriş tamamlanamadı.",
+    );
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    params.delete("oauth_error");
+    const q = params.toString();
+    router.replace(`${window.location.pathname}${q ? `?${q}` : ""}`, { scroll: false });
+  }, [initialOauthError, router]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -56,21 +63,6 @@ export function CustomerLoginForm({
       cancelled = true;
     };
   }, [router, safeReturn]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const oauthErr = sp.get("oauth_error");
-    if (!oauthErr) return;
-    setError(
-      oauthErr === "1"
-        ? "Google ile giriş tamamlanamadı. E-postanızla kayıtlı bir hesabınız yoksa önce kayıt olun."
-        : "Google ile giriş tamamlanamadı.",
-    );
-    const params = new URLSearchParams(sp.toString());
-    params.delete("oauth_error");
-    const q = params.toString();
-    router.replace(`${window.location.pathname}${q ? `?${q}` : ""}`, { scroll: false });
-  }, [sp, router]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -162,22 +154,7 @@ export function CustomerLoginForm({
     >
       {googleLoginEnabled ? (
         <>
-          <button
-            type="button"
-            disabled={busy}
-            title="Google ile giriş"
-            onClick={() => {
-              if (busy) return;
-              window.location.assign(apiUrl("/auth/oauth/google"));
-            }}
-            className="auth-btn-google"
-          >
-            <GoogleIcon />
-            Google ile devam et
-          </button>
-          <p className="text-center text-[11px] leading-relaxed text-slate-400">
-            Önce sitede aynı e-posta ile kayıt olmalısınız.
-          </p>
+          <GoogleAuthButton disabled={busy} showRegisterHint />
           <div className="auth-divider" aria-hidden>
             <span>veya e-posta</span>
           </div>

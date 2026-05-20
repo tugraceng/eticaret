@@ -567,3 +567,15 @@
   background: rgba(15, 23, 42, 0.6);
   color: #e2e8f0;
 }
+
+/**
+ * Hero object-position — @layer dışında; next/image + Tailwind object-* ile çakışmayı önler.
+ */
+.hero-image-position-host :is(img, picture img) {
+  object-position: var(--hero-object-position-mobile, center center) !important;
+}
+@media (min-width: 768px) {
+  .hero-image-position-host :is(img, picture img) {
+    object-position: var(--hero-object-position, center center) !important;
+  }
+}

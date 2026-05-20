@@ -9,7 +9,9 @@ import {
   heroImagePositionVars,
   type HeroImageDisplay,
   type HeroImageFit,
+  type HeroImagePosition,
 } from "@/components/home/homeHeroImage";
+import { useHeroObjectPosition } from "@/components/home/useHeroObjectPosition";
 import { apiAssetUrl } from "@/lib/api";
 
 /** Metin okunabilirliği */
@@ -36,10 +38,47 @@ function slideDisplay(slide: HeroBackdropSlide | undefined): HeroImageDisplay {
   };
 }
 
+function HeroPositionedImage({
+  src,
+  alt,
+  className,
+  desktop,
+  mobile,
+  hostStyle,
+  priority,
+  quality,
+}: {
+  src: string;
+  alt: string;
+  className: string;
+  desktop: HeroImagePosition;
+  mobile: HeroImagePosition | null;
+  hostStyle: CSSProperties;
+  priority?: boolean;
+  quality?: number;
+}) {
+  const objectPosition = useHeroObjectPosition(desktop, mobile);
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes={HERO_SIZES}
+      quality={quality}
+      priority={priority}
+      className={className}
+      style={{ ...hostStyle, objectPosition }}
+    />
+  );
+}
+
 function HeroImageLayer({
   src,
   alt,
   fit,
+  desktop,
+  mobile,
   positionVars,
   priority,
   quality,
@@ -47,6 +86,8 @@ function HeroImageLayer({
   src: string;
   alt: string;
   fit: HeroImageFit;
+  desktop: HeroImagePosition;
+  mobile: HeroImagePosition | null;
   positionVars: Record<string, string>;
   priority?: boolean;
   quality?: number;
@@ -60,23 +101,24 @@ function HeroImageLayer({
         style={hostStyle}
         aria-hidden
       >
-        <Image
+        <HeroPositionedImage
           src={src}
           alt=""
-          fill
-          sizes={HERO_SIZES}
-          quality={45}
+          desktop={desktop}
+          mobile={mobile}
+          hostStyle={hostStyle}
           priority={priority}
+          quality={45}
           className="scale-110 object-cover blur-2xl brightness-[0.35] saturate-[0.85]"
-          aria-hidden
         />
-        <Image
+        <HeroPositionedImage
           src={src}
           alt={alt}
-          fill
-          sizes={HERO_SIZES}
-          quality={quality ?? 78}
+          desktop={desktop}
+          mobile={mobile}
+          hostStyle={hostStyle}
           priority={priority}
+          quality={quality ?? 78}
           className="relative z-[1] object-contain"
         />
       </div>
@@ -87,13 +129,14 @@ function HeroImageLayer({
 
   return (
     <div className="hero-image-position-host absolute inset-0" style={hostStyle}>
-      <Image
+      <HeroPositionedImage
         src={src}
         alt={alt}
-        fill
-        sizes={HERO_SIZES}
-        quality={quality ?? fit === "cover" ? 82 : 78}
+        desktop={desktop}
+        mobile={mobile}
+        hostStyle={hostStyle}
         priority={priority}
+        quality={quality ?? (fit === "cover" ? 82 : 78)}
         className={objectFitClass}
       />
     </div>
@@ -119,6 +162,8 @@ function SingleHeroLayer({
       src={url}
       alt=""
       fit={imageFit}
+      desktop={imagePosition}
+      mobile={imagePositionMobile}
       positionVars={positionVars}
       priority={priority}
     />

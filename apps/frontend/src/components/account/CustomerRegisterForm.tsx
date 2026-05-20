@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { AuthSplitShell, type AuthPagePanel } from "@/components/account/AuthSplitShell";
+import { GoogleAuthButton } from "@/components/account/GoogleAuthButton";
 import { mergeGuestCartIntoServerCart } from "@/lib/cart-sync";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import {
@@ -28,17 +29,15 @@ function ageFrom(dateStr: string): number | null {
 export function CustomerRegisterForm({
   siteName,
   authPanel,
+  returnTo: safeReturn = "/hesap",
+  googleLoginEnabled = false,
 }: {
   siteName: string;
   authPanel?: AuthPagePanel;
+  returnTo?: string;
+  googleLoginEnabled?: boolean;
 }) {
   const router = useRouter();
-  const sp = useSearchParams();
-  const safeReturn = useMemo(() => {
-    const raw = sp.get("callbackUrl") ?? sp.get("from") ?? "";
-    if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
-    return "/hesap";
-  }, [sp]);
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [email, setEmail] = useState("");
@@ -147,6 +146,15 @@ export function CustomerRegisterForm({
         </p>
       }
     >
+      {googleLoginEnabled ? (
+        <>
+          <GoogleAuthButton disabled={busy} showRegisterHint />
+          <div className="auth-divider" aria-hidden>
+            <span>veya form ile kayıt</span>
+          </div>
+        </>
+      ) : null}
+
       <form
         onSubmit={(e) => {
           e.preventDefault();

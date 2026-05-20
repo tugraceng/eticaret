@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { ReactNode } from "react";
 import { apiAssetUrl } from "@/lib/api";
 
@@ -61,13 +60,10 @@ export function AuthSplitShell({
           />
           {resolvedImage ? (
             <>
-              <Image
-                src={resolvedImage}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 480px"
-                priority
+              <div
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: `url("${resolvedImage.replace(/"/g, "%22")}")` }}
+                aria-hidden
               />
               <div
                 className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/45 to-black/75"

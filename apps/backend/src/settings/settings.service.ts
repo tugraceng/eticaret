@@ -58,7 +58,11 @@ export class SettingsService {
     void _smtpPw;
     void _birthdayAuto;
     void _lowStock;
-    return safe;
+    const googleOAuthEnabled =
+      !!process.env.GOOGLE_CLIENT_ID?.trim() &&
+      !!process.env.GOOGLE_CLIENT_SECRET?.trim() &&
+      !!process.env.GOOGLE_CALLBACK_URL?.trim();
+    return { ...safe, googleOAuthEnabled };
   }
 
   async updateSettings(

@@ -61,6 +61,8 @@ export type SiteSettings = {
   authPanelGradientFrom?: string;
   authPanelGradientTo?: string;
   authPanelTextColor?: string;
+  /** Backend Google OAuth env doluysa true (build-time flag gerekmez) */
+  googleOAuthEnabled?: boolean;
   /** xl+ mağaza / ürün: sol sütun kampanya */
   shopRailLeftEnabled?: boolean;
   shopRailLeftTitle?: string;
@@ -156,6 +158,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   authPanelGradientFrom: "#0f172a",
   authPanelGradientTo: "#0369a1",
   authPanelTextColor: "#ffffff",
+  googleOAuthEnabled: false,
   shopRailLeftEnabled: true,
   shopRailLeftTitle: "İlk siparişe özel",
   shopRailLeftBody:
