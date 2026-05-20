@@ -50,7 +50,7 @@ export default async function ServicesPage() {
 
       <div className="mt-14 space-y-20 sm:space-y-24">
         {services.length === 0 && (
-          <div className="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-sm text-slate-500 backdrop-blur">
+          <div className="si-empty-state">
             Henüz hizmet yok — yönetim panelinden CMS → Hizmet ile ekleyin.
           </div>
         )}
@@ -60,11 +60,11 @@ export default async function ServicesPage() {
             <section
               key={s.id}
               id={s.slug}
-              className="fade-up scroll-mt-28 border-b border-slate-200/80 pb-20 last:border-0 last:pb-0 sm:scroll-mt-32"
+              className="si-cms-section fade-up sm:scroll-mt-32"
               style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}
             >
               {cover ? (
-                <div className="relative aspect-[2/1] max-h-[min(52vw,380px)] w-full overflow-hidden rounded-3xl bg-slate-100 shadow-sm ring-1 ring-slate-200/60 sm:aspect-[21/9]">
+                <div className="si-cms-media relative aspect-[2/1] max-h-[min(52vw,380px)] w-full sm:aspect-[21/9]">
                   <Image
                     src={cover}
                     alt=""
@@ -86,17 +86,15 @@ export default async function ServicesPage() {
                   {s.title.slice(0, 1).toUpperCase()}
                 </div>
               )}
-              <h2 className="mt-8 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{s.title}</h2>
-              {s.summary ? (
-                <p className="mt-3 text-lg leading-relaxed text-slate-600">{s.summary}</p>
-              ) : null}
-              <article className="mt-8 whitespace-pre-wrap text-base leading-[1.75] text-slate-700">{s.description}</article>
+              <h2 className="si-cms-block-title mt-8">{s.title}</h2>
+              {s.summary ? <p className="si-cms-lead mt-3">{s.summary}</p> : null}
+              <article className="si-cms-prose mt-8">{s.description}</article>
             </section>
           );
         })}
       </div>
 
-      <div className="mt-16 flex flex-wrap gap-3 border-t border-slate-200/80 pt-10">
+      <div className="si-cms-divider">
         <Link href="/contact" className="btn-primary">
           Teklif al <span aria-hidden>→</span>
         </Link>

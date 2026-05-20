@@ -70,9 +70,7 @@ export function ShopCatalogGrid({
       {isList ? (
         <ul className="mt-2 flex flex-col gap-4">
           {items.length === 0 ? (
-            <li className="rounded-ds-xl border border-dashed border-[var(--ds-border)] bg-[var(--ds-surface-muted)] p-10 text-center text-small text-[var(--ds-text-muted)]">
-              {emptyCopy}
-            </li>
+            <li className="si-empty-state">{emptyCopy}</li>
           ) : (
             items.map((p) => <ProductListRow key={p.id} product={p} />)
           )}
@@ -80,7 +78,7 @@ export function ShopCatalogGrid({
       ) : (
         <ul className="mt-2 grid auto-rows-fr grid-cols-2 gap-4 md:gap-5 lg:grid-cols-3 xl:grid-cols-4">
           {items.length === 0 ? (
-            <li className="col-span-full rounded-ds-xl border border-dashed border-[var(--ds-border)] bg-[var(--ds-surface-muted)] p-10 text-center text-small text-[var(--ds-text-muted)]">
+            <li className="si-empty-state col-span-full">
               {emptyCopy}
             </li>
           ) : (

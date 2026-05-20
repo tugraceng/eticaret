@@ -26,12 +26,12 @@ export default async function BlogPostPage({
   }
   return (
     <PageContainer as="article" width="narrow" className="py-12 sm:py-16">
-      <Link href="/blog" className="link-underline text-sm text-slate-600 hover:text-slate-900">
+      <Link href="/blog" className="link-underline text-sm">
         ← Bloga dön
       </Link>
 
       {post.publishedAt && (
-        <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+        <p className="si-kicker mt-6 !text-[11px] !tracking-[0.22em]">
           {new Date(post.publishedAt).toLocaleDateString("tr-TR", {
             day: "2-digit",
             month: "long",
@@ -39,13 +39,11 @@ export default async function BlogPostPage({
           })}
         </p>
       )}
-      <h1 className="mt-2 text-3xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-4xl">
-        {post.title}
-      </h1>
-      {post.excerpt ? <p className="mt-4 text-base text-slate-600">{post.excerpt}</p> : null}
+      <h1 className="si-heading mt-2">{post.title}</h1>
+      {post.excerpt ? <p className="si-body mt-4 text-base">{post.excerpt}</p> : null}
 
       {post.coverImageUrl ? (
-        <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-2xl bg-slate-100">
+        <div className="si-cms-media relative mt-8 aspect-[16/9]">
           <Image
             src={post.coverImageUrl}
             alt=""
@@ -58,7 +56,7 @@ export default async function BlogPostPage({
         </div>
       ) : null}
 
-      <div className="prose prose-slate mt-10 max-w-none whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+      <div className="si-legal-prose prose prose-slate mt-10 max-w-none whitespace-pre-wrap text-sm">
         {post.body}
       </div>
     </PageContainer>

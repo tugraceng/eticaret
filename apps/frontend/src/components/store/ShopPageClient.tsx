@@ -41,19 +41,11 @@ const ViewToggle = memo(function ViewToggle({ view }: { view: "grid" | "list" })
   );
 
   return (
-    <div
-      className="flex h-11 shrink-0 rounded-ds-lg border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] p-1"
-      role="group"
-      aria-label="Görünüm"
-    >
+    <div className="si-view-toggle flex h-11 shrink-0 p-1" role="group" aria-label="Görünüm">
       <Link
         href={buildHref("grid")}
         scroll={false}
-        className={`grid flex-1 place-items-center rounded-lg px-3 text-micro font-semibold transition-colors ${
-          view === "grid"
-            ? "bg-[var(--ds-surface-inverse)] text-[var(--ds-surface)]"
-            : "text-[var(--ds-text-muted)] hover:text-[var(--ds-text)]"
-        }`}
+        className={view === "grid" ? "si-view-toggle-active" : "si-view-toggle-item"}
         aria-pressed={view === "grid"}
         prefetch
       >
@@ -62,11 +54,7 @@ const ViewToggle = memo(function ViewToggle({ view }: { view: "grid" | "list" })
       <Link
         href={buildHref("list")}
         scroll={false}
-        className={`grid flex-1 place-items-center rounded-lg px-3 text-micro font-semibold transition-colors ${
-          view === "list"
-            ? "bg-[var(--ds-surface-inverse)] text-[var(--ds-surface)]"
-            : "text-[var(--ds-text-muted)] hover:text-[var(--ds-text)]"
-        }`}
+        className={view === "list" ? "si-view-toggle-active" : "si-view-toggle-item"}
         aria-pressed={view === "list"}
         prefetch
       >
@@ -180,7 +168,7 @@ export function ShopPageClient({
           <button
             type="button"
             onClick={() => setFiltersOpen(true)}
-            className="flex min-h-11 flex-1 basis-[min(100%,11rem)] items-center justify-center gap-2 rounded-ds-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-2 text-sm font-semibold text-[var(--ds-text)] shadow-card"
+            className="si-shop-filters-trigger min-h-11 flex-1 basis-[min(100%,11rem)]"
             aria-expanded={filtersOpen}
             aria-haspopup="dialog"
           >
@@ -211,19 +199,19 @@ export function ShopPageClient({
           role={filtersOpen ? "dialog" : undefined}
           aria-labelledby="shop-filters-sheet-title"
         >
-          <div className="flex shrink-0 flex-col items-stretch border-b border-[var(--ds-border)] lg:hidden">
+          <div className="flex shrink-0 flex-col items-stretch border-b border-white/10 lg:hidden">
             <div className="flex justify-center pt-2 pb-1" aria-hidden>
-              <span className="h-1 w-10 rounded-full bg-[var(--ds-border)]" />
+              <span className="h-1 w-10 rounded-full bg-white/15" />
             </div>
             <div className="flex items-center justify-between px-4 pb-3 pt-1">
-              <p id="shop-filters-sheet-title" className="text-base font-semibold text-[var(--ds-text)]">
+              <p id="shop-filters-sheet-title" className="text-base font-semibold text-slate-100">
                 Filtreler
               </p>
               <button
                 ref={filtersSheetCloseRef}
                 type="button"
                 onClick={() => setFiltersOpen(false)}
-                className="rounded-lg px-3 py-1.5 text-sm font-semibold text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-muted)] hover:text-[var(--ds-text)]"
+                className="rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-400 hover:bg-white/6 hover:text-slate-100"
               >
                 Kapat
               </button>
@@ -238,7 +226,7 @@ export function ShopPageClient({
               className="space-y-3 p-4 pb-6 max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom))]"
               onSubmit={() => setFiltersOpen(false)}
             >
-              <p className="hidden text-h3 text-[var(--ds-text)] lg:block">Filtreler</p>
+              <p className="hidden text-h3 lg:block">Filtreler</p>
             <select
               key={categoryId ?? "all"}
               name="categoryId"
@@ -324,44 +312,20 @@ export function ShopPageClient({
               placeholder="Max fiyat"
               className="input-soft min-h-11 w-full !rounded-ds-lg"
             />
-            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-ds-lg border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-3 py-2 text-small text-[var(--ds-text)]">
-              <input
-                type="checkbox"
-                name="inStock"
-                value="1"
-                defaultChecked={inStockOnly}
-                className="h-4 w-4 rounded border-[var(--ds-border)]"
-              />
+            <label className="si-shop-filter-chip">
+              <input type="checkbox" name="inStock" value="1" defaultChecked={inStockOnly} />
               Yalnızca stokta olanlar
             </label>
-            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-ds-lg border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-3 py-2 text-small text-[var(--ds-text)]">
-              <input
-                type="checkbox"
-                name="onSale"
-                value="1"
-                defaultChecked={onSaleOnly}
-                className="h-4 w-4 rounded border-[var(--ds-border)]"
-              />
+            <label className="si-shop-filter-chip">
+              <input type="checkbox" name="onSale" value="1" defaultChecked={onSaleOnly} />
               İndirimli ürünler
             </label>
-            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-ds-lg border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-3 py-2 text-small text-[var(--ds-text)]">
-              <input
-                type="checkbox"
-                name="featured"
-                value="1"
-                defaultChecked={featuredOnly}
-                className="h-4 w-4 rounded border-[var(--ds-border)]"
-              />
+            <label className="si-shop-filter-chip">
+              <input type="checkbox" name="featured" value="1" defaultChecked={featuredOnly} />
               Öne çıkanlar
             </label>
-            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-ds-lg border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-3 py-2 text-small text-[var(--ds-text)]">
-              <input
-                type="checkbox"
-                name="newProduct"
-                value="1"
-                defaultChecked={newOnly}
-                className="h-4 w-4 rounded border-[var(--ds-border)]"
-              />
+            <label className="si-shop-filter-chip">
+              <input type="checkbox" name="newProduct" value="1" defaultChecked={newOnly} />
               Yeni ürünler
             </label>
             {view === "list" ? <input type="hidden" name="view" value="list" /> : null}

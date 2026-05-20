@@ -18,7 +18,7 @@ export const ProductListRow = memo(function ProductListRow({ product }: Props) {
   const alt = product.images?.[0]?.alt ?? product.name;
 
   return (
-    <li className="flex gap-4 rounded-ds-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4 shadow-card">
+    <li className="si-shop-list-row flex gap-4 rounded-ds-xl p-4">
       <Link
         prefetch={false}
         href={`/shop/${product.slug}`}

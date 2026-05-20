@@ -99,16 +99,18 @@ function ProductCardInner({ product, showCategory = false }: ProductCardProps) {
     });
   }
 
+  const productHref = `/shop/${product.slug}`;
+
   return (
-    <div className="si-product-card group fade-up relative flex h-full w-full flex-col">
+    <article className="si-product-card group fade-up relative flex h-full w-full flex-col">
       <Link
         prefetch={false}
-        href={`/shop/${product.slug}`}
-        className="absolute inset-0 z-[1] rounded-[inherit] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#141d2e]"
+        href={productHref}
+        className="absolute inset-0 z-[1] rounded-[inherit] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1e2736]"
         aria-label={`${product.name} — ürüne git`}
       />
 
-      <div className="relative z-[2] flex min-h-0 flex-1 flex-col">
+      <div className="relative z-[2] flex min-h-0 flex-1 flex-col pointer-events-none">
         <div className="si-product-card-media shrink-0">
           {second ? (
             <div className="absolute inset-0 z-[1]" role="img" aria-hidden>
@@ -173,7 +175,9 @@ function ProductCardInner({ product, showCategory = false }: ProductCardProps) {
         </div>
 
         <div className="si-product-card-body flex min-h-0 flex-1 flex-col px-3 pb-3 pt-2.5 sm:px-3.5 sm:pb-3.5">
-          <p className="si-product-name line-clamp-2 min-h-[2.5rem]">{product.name}</p>
+          <p className="si-product-name line-clamp-2 min-h-[2.5rem]">
+            <span className="pointer-events-none">{product.name}</span>
+          </p>
 
           <div className="mt-2 flex h-5 items-center gap-1.5">
             {hasReviews ? (
@@ -213,7 +217,7 @@ function ProductCardInner({ product, showCategory = false }: ProductCardProps) {
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 

@@ -492,37 +492,271 @@
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
 }
 
-/* Mağaza / iç sayfa — açık kartları koyu temaya uyarla */
-.site-theme-stoneiron .section-shell,
+/* Vitrin içeriği (header/footer hariç) — açık Tailwind sınıflarını koyu temaya çeker */
+.site-theme-stoneiron > .flex-1 .section-shell,
+.site-theme-stoneiron > .flex-1 .rounded-2xl.border-slate-200,
+.site-theme-stoneiron > .flex-1 .rounded-3xl.border-slate-200,
 .site-theme-stoneiron main .rounded-2xl.border-slate-200,
 .site-theme-stoneiron main .rounded-3xl.border-slate-200 {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+.site-theme-stoneiron > .flex-1 .bg-white,
+.site-theme-stoneiron > .flex-1 .bg-white\/95,
+.site-theme-stoneiron > .flex-1 .bg-white\/80,
 .site-theme-stoneiron main .bg-white {
   background-color: var(--si-bg-card);
   color: var(--si-text);
 }
 
+.site-theme-stoneiron > .flex-1 .bg-white\/70,
+.site-theme-stoneiron > .flex-1 .bg-white\/60 {
+  background-color: rgba(30, 39, 54, 0.75);
+  color: var(--si-text-muted);
+}
+
+.site-theme-stoneiron > .flex-1 .text-slate-900,
 .site-theme-stoneiron main .text-slate-900 {
   color: #f1f5f9;
 }
 
+.site-theme-stoneiron > .flex-1 .text-slate-800,
+.site-theme-stoneiron > .flex-1 .text-slate-700,
+.site-theme-stoneiron > .flex-1 .text-slate-600,
+.site-theme-stoneiron > .flex-1 .text-slate-500,
+.site-theme-stoneiron > .flex-1 .text-slate-400,
 .site-theme-stoneiron main .text-slate-800,
 .site-theme-stoneiron main .text-slate-700,
 .site-theme-stoneiron main .text-slate-600 {
   color: #94a3b8;
 }
 
+.site-theme-stoneiron > .flex-1 .text-sky-800,
+.site-theme-stoneiron > .flex-1 .group-hover\:text-sky-800 {
+  color: #7dd3fc;
+}
+
+.site-theme-stoneiron > .flex-1 .border-slate-200,
+.site-theme-stoneiron > .flex-1 .border-slate-200\/90,
+.site-theme-stoneiron > .flex-1 .border-slate-200\/80,
+.site-theme-stoneiron > .flex-1 .border-slate-300,
+.site-theme-stoneiron > .flex-1 .border-slate-100,
 .site-theme-stoneiron main .border-slate-200,
 .site-theme-stoneiron main .border-slate-200\/90,
 .site-theme-stoneiron main .border-slate-200\/80 {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
+.site-theme-stoneiron > .flex-1 .bg-slate-50,
+.site-theme-stoneiron > .flex-1 .bg-slate-50\/50,
+.site-theme-stoneiron > .flex-1 .bg-slate-50\/80,
 .site-theme-stoneiron main .bg-slate-50,
 .site-theme-stoneiron main .bg-slate-50\/50 {
   background-color: rgba(255, 255, 255, 0.04);
+}
+
+.site-theme-stoneiron > .flex-1 .bg-slate-100,
+.site-theme-stoneiron > .flex-1 .ring-slate-200\/60,
+.site-theme-stoneiron > .flex-1 .ring-slate-200\/90,
+.site-theme-stoneiron > .flex-1 .ring-slate-900\/\[0\.03\] {
+  --tw-ring-color: rgba(255, 255, 255, 0.1);
+}
+
+.site-theme-stoneiron > .flex-1 .bg-slate-100 {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.site-theme-stoneiron > .flex-1 .link-underline {
+  color: #94a3b8;
+}
+.site-theme-stoneiron > .flex-1 .link-underline:hover {
+  color: #e2e8f0;
+}
+.site-theme-stoneiron > .flex-1 .link-underline::after {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+.site-theme-stoneiron > .flex-1 select option {
+  background-color: #1e2736;
+  color: #e8edf5;
+}
+
+/* CMS — blog, hizmetler, projeler */
+.site-theme-stoneiron .si-empty-state {
+  border-radius: 1rem;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 2.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--si-text-muted);
+}
+
+.site-theme-stoneiron .si-cms-section {
+  scroll-margin-top: 7rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 5rem;
+}
+.site-theme-stoneiron .si-cms-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.site-theme-stoneiron .si-cms-media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+  outline: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.site-theme-stoneiron .si-cms-block-title {
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
+  font-size: 1.875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+@media (min-width: 640px) {
+  .site-theme-stoneiron .si-cms-block-title {
+    font-size: 2.25rem;
+  }
+}
+
+.site-theme-stoneiron .si-cms-lead {
+  font-size: 1.125rem;
+  line-height: 1.65;
+  color: #94a3b8;
+}
+
+.site-theme-stoneiron .si-cms-prose {
+  white-space: pre-wrap;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #cbd5e1;
+}
+
+.site-theme-stoneiron .si-cms-divider {
+  margin-top: 4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 2.5rem;
+}
+
+.site-theme-stoneiron .si-blog-card-title {
+  margin-top: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #f1f5f9;
+  transition: color 0.2s ease;
+}
+.site-theme-stoneiron .card-soft:hover .si-blog-card-title {
+  color: #bae6fd;
+}
+
+.site-theme-stoneiron .si-blog-card-cta {
+  margin-top: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #7dd3fc;
+}
+
+/* Mağaza — filtre paneli */
+.site-theme-stoneiron .si-shop-filters {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--si-bg-card);
+  color: var(--si-text);
+  box-shadow: none;
+}
+
+.site-theme-stoneiron .si-shop-filters-trigger {
+  display: flex;
+  min-height: 2.75rem;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--si-bg-card);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--si-text);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.site-theme-stoneiron .si-shop-filters-trigger:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: var(--si-bg-elevated);
+}
+
+.site-theme-stoneiron .si-shop-filter-chip {
+  display: flex;
+  min-height: 2.75rem;
+  cursor: pointer;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--si-text);
+}
+.site-theme-stoneiron .si-shop-filter-chip input {
+  height: 1rem;
+  width: 1rem;
+  border-color: rgba(255, 255, 255, 0.2);
+  accent-color: #38bdf8;
+}
+
+.site-theme-stoneiron .si-shop-filters .text-h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.site-theme-stoneiron .si-shop-list-row {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--si-bg-card);
+  box-shadow: none;
+}
+.site-theme-stoneiron .si-shop-list-row .text-h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+.site-theme-stoneiron .si-shop-list-row .text-lg {
+  color: var(--si-accent);
+}
+
+/* Promo — koyu panel */
+.site-theme-stoneiron .si-promo-panel {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--si-bg-card);
+  color: var(--si-text);
+}
+.site-theme-stoneiron .si-promo-panel .text-slate-900 {
+  color: #f1f5f9;
+}
+.site-theme-stoneiron .si-promo-panel .text-slate-500 {
+  color: #94a3b8;
+}
+.site-theme-stoneiron .si-promo-panel .border-slate-100,
+.site-theme-stoneiron .si-promo-panel .bg-slate-50\/80 {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+.site-theme-stoneiron .si-promo-panel .hover\:bg-slate-100:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
 }
 
 .site-theme-stoneiron .btn-ghost {
@@ -684,6 +918,72 @@
     font-size: 1.75rem;
     max-width: 16ch;
   }
+}
+
+/* Mağaza — arama ve görünüm */
+.site-theme-stoneiron .si-shop-search {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 14, 20, 0.85);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.site-theme-stoneiron .si-shop-search:focus-within {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(14, 18, 26, 0.95);
+}
+
+.site-theme-stoneiron .si-shop-search-btn {
+  display: inline-flex;
+  height: 2.875rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #e8edf5;
+  padding: 0 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0c0e12;
+  transition: background-color 0.2s ease;
+}
+.site-theme-stoneiron .si-shop-search-btn:hover {
+  background: #fff;
+}
+
+.site-theme-stoneiron .si-shop-suggest {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #1a222e;
+  box-shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.65);
+}
+
+.site-theme-stoneiron .si-view-toggle {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.site-theme-stoneiron .si-view-toggle-item,
+.site-theme-stoneiron .si-view-toggle-active {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.site-theme-stoneiron .si-view-toggle-item {
+  color: #94a3b8;
+}
+.site-theme-stoneiron .si-view-toggle-item:hover {
+  color: #e2e8f0;
+}
+
+.site-theme-stoneiron .si-view-toggle-active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
 }
 
 /* Footer & bülten */

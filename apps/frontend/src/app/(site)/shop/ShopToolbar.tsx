@@ -97,25 +97,25 @@ export function ShopToolbar() {
           Ürün ara
         </label>
         <div className="relative">
-          <div className="flex min-h-[2.875rem] w-full overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/[0.04] transition-[box-shadow,border-color] focus-within:border-slate-300 focus-within:shadow-md focus-within:ring-slate-900/[0.06]">
-          <span
-            className="flex w-[3.25rem] shrink-0 items-center justify-center border-r border-slate-100 bg-slate-50 text-slate-400"
-            aria-hidden
-          >
-            <SearchIcon className="h-5 w-5" />
-          </span>
-          <input
-            id="shop-search-q"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Ürün veya kategori ara…"
-            className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2.5 text-[15px] leading-snug text-slate-900 placeholder:text-slate-400 outline-none focus:ring-0 sm:text-sm"
-            autoComplete="off"
-            enterKeyHint="search"
-          />
+          <div className="si-shop-search flex min-h-[2.875rem] w-full overflow-hidden rounded-xl">
+            <span
+              className="flex w-11 shrink-0 items-center justify-center border-r border-white/10 text-slate-500"
+              aria-hidden
+            >
+              <SearchIcon className="h-5 w-5" />
+            </span>
+            <input
+              id="shop-search-q"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Ürün veya kategori ara…"
+              className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2.5 text-sm leading-snug text-slate-100 placeholder:text-slate-500 outline-none focus:ring-0"
+              autoComplete="off"
+              enterKeyHint="search"
+            />
           </div>
           {showSuggest && (
-            <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+            <div className="si-shop-suggest absolute z-30 mt-1 w-full overflow-hidden rounded-xl">
               {busy ? <p className="px-3 py-2 text-xs text-slate-500">Aranıyor…</p> : null}
               {!busy && suggest.length === 0 ? (
                 <p className="px-3 py-2 text-xs text-slate-500">Öneri bulunamadı. Tüm sonuçlar için Ara&apos;ya basın.</p>
@@ -126,7 +126,7 @@ export function ShopToolbar() {
                     prefetch={false}
                     key={s.id}
                     href={`/shop/${s.slug}`}
-                    className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    className="block px-3 py-2 text-sm text-slate-300 hover:bg-white/6 hover:text-white"
                   >
                     {s.name}
                   </Link>
@@ -135,10 +135,7 @@ export function ShopToolbar() {
           )}
         </div>
       </div>
-      <button
-        type="submit"
-        className="inline-flex h-[2.875rem] shrink-0 items-center justify-center rounded-2xl bg-slate-900 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-950 active:scale-[0.98] sm:w-auto sm:rounded-full sm:px-8"
-      >
+      <button type="submit" className="si-shop-search-btn">
         Ara
       </button>
     </form>

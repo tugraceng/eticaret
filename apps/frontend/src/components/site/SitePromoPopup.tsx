@@ -148,7 +148,7 @@ export function SitePromoPopup({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={body?.trim() ? descId : undefined}
-        className={`surface-soft relative flex max-h-[min(90vh,720px)] w-full flex-col overflow-hidden rounded-2xl shadow-2xl transition-all duration-200 ease-out ${widthClass} ${
+        className={`si-promo-panel surface-soft relative flex max-h-[min(90vh,720px)] w-full flex-col overflow-hidden rounded-2xl shadow-2xl transition-all duration-200 ease-out ${widthClass} ${
           entered ? "translate-y-0 scale-100 opacity-100" : "translate-y-6 scale-[0.98] opacity-0"
         }`}
       >

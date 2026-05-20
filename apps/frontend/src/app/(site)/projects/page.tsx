@@ -38,9 +38,7 @@ export default async function ProjectsPage() {
 
       <div className="mt-14 space-y-20 sm:space-y-24">
         {list.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-sm text-slate-500">
-            Portföy boş — CMS üzerinden proje ekleyin.
-          </div>
+          <div className="si-empty-state">Portföy boş — CMS üzerinden proje ekleyin.</div>
         )}
         {list.map((p, i) => {
           const urls = galleryUrls(p.gallery).map((u) => apiAssetUrl(u) ?? u);
@@ -50,11 +48,11 @@ export default async function ProjectsPage() {
             <section
               key={p.id}
               id={p.slug}
-              className="fade-up scroll-mt-28 border-b border-slate-200/80 pb-20 last:border-0 last:pb-0 sm:scroll-mt-32"
+              className="si-cms-section fade-up sm:scroll-mt-32"
               style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}
             >
               {cover ? (
-                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-slate-100 shadow-sm ring-1 ring-slate-200/60">
+                <div className="si-cms-media relative aspect-[16/9] w-full">
                   <Image
                     src={cover}
                     alt=""
@@ -66,27 +64,24 @@ export default async function ProjectsPage() {
                   />
                 </div>
               ) : (
-                <div className="grid aspect-[16/9] w-full place-items-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-400">
+                <div className="si-empty-state grid aspect-[16/9] w-full place-items-center !p-6 text-sm">
                   Görsel yok
                 </div>
               )}
               <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-                <h2 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{p.title}</h2>
+                <h2 className="si-cms-block-title">{p.title}</h2>
                 {p.completedAt ? (
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                  <p className="si-kicker !text-[11px] !tracking-[0.22em]">
                     {new Date(p.completedAt).toLocaleDateString("tr-TR", { month: "long", year: "numeric" })}
                   </p>
                 ) : null}
               </div>
-              {p.summary ? <p className="mt-3 text-lg leading-relaxed text-slate-600">{p.summary}</p> : null}
-              <article className="mt-8 whitespace-pre-wrap text-base leading-[1.75] text-slate-700">{p.description}</article>
+              {p.summary ? <p className="si-cms-lead mt-3">{p.summary}</p> : null}
+              <article className="si-cms-prose mt-8">{p.description}</article>
               {rest.length > 0 ? (
                 <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
                   {rest.map((url) => (
-                    <div
-                      key={url}
-                      className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-slate-200/60"
-                    >
+                    <div key={url} className="si-cms-media relative aspect-square overflow-hidden rounded-2xl">
                       <Image src={url} alt="" fill className="object-cover" sizes="200px" quality={65} loading="lazy" />
                     </div>
                   ))}
