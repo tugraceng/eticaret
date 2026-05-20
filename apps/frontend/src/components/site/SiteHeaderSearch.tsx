@@ -118,7 +118,7 @@ export function SiteHeaderSearch({
             isDesktop
               ? heroOverlay
                 ? "flex min-h-[2.5rem] items-center gap-2 rounded-full border border-white/30 bg-black/20 px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md"
-                : "flex min-h-[2.75rem] items-center gap-2.5 rounded-xl border border-slate-200/80 bg-slate-50 px-4 py-2 shadow-sm ring-1 ring-slate-900/[0.03] transition-shadow focus-within:border-slate-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-sky-500/15"
+                : "si-header-search flex min-h-[2.75rem] items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 transition-shadow focus-within:border-sky-500/40 focus-within:bg-white/[0.08] focus-within:ring-2 focus-within:ring-sky-500/20"
               : isSheet
                 ? "flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"
                 : "flex items-center gap-2"
@@ -127,7 +127,7 @@ export function SiteHeaderSearch({
           {isDesktop || isSheet ? (
             <svg
               viewBox="0 0 24 24"
-              className={`h-4 w-4 shrink-0 ${heroOverlay ? "text-white/70" : "text-slate-400"}`}
+              className={`h-4 w-4 shrink-0 ${heroOverlay ? "text-white/70" : "text-slate-500"}`}
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -159,13 +159,13 @@ export function SiteHeaderSearch({
         </div>
         {showPanel && (
           <div
-            className={`absolute z-50 mt-1 max-h-[min(70vh,320px)] w-full overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl ${
+            className={`absolute z-50 mt-1 max-h-[min(70vh,320px)] w-full overflow-auto rounded-xl border border-white/10 bg-[#121a28] shadow-xl ${
               isDesktop ? "left-0 right-0" : ""
             }`}
           >
-            {busy ? <p className="px-3 py-2 text-xs text-slate-500">Aranıyor…</p> : null}
+            {busy ? <p className="px-3 py-2 text-xs text-slate-400">Aranıyor…</p> : null}
             {!busy && suggest.length === 0 ? (
-              <p className="px-3 py-2 text-xs text-slate-500">Eşleşen ürün yok. Tüm sonuçlar için Ara&apos;ya basın.</p>
+              <p className="px-3 py-2 text-xs text-slate-400">Eşleşen ürün yok. Tüm sonuçlar için Ara&apos;ya basın.</p>
             ) : null}
             {!busy &&
               suggest.map((s) => (
@@ -173,7 +173,7 @@ export function SiteHeaderSearch({
                   prefetch={false}
                   key={s.id}
                   href={`/shop/${s.slug}`}
-                  className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  className="block px-3 py-2 text-sm text-slate-200 hover:bg-white/8"
                   onClick={() => {
                     setOpen(false);
                     onNavigate?.();
@@ -191,7 +191,7 @@ export function SiteHeaderSearch({
           isDesktop
             ? heroOverlay
               ? "grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/50 bg-white text-neutral-900 shadow-md transition hover:bg-neutral-50"
-              : "grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-900 text-white shadow-md transition hover:bg-slate-800"
+              : "grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sky-600 text-white shadow-md transition hover:bg-sky-500"
             : isSheet
               ? "w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-950"
               : "shrink-0 self-center text-xs font-semibold text-slate-700"

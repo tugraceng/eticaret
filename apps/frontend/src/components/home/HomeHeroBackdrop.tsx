@@ -11,9 +11,19 @@ import {
 } from "@/components/home/homeHeroImage";
 import { useHeroObjectPosition } from "@/components/home/useHeroObjectPosition";
 import { apiAssetUrl } from "@/lib/api";
-/** Metin okunabilirliği */
-const HERO_OVERLAY =
-  "linear-gradient(105deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 38%, rgba(0,0,0,0.2) 100%)";
+function heroOverlayGradient(strength: number): string {
+  const t = Math.min(100, Math.max(0, strength)) / 100;
+  const a = (0.55 + t * 0.4).toFixed(3);
+  const b = (0.28 + t * 0.35).toFixed(3);
+  const c = (0.12 + t * 0.2).toFixed(3);
+  return `linear-gradient(105deg, rgba(0,0,0,${a}) 0%, rgba(0,0,0,${b}) 42%, rgba(7,11,18,${c}) 68%, transparent 100%)`;
+}
+
+function heroOverlayMobile(strength: number): string {
+  const t = Math.min(100, Math.max(0, strength)) / 100;
+  const bottom = (0.65 + t * 0.3).toFixed(3);
+  return `linear-gradient(to top, rgba(7,11,18,${bottom}) 0%, rgba(7,11,18,0.25) 45%, transparent 72%)`;
+}
 
 export type HeroBackdropSlide = {
   image: string;
@@ -30,6 +40,8 @@ function slideDisplay(slide: HeroBackdropSlide | undefined): HeroImageDisplay {
     imageFit: slide?.imageFit ?? DEFAULT_HERO_IMAGE_DISPLAY.imageFit,
     imagePosition: slide?.imagePosition ?? DEFAULT_HERO_IMAGE_DISPLAY.imagePosition,
     imagePositionMobile: slide?.imagePositionMobile ?? DEFAULT_HERO_IMAGE_DISPLAY.imagePositionMobile,
+    overlayStrength: slide?.overlayStrength ?? DEFAULT_HERO_IMAGE_DISPLAY.overlayStrength,
+    backgroundBlurScale: slide?.backgroundBlurScale ?? DEFAULT_HERO_IMAGE_DISPLAY.backgroundBlurScale,
   };
 }
 
@@ -43,13 +55,16 @@ function HeroContainBlurLayer({
   src,
   desktop,
   mobile,
+  blurScale = 110,
 }: {
   src: string;
   desktop: HeroImagePosition;
   mobile: HeroImagePosition | null;
+  blurScale?: number;
 }) {
   const backgroundPosition = useHeroObjectPosition(desktop, mobile);
   const bg = cssBackgroundUrl(src);
+  const scale = blurScale / 100;
   const base: CSSProperties = {
     backgroundImage: bg,
     backgroundRepeat: "no-repeat",
@@ -59,8 +74,8 @@ function HeroContainBlurLayer({
   return (
     <div className="absolute inset-0">
       <div
-        className="absolute inset-0 scale-110 blur-2xl brightness-[0.35] saturate-[0.85]"
-        style={{ ...base, backgroundSize: "cover" }}
+        className="absolute inset-0 blur-2xl brightness-[0.35] saturate-[0.85]"
+        style={{ ...base, backgroundSize: "cover", transform: `scale(${scale})` }}
         aria-hidden
       />
       <div
@@ -110,6 +125,7 @@ function HeroImageLayer({
   fit,
   desktop,
   mobile,
+  blurScale,
   priority,
 }: {
   src: string;
@@ -117,10 +133,18 @@ function HeroImageLayer({
   fit: HeroImageFit;
   desktop: HeroImagePosition;
   mobile: HeroImagePosition | null;
+  blurScale?: number;
   priority?: boolean;
 }) {
   if (fit === "contain_blur") {
-    return <HeroContainBlurLayer src={src} desktop={desktop} mobile={mobile} />;
+    return (
+      <HeroContainBlurLayer
+        src={src}
+        desktop={desktop}
+        mobile={mobile}
+        blurScale={blurScale}
+      />
+    );
   }
 
   return (
@@ -146,7 +170,7 @@ function SingleHeroLayer({
 }) {
   const url = imageUrl(slide, fallback);
   if (!url) return null;
-  const { imageFit, imagePosition, imagePositionMobile } = slideDisplay(slide);
+  const { imageFit, imagePosition, imagePositionMobile, backgroundBlurScale } = slideDisplay(slide);
 
   return (
     <HeroImageLayer
@@ -155,8 +179,32 @@ function SingleHeroLayer({
       fit={imageFit}
       desktop={imagePosition}
       mobile={imagePositionMobile}
+      blurScale={backgroundBlurScale}
       priority={priority}
     />
+  );
+}
+
+function HeroOverlays({ strength }: { strength: number }) {
+  return (
+    <>
+      <div
+        className="absolute inset-0 z-[1] hidden lg:block"
+        style={{ backgroundImage: heroOverlayGradient(strength) }}
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 z-[1] lg:hidden"
+        style={{
+          backgroundImage: `${heroOverlayMobile(strength)}, ${heroOverlayGradient(strength)}`,
+        }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-r from-[#121212] via-[#121212]/80 to-transparent lg:max-w-[42%]"
+        aria-hidden
+      />
+    </>
   );
 }
 
@@ -204,22 +252,24 @@ export function HomeHeroBackdrop({
   const slideB = slides[slotB] ?? fallback;
   const urlA = imageUrl(slideA, fallback);
   const urlB = imageUrl(slideB, fallback);
+  const activeSlide = slides[safeIndex] ?? fallback;
+  const overlayStrength = slideDisplay(activeSlide).overlayStrength ?? 72;
 
   if (n <= 1) {
     return (
-      <div className="pointer-events-none absolute inset-0 z-0 bg-neutral-950" aria-hidden>
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[#121212]" aria-hidden>
         {urlA ? (
           <div className="absolute inset-0">
             <SingleHeroLayer slide={slideA} fallback={fallback} priority />
           </div>
         ) : null}
-        <div className="absolute inset-0 z-[1]" style={{ backgroundImage: HERO_OVERLAY }} />
+        <HeroOverlays strength={overlayStrength} />
       </div>
     );
   }
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-0 bg-neutral-950" aria-hidden>
+    <div className="pointer-events-none absolute inset-0 z-0 bg-[#121212]" aria-hidden>
       <div className="absolute inset-0">
         {urlA ? (
           <div
@@ -254,7 +304,7 @@ export function HomeHeroBackdrop({
           </div>
         ) : null}
       </div>
-      <div className="absolute inset-0 z-[1]" style={{ backgroundImage: HERO_OVERLAY }} />
+      <HeroOverlays strength={overlayStrength} />
     </div>
   );
 }

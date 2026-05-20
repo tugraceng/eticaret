@@ -20,12 +20,12 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const categoryNav = categoryRows ? buildHeaderCategoryNav(categoryRows) : [];
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-slate-900">
+    <div className="site-theme-stoneiron flex min-h-screen flex-col overflow-x-hidden">
       <AnalyticsBeacon />
       <SiteHeader settings={settings} categoryNav={categoryNav} />
-      <div className="flex-1 pb-[calc(4.75rem+env(safe-area-inset-bottom))] md:pb-0">{children}</div>
+      <div className="flex-1 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-0">{children}</div>
       <SiteFooter settings={settings} />
-      <SiteMobileDock categoryNav={categoryNav} />
+      <SiteMobileDock categoryNav={categoryNav} className="hidden" />
       <SiteUiChrome />
       <SitePromoPopup
         settingsId={settings.id}

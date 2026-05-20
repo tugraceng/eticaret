@@ -10,11 +10,11 @@ export function SiteFooterNewsletter() {
         type="email"
         name="newsletter-email"
         placeholder="ornek@eposta.com"
-        className="min-h-[44px] flex-1 border border-neutral-300 bg-white px-4 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900"
+        className="input-soft min-h-[44px] flex-1 px-4 text-sm outline-none focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20"
       />
       <button
         type="submit"
-        className="min-h-[44px] bg-neutral-950 px-6 text-[11px] font-semibold uppercase tracking-[0.18em] text-white hover:bg-black"
+        className="si-btn-primary min-h-[44px] shrink-0 px-6"
       >
         Abone ol
       </button>

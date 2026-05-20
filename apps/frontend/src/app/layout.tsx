@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import { getSiteSettings } from "@/lib/settings";
 import { absoluteFromSite, getMetadataBase } from "@/lib/site-url";
 import { AppProviders } from "@/providers/AppProviders";
@@ -7,6 +7,11 @@ import "./globals.css";
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
+const playfair = Playfair_Display({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-playfair",
+  display: "swap",
+});
 
 export const dynamic = "force-dynamic";
 
@@ -61,8 +66,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     ...(settings.accentColor ? { "--brand-accent": settings.accentColor } : {}),
   } as React.CSSProperties;
   return (
-    <html lang="tr" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="min-h-screen font-sans" style={cssVars}>
+    <html lang="tr" className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable}`}>
+      <body className="min-h-screen font-sans antialiased" style={cssVars}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

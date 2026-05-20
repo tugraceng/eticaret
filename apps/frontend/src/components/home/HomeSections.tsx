@@ -48,14 +48,17 @@ function CatalogRail({
   const railTitle = section.title?.trim() || defaultTitle;
   const href = section.ctaHref?.trim() || defaultHref;
   return (
-    <section className="bg-white pb-2 pt-2">
+    <section className="si-section pb-2 pt-2">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {section.subtitle ? (
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-            {section.subtitle}
-          </p>
+          <p className="si-kicker mb-1">{section.subtitle}</p>
         ) : null}
-        <HomeProductRail title={railTitle} href={href} products={products} />
+        <HomeProductRail
+          title={railTitle}
+          href={href}
+          products={products}
+          subtitle={section.body?.trim() || null}
+        />
       </div>
     </section>
   );
@@ -88,7 +91,7 @@ function SectionHeading({
   subtitle,
   title,
   center = false,
-  tone = "light",
+  tone = "dark",
 }: {
   subtitle?: string | null;
   title?: string | null;
@@ -97,20 +100,18 @@ function SectionHeading({
 }) {
   if (!subtitle && !title) return null;
   const base = center ? "text-center" : "";
-  const kickerColor = tone === "dark" ? "text-sky-300" : "text-slate-500";
-  const titleColor = tone === "dark" ? "text-white" : "text-slate-900";
+  const kickerClass =
+    tone === "dark"
+      ? "si-kicker"
+      : "text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500";
+  const titleClass =
+    tone === "dark"
+      ? "si-heading mt-2"
+      : "mt-2 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl";
   return (
     <div className={`${base} fade-up`}>
-      {subtitle && (
-        <p className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${kickerColor}`}>
-          {subtitle}
-        </p>
-      )}
-      {title && (
-        <h2 className={`mt-2 text-3xl font-semibold tracking-tight sm:text-4xl ${titleColor}`}>
-          {title}
-        </h2>
-      )}
+      {subtitle && <p className={kickerClass}>{subtitle}</p>}
+      {title && <h2 className={titleClass}>{title}</h2>}
     </div>
   );
 }
@@ -198,18 +199,20 @@ async function FeaturedProducts({ section }: { section: HomeSection }) {
   if (products.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+    <section className="si-section">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <SectionHeading subtitle={section.subtitle} title={section.title ?? "Öne çıkan ürünler"} />
         {ctaButton(section, "ghost")}
       </div>
-      <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((p) => (
           <li key={p.id} className="flex h-full min-h-0">
             <ProductCard product={p} />
           </li>
         ))}
       </ul>
+      </div>
     </section>
   );
 }
@@ -226,38 +229,29 @@ async function FeaturedCategories({ section }: { section: HomeSection }) {
   if (selected.length === 0) return null;
 
   return (
-    <section className="relative isolate bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+    <section className="si-section-alt">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <SectionHeading subtitle={section.subtitle} title={section.title ?? "Kategoriler"} />
           {ctaButton(section, "ghost")}
         </div>
-        <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {selected.map((c, i) => (
             <li key={c.id} className="fade-up" style={{ animationDelay: `${i * 60}ms` }}>
               <Link
                 href={`/?categoryId=${encodeURIComponent(c.id)}#urunler`}
-                className="card-soft group flex h-full flex-col p-6"
+                className="si-category-card group !items-start !p-5 !text-left"
               >
-                <span
-                  aria-hidden
-                  className="grid h-11 w-11 place-items-center rounded-2xl text-white shadow-inner"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))",
-                  }}
-                >
+                <span className="si-category-icon text-sm font-semibold">
                   {c.name.slice(0, 1).toUpperCase()}
                 </span>
-                <p className="mt-4 text-base font-semibold text-slate-900">{c.name}</p>
+                <p className="text-sm font-semibold text-slate-100">{c.name}</p>
                 {c.description && (
-                  <p className="mt-1.5 flex-1 text-sm leading-relaxed text-slate-500">
-                    {c.description}
-                  </p>
+                  <p className="line-clamp-2 text-xs leading-relaxed text-slate-400">{c.description}</p>
                 )}
-                <p className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-900">
+                <p className="mt-auto inline-flex items-center gap-1.5 text-xs font-semibold text-sky-400">
                   Keşfet
-                  <span className="transition-transform duration-300 group-hover:translate-x-1.5" aria-hidden>
+                  <span className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden>
                     →
                   </span>
                 </p>
@@ -273,16 +267,18 @@ async function FeaturedCategories({ section }: { section: HomeSection }) {
 function RichText({ section }: { section: HomeSection }) {
   if (!section.title && !section.body) return null;
   return (
-    <section className="relative mx-auto max-w-3xl px-4 py-20 sm:px-6">
+    <section className="si-section-alt">
+      <div className="relative mx-auto max-w-3xl px-4 sm:px-6">
       <SectionHeading subtitle={section.subtitle} title={section.title} center />
       {section.body && (
-        <article className="fade-up mt-8 whitespace-pre-wrap text-center text-base leading-relaxed text-slate-600">
+        <article className="si-body fade-up mt-8 whitespace-pre-wrap text-center">
           {section.body}
         </article>
       )}
       {section.ctaLabel && section.ctaHref && (
         <div className="fade-up mt-8 flex justify-center">{ctaButton(section)}</div>
       )}
+      </div>
     </section>
   );
 }
@@ -294,12 +290,13 @@ async function BlogTeaser({ section }: { section: HomeSection }) {
   if (list.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+    <section className="si-section">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <SectionHeading subtitle={section.subtitle} title={section.title ?? "Blog"} />
         {ctaButton(section, "ghost")}
       </div>
-      <ul className="mt-10 grid gap-6 md:grid-cols-3">
+      <ul className="mt-10 grid gap-5 md:grid-cols-3">
         {list.map((p, i) => (
           <li key={p.id} className="fade-up" style={{ animationDelay: `${i * 70}ms` }}>
             <Link
@@ -307,7 +304,7 @@ async function BlogTeaser({ section }: { section: HomeSection }) {
               className="card-soft group flex h-full flex-col p-6"
             >
               {p.publishedAt && (
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                <p className="si-kicker !text-[10px]">
                   {new Date(p.publishedAt).toLocaleDateString("tr-TR", {
                     day: "2-digit",
                     month: "long",
@@ -315,15 +312,15 @@ async function BlogTeaser({ section }: { section: HomeSection }) {
                   })}
                 </p>
               )}
-              <p className="mt-2 text-lg font-semibold leading-snug text-slate-900 group-hover:text-sky-800">
+              <p className="mt-2 text-lg font-semibold leading-snug text-slate-100 group-hover:text-sky-300">
                 {p.title}
               </p>
               {p.excerpt && (
-                <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-slate-500">
+                <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-slate-400">
                   {p.excerpt}
                 </p>
               )}
-              <p className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-sky-800">
+              <p className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-sky-400">
                 Oku
                 <span className="transition-transform duration-300 group-hover:translate-x-1.5" aria-hidden>
                   →
@@ -333,6 +330,7 @@ async function BlogTeaser({ section }: { section: HomeSection }) {
           </li>
         ))}
       </ul>
+      </div>
     </section>
   );
 }
@@ -389,7 +387,8 @@ function Testimonials({ section }: { section: HomeSection }) {
 
 function CTA({ section }: { section: HomeSection }) {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <section className="si-section pb-8 pt-4">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div
         className="relative isolate overflow-hidden rounded-3xl px-6 py-14 text-white shadow-xl sm:px-12"
         style={{
@@ -432,6 +431,7 @@ function CTA({ section }: { section: HomeSection }) {
           )}
         </div>
       </div>
+      </div>
     </section>
   );
 }
@@ -462,7 +462,7 @@ export async function HomeSectionRenderer({
         <CatalogRail
           section={section}
           products={ctx.catalog.bestsellers}
-          defaultTitle="En çok satanlar"
+          defaultTitle="Öne çıkanlar"
           defaultHref="/shop"
         />
       );

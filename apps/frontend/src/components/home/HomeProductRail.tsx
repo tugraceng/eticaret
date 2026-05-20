@@ -2,46 +2,56 @@
 
 import Link from "next/link";
 import { useRef } from "react";
-import { WishlistButton } from "@/app/(site)/shop/[slug]/ui";
-import type { ProductCardData } from "@/components/site/ProductCard";
+import { ProductCard, type ProductCardData } from "@/components/site/ProductCard";
 
 type Props = {
   title: string;
   href: string;
   products: ProductCardData[];
+  subtitle?: string | null;
 };
 
-export function HomeProductRail({ title, href, products }: Props) {
+export function HomeProductRail({ title, href, products, subtitle }: Props) {
   const railRef = useRef<HTMLUListElement>(null);
 
   function scrollByDir(dir: -1 | 1) {
     const el = railRef.current;
     if (!el) return;
-    el.scrollBy({ left: dir * 480, behavior: "smooth" });
+    const card = el.querySelector("li");
+    const step = card ? card.getBoundingClientRect().width + 16 : 320;
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
   }
 
+  if (products.length === 0) return null;
+
   return (
-    <section className="mt-8">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-base font-semibold text-slate-900 sm:text-lg">{title}</h3>
-        <div className="flex items-center gap-2">
+    <div className="mt-2">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <h3 className="si-heading">{title}</h3>
+          {subtitle ? <p className="si-body mt-2 max-w-xl">{subtitle}</p> : null}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => scrollByDir(-1)}
-            className="grid h-7 w-7 place-items-center rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-            aria-label="Sola kaydır"
+            className="grid h-10 w-10 place-items-center rounded-lg border border-white/12 bg-white/[0.04] text-slate-300 transition hover:border-white/20 hover:text-white"
+            aria-label="Önceki ürünler"
           >
-            ←
+            <span aria-hidden>←</span>
           </button>
           <button
             type="button"
             onClick={() => scrollByDir(1)}
-            className="grid h-7 w-7 place-items-center rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-            aria-label="Sağa kaydır"
+            className="grid h-10 w-10 place-items-center rounded-lg border border-white/12 bg-white/[0.04] text-slate-300 transition hover:border-white/20 hover:text-white"
+            aria-label="Sonraki ürünler"
           >
-            →
+            <span aria-hidden>→</span>
           </button>
-          <Link href={href} className="ml-1 text-xs font-semibold text-slate-600 hover:text-slate-900">
+          <Link
+            href={href}
+            className="ml-1 hidden text-xs font-semibold uppercase tracking-wider text-sky-400/90 hover:text-sky-300 sm:inline"
+          >
             Tümünü gör →
           </Link>
         </div>
@@ -49,60 +59,24 @@ export function HomeProductRail({ title, href, products }: Props) {
 
       <ul
         ref={railRef}
-        className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 [scrollbar-width:thin]"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]"
       >
-        {products.map((p) => {
-          const cover = p.images?.[0]?.url;
-          const onSale =
-            typeof p.compareAtCents === "number" && p.compareAtCents > p.priceCents;
-          const discountPct = onSale
-            ? Math.round(((p.compareAtCents! - p.priceCents) / p.compareAtCents!) * 100)
-            : 0;
-          return (
-            <li key={p.id} className="relative w-[160px] shrink-0 snap-start rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
-              <Link
-                prefetch={false}
-                href={`/shop/${p.slug}`}
-                className="absolute inset-0 z-[1] rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/25 focus-visible:ring-offset-2"
-                aria-label={`${p.name} — ürüne git`}
-              />
-              <div className="pointer-events-none relative z-[2]">
-                <div className="relative aspect-square rounded-lg bg-slate-100">
-                  {onSale ? (
-                    <div className="absolute left-2 top-2 z-10 flex flex-wrap gap-1">
-                      <span className="rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
-                        %{discountPct}
-                      </span>
-                    </div>
-                  ) : null}
-                  <div className="pointer-events-auto absolute right-2 top-2 z-[3]">
-                    <WishlistButton
-                      productId={p.id}
-                      slug={p.slug}
-                      title={p.name}
-                      priceCents={p.priceCents}
-                      imageUrl={cover}
-                      size="sm"
-                    />
-                  </div>
-                  {cover ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={cover}
-                      alt={p.images?.[0]?.alt ?? p.name}
-                      className="h-full w-full rounded-lg object-cover"
-                    />
-                  ) : null}
-                </div>
-                <p className="mt-2 line-clamp-2 text-xs text-slate-700">{p.name}</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">
-                  {(p.priceCents / 100).toLocaleString("tr-TR", { style: "currency", currency: "TRY" })}
-                </p>
-              </div>
-            </li>
-          );
-        })}
+        {products.map((p) => (
+          <li
+            key={p.id}
+            className="w-[min(72vw,220px)] shrink-0 snap-start sm:w-[200px] md:w-[220px] lg:w-[240px]"
+          >
+            <ProductCard product={p} />
+          </li>
+        ))}
       </ul>
-    </section>
+
+      <Link
+        href={href}
+        className="mt-4 inline-flex text-xs font-semibold uppercase tracking-wider text-sky-400/90 hover:text-sky-300 sm:hidden"
+      >
+        Tümünü gör →
+      </Link>
+    </div>
   );
 }

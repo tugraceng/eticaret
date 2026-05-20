@@ -59,6 +59,24 @@ function CartIcon({ className = "" }: { className?: string }) {
   );
 }
 
+function UserIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <circle cx="12" cy="8" r="4" />
+      <path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7" />
+    </svg>
+  );
+}
+
 function MenuIcon({ open, className = "h-5 w-5" }: { open: boolean; className?: string }) {
   return (
     <svg
@@ -303,6 +321,15 @@ export function SiteHeader({
   }, [open]);
 
   useEffect(() => {
+    if (!open || typeof document === "undefined") return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  useEffect(() => {
     return () => clearMegaCloseTimer();
   }, [clearMegaCloseTimer]);
 
@@ -335,12 +362,12 @@ export function SiteHeader({
   }, [pathname]);
 
   const headerSurface = cn(
-    "border-b border-slate-200/90 bg-white text-slate-900 transition-[box-shadow,padding] duration-300",
+    "si-header border-b border-white/[0.08] bg-[#121212]/82 text-slate-100 backdrop-blur-md backdrop-saturate-150 transition-[box-shadow,padding,background-color] duration-300",
     headerCompact
-      ? "shadow-[0_10px_32px_-18px_rgba(15,23,42,0.14)]"
+      ? "shadow-[0_12px_40px_-20px_rgba(0,0,0,0.55)]"
       : isHome
-        ? "shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)]"
-        : "shadow-[0_6px_24px_-16px_rgba(15,23,42,0.1)]",
+        ? "shadow-[0_8px_32px_-18px_rgba(0,0,0,0.45)]"
+        : "shadow-[0_6px_28px_-16px_rgba(0,0,0,0.4)]",
   );
 
   const headerPosition = isHome ? "fixed inset-x-0 top-0" : "sticky top-0";
@@ -381,7 +408,52 @@ export function SiteHeader({
           headerCompact ? "py-2 md:py-2" : "py-3 md:py-3.5",
         )}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-3 md:contents">
+        {/* Mobil: hamburger — logo ortada — sepet + hesap */}
+        <div className="relative flex min-h-[3rem] w-full items-center justify-between md:hidden">
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className="si-mobile-menu-btn relative z-[62] grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/12 bg-white/[0.06] text-slate-200"
+            aria-label="Menü"
+            aria-expanded={open}
+          >
+            <MenuIcon open={open} className="h-5 w-5" />
+          </button>
+          <Link
+            href="/"
+            className="absolute left-1/2 z-20 -translate-x-1/2 text-sm font-semibold uppercase tracking-[0.14em] text-white"
+            onClick={() => setOpen(false)}
+          >
+            {settings.siteName}
+          </Link>
+          <div className="relative z-20 flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => openMiniCart()}
+              className="relative grid h-11 w-11 place-items-center rounded-xl text-slate-300 hover:bg-white/8 hover:text-white"
+              aria-label="Sepeti aç"
+            >
+              <CartIcon className="h-5 w-5" />
+              {cartCount > 0 ? (
+                <span
+                  className="absolute right-1 top-1 inline-flex min-h-[1rem] min-w-[1rem] items-center justify-center rounded-full px-0.5 text-[9px] font-bold text-white"
+                  style={{ background: accent }}
+                >
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              ) : null}
+            </button>
+            <Link
+              href={loggedIn ? "/hesap" : "/hesap/giris"}
+              className="grid h-11 w-11 place-items-center rounded-xl text-slate-300 hover:bg-white/8 hover:text-white"
+              aria-label={loggedIn ? "Hesabım" : "Giriş yap"}
+            >
+              <UserIcon className="h-5 w-5" />
+            </Link>
+          </div>
+        </div>
+
+        <div className="hidden min-w-0 flex-1 items-center gap-3 md:flex md:contents">
           <Link
             href="/"
             className="relative z-20 flex shrink-0 flex-col justify-center outline-none focus-visible:ring-2 focus-visible:ring-sky-500/35 focus-visible:ring-offset-2"
@@ -404,7 +476,7 @@ export function SiteHeader({
             <div className="w-full max-w-2xl min-w-0 lg:max-w-3xl">
               <Suspense
                 fallback={
-                  <div className="min-h-[2.75rem] w-full rounded-xl border border-slate-200/90 bg-slate-50" aria-hidden />
+                  <div className="min-h-[2.75rem] w-full rounded-xl border border-white/10 bg-white/5" aria-hidden />
                 }
               >
                 <SiteHeaderSearch
@@ -417,10 +489,10 @@ export function SiteHeader({
           </div>
 
           <div className="relative z-20 ml-auto flex shrink-0 items-center gap-2 sm:gap-3 md:ml-0">
-            <div className="hidden items-center gap-1 rounded-xl border border-slate-200/90 bg-white p-1 shadow-sm ring-1 ring-slate-900/[0.04] md:flex">
+            <div className="si-header-actions hidden items-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1 md:flex">
               <Link
                 href="/favoriler"
-                className="relative grid h-10 w-10 place-items-center rounded-lg text-slate-600 transition-colors hover:bg-slate-50 hover:text-rose-600"
+                className="relative grid h-10 w-10 place-items-center rounded-lg text-slate-300 transition-colors hover:bg-white/8 hover:text-rose-400"
                 aria-label="Favoriler"
               >
                 <HeartIcon className="h-5 w-5" />
@@ -433,11 +505,11 @@ export function SiteHeader({
                   </span>
                 )}
               </Link>
-              <span className="w-px self-stretch bg-slate-200/90" aria-hidden />
+              <span className="w-px self-stretch bg-white/10" aria-hidden />
               <button
                 type="button"
                 onClick={() => openMiniCart()}
-                className="relative grid h-10 w-10 place-items-center rounded-lg text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                className="relative grid h-10 w-10 place-items-center rounded-lg text-slate-300 transition-colors hover:bg-white/8 hover:text-white"
                 aria-label="Sepeti aç"
                 aria-haspopup="dialog"
                 aria-controls="mini-cart-panel"
@@ -454,16 +526,7 @@ export function SiteHeader({
               </button>
             </div>
 
-            {headerNav.beforeCategories[0] ? (
-              <Link
-                href={headerNav.beforeCategories[0].href}
-                className="shrink-0 rounded-lg px-2.5 py-2 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 md:hidden"
-              >
-                {headerNav.beforeCategories[0].label}
-              </Link>
-            ) : null}
-
-            <div className="hidden h-10 w-px shrink-0 bg-slate-200 sm:block" aria-hidden />
+            <div className="hidden h-10 w-px shrink-0 bg-white/10 sm:block" aria-hidden />
 
             <div className="hidden items-center gap-2 sm:flex">
               {loggedIn ? (
@@ -482,22 +545,13 @@ export function SiteHeader({
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setOpen((o) => !o)}
-              className="grid h-9 w-9 place-items-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm hover:bg-slate-50 md:hidden"
-              aria-label="Menü"
-              aria-expanded={open}
-            >
-              <MenuIcon open={open} className="h-5 w-5 text-slate-900" />
-            </button>
           </div>
         </div>
       </div>
 
       <nav
         aria-label="Kategori ve bağlantılar"
-        className="relative z-0 hidden shrink-0 border-t border-slate-200/90 bg-white md:block"
+        className="si-header-nav relative z-0 hidden shrink-0 border-t border-white/[0.06] bg-[#0a0f18]/95 md:block"
       >
         <div className="mx-auto flex max-w-7xl flex-wrap items-end gap-x-0.5 gap-y-0 px-4 sm:px-6 lg:px-8">
           {headerNav.beforeCategories.map((item) => {
@@ -600,41 +654,74 @@ export function SiteHeader({
         ) : null}
       </nav>
 
-      <div
-        className={`md:hidden overflow-hidden transition-[max-height,opacity] duration-300 ease-smooth ${
-          open ? "max-h-[720px] opacity-100" : "max-h-0 opacity-0"
-        }`}
+      {open ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-[60] bg-black/65 backdrop-blur-[2px] md:hidden"
+          aria-label="Menüyü kapat"
+          onClick={() => setOpen(false)}
+        />
+      ) : null}
+
+      <aside
+        id="mobile-nav-drawer"
+        className={cn(
+          "si-mobile-drawer fixed inset-y-0 right-0 z-[61] flex w-[min(88vw,20rem)] flex-col border-l border-white/10 bg-[#0f141c] shadow-2xl transition-transform duration-300 ease-out md:hidden",
+          open ? "translate-x-0" : "pointer-events-none translate-x-full",
+        )}
+        aria-hidden={!open}
+        aria-label="Site menüsü"
       >
-        <div className="mx-auto flex max-w-7xl flex-col border-t border-slate-200/60 bg-white px-4 py-4 shadow-[0_24px_50px_-24px_rgba(15,23,42,0.2)] sm:px-6">
-          <div className="flex max-h-[min(70vh,560px)] flex-col gap-2 overflow-y-auto overscroll-y-contain pr-1 [-webkit-overflow-scrolling:touch]">
+        <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
+          <p className="font-[family-name:var(--font-playfair)] text-lg font-semibold text-white">Menü</p>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="grid h-10 w-10 place-items-center rounded-lg text-slate-400 hover:bg-white/8 hover:text-white"
+            aria-label="Kapat"
+          >
+            <MenuIcon open className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="flex flex-1 flex-col gap-1 overflow-y-auto overscroll-y-contain px-4 py-4 [-webkit-overflow-scrolling:touch]">
+            <Link
+              href="/shop"
+              className="rounded-lg px-3 py-3 font-[family-name:var(--font-playfair)] text-lg text-slate-100 hover:bg-white/6"
+              onClick={() => setOpen(false)}
+            >
+              Ürünler
+            </Link>
+            <Link
+              href="/services"
+              className="rounded-lg px-3 py-3 font-[family-name:var(--font-playfair)] text-lg text-slate-100 hover:bg-white/6"
+              onClick={() => setOpen(false)}
+            >
+              Hizmetler
+            </Link>
             {headerNav.beforeCategories.map((item) => (
               <Link
                 key={`mob-before-${item.href}-${item.label}`}
                 href={item.href}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                className="rounded-lg px-3 py-3 font-[family-name:var(--font-playfair)] text-lg text-slate-100 hover:bg-white/6"
                 onClick={() => setOpen(false)}
               >
                 {item.label}
               </Link>
             ))}
-            {categoryNav.length === 0 ? (
-              <Link
-                href="/shop"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
-                onClick={() => setOpen(false)}
-              >
-                Ürünler
-              </Link>
-            ) : null}
+            {categoryNav.length === 0 ? null : (
+              <p className="mt-4 px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Kategoriler
+              </p>
+            )}
             {categoryNav.map((cat) => {
               const hasSubs = cat.children.length > 0;
               const subsExpanded = mobileSubcatsOpen.has(cat.id);
               return (
-                <div key={cat.id} className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
+                <div key={cat.id} className="overflow-hidden rounded-2xl border border-white/10 bg-[#121a28] shadow-sm">
                   <div className="flex min-h-[2.75rem] items-stretch">
                     <Link
                       href={shopCategoryHref(cat.id)}
-                      className="flex flex-1 items-center px-3 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50 hover:text-slate-700"
+                      className="flex flex-1 items-center px-3 py-2.5 text-sm font-semibold text-slate-100 hover:bg-white/6"
                       onClick={() => setOpen(false)}
                     >
                       {cat.name}
@@ -642,7 +729,7 @@ export function SiteHeader({
                     {hasSubs ? (
                       <button
                         type="button"
-                        className="flex min-w-[3rem] shrink-0 items-center justify-center border-l border-slate-100 bg-slate-50/90 text-slate-600 hover:bg-slate-100 hover:text-slate-900 active:bg-slate-200"
+                        className="flex min-w-[3rem] shrink-0 items-center justify-center border-l border-white/8 bg-white/[0.04] text-slate-400 hover:bg-white/8 hover:text-slate-100"
                         aria-expanded={subsExpanded}
                         aria-controls={`mobile-subcats-${cat.id}`}
                         aria-label={subsExpanded ? `${cat.name} alt koleksiyonlarını gizle` : `${cat.name} alt koleksiyonlarını göster`}
@@ -650,7 +737,7 @@ export function SiteHeader({
                       >
                         <DownIcon
                           className={cn(
-                            "h-4 w-4 text-slate-500 transition-transform duration-200",
+                            "h-4 w-4 text-slate-400 transition-transform duration-200",
                             subsExpanded && "-rotate-180",
                           )}
                         />
@@ -667,20 +754,20 @@ export function SiteHeader({
                         subsExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                       )}
                     >
-                      <div className="min-h-0 overflow-hidden border-t border-slate-100 bg-slate-50/70">
+                      <div className="min-h-0 overflow-hidden border-t border-white/8 bg-[#0c111b]/90">
                         <div className="space-y-3 px-3 py-4">
                           <div className="flex flex-wrap items-end justify-between gap-3">
                             <div className="min-w-0">
-                              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
                                 Kategori
                               </p>
-                              <p className="mt-0.5 truncate text-base font-semibold tracking-tight text-slate-900">
+                              <p className="mt-0.5 truncate text-base font-semibold tracking-tight text-white">
                                 {cat.name}
                               </p>
                             </div>
                             <Link
                               href={shopCategoryHref(cat.id)}
-                              className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-sky-700 active:text-sky-900"
+                              className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-sky-400 active:text-sky-300"
                               onClick={() => setOpen(false)}
                             >
                               Tümünü gör →
@@ -691,7 +778,7 @@ export function SiteHeader({
                               <li key={sub.id}>
                                 <Link
                                   href={shopCategoryHref(sub.id)}
-                                  className="flex min-h-[3rem] items-center rounded-2xl border border-slate-100 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm active:bg-slate-50"
+                                  className="flex min-h-[3rem] items-center rounded-xl border border-white/8 bg-white/[0.04] px-3 py-2.5 text-sm font-semibold text-slate-200 active:bg-white/8"
                                   onClick={() => setOpen(false)}
                                 >
                                   {sub.name}
@@ -706,21 +793,18 @@ export function SiteHeader({
                 </div>
               );
             })}
-            <div className="grid grid-cols-2 gap-2">
-              {[...headerNav.afterCategories, contactNavItem].map((item) => (
-                <Link
-                  key={`mob-tail-${item.href}-${item.label}`}
-                  href={item.href}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-medium text-slate-800 hover:bg-slate-50"
-                  onClick={() => setOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </div>
+            {[...headerNav.afterCategories, contactNavItem].map((item) => (
+              <Link
+                key={`mob-tail-${item.href}-${item.label}`}
+                href={item.href}
+                className="rounded-lg px-3 py-3 font-[family-name:var(--font-playfair)] text-lg text-slate-100 hover:bg-white/6"
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
         </div>
-      </div>
+      </aside>
     </header>
   );
 }

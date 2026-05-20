@@ -1,12 +1,28 @@
 import Link from "next/link";
 import type { ShopCategory } from "@/app/(site)/shop/CategoryStrip";
 
-const GLYPHS = ["◆", "◇", "✦", "◎", "◉", "▣", "▲", "▼"];
+function CategoryLineIcon({ index }: { index: number }) {
+  const paths = [
+    "M8 12h8M12 8v8M6 6l12 12",
+    "M7 10h10v6H7zM9 8V6h6v2",
+    "M6 14l4-8 4 8M8 14h4",
+    "M12 6a6 6 0 1 1 0 12 6 6 0 0 1 0-12z",
+    "M8 8h8v8H8z",
+    "M6 12h12M12 6v12",
+    "M8 16l4-10 4 10",
+    "M10 6h4v12h-4z",
+  ];
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d={paths[index % paths.length]} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 export function HomeCategoryIconGrid({
   categories,
   kicker = "Kategoriler",
-  heading = "Hızlı keşif",
+  heading = "Kategoriler",
   description = "İlgilendiğiniz alana tek dokunuşla gidin.",
 }: {
   categories: ShopCategory[];
@@ -18,34 +34,28 @@ export function HomeCategoryIconGrid({
   if (!show.length) return null;
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-1 text-center sm:text-left">
-        {kicker ? (
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">{kicker}</p>
-        ) : null}
-        {heading ? (
-          <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{heading}</h2>
-        ) : null}
-        {description ? <p className="text-sm text-slate-600">{description}</p> : null}
+    <section className="si-section">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-1 sm:max-w-xl">
+          {kicker ? <p className="si-kicker">{kicker}</p> : null}
+          {heading ? <h2 className="si-heading mt-2">{heading}</h2> : null}
+          {description ? <p className="si-body mt-2">{description}</p> : null}
+        </div>
+        <ul className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 md:grid-cols-4 lg:grid-cols-8">
+          {show.map((c, i) => (
+            <li key={c.id}>
+              <Link href={`/shop?categoryId=${encodeURIComponent(c.id)}`} className="si-category-card group">
+                <span className="si-category-icon transition group-hover:border-sky-500/40 group-hover:text-sky-300">
+                  <CategoryLineIcon index={i} />
+                </span>
+                <span className="line-clamp-2 text-xs font-semibold leading-tight text-slate-300 group-hover:text-white">
+                  {c.name}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
-      <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-        {show.map((c, i) => (
-          <li key={c.id}>
-            <Link
-              href={`/shop?categoryId=${encodeURIComponent(c.id)}`}
-              className="group flex flex-col items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-3 py-5 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
-            >
-              <span
-                className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 text-lg text-slate-700 transition group-hover:from-sky-50 group-hover:to-indigo-50 group-hover:text-sky-900"
-                aria-hidden
-              >
-                {GLYPHS[i % GLYPHS.length]}
-              </span>
-              <span className="line-clamp-2 text-xs font-semibold leading-tight text-slate-800">{c.name}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }

@@ -9,6 +9,7 @@ type Props = {
   title: string;
   priceCents: number;
   imageUrl?: string;
+  variant?: "default" | "icon";
 };
 
 export const ProductCardAddToCart = memo(function ProductCardAddToCart(props: Props) {

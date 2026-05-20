@@ -16,13 +16,25 @@ export type HeroImageDisplay = {
   imageFit: HeroImageFit;
   imagePosition: HeroImagePosition;
   imagePositionMobile: HeroImagePosition | null;
+  /** 0–100 — metin okunabilirliği gradient (varsayılan 72) */
+  overlayStrength?: number;
+  /** contain_blur arka plan blur ölçeği % (100–140, varsayılan 110) */
+  backgroundBlurScale?: number;
 };
 
 export const DEFAULT_HERO_IMAGE_DISPLAY: HeroImageDisplay = {
   imageFit: "cover",
   imagePosition: "center center",
   imagePositionMobile: null,
+  overlayStrength: 72,
+  backgroundBlurScale: 110,
 };
+
+function clampInt(raw: unknown, min: number, max: number, fallback: number): number {
+  const n = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : NaN;
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(n)));
+}
 
 const FIT_SET = new Set<string>(HERO_IMAGE_FITS);
 const POS_SET = new Set<string>(HERO_IMAGE_POSITIONS);
@@ -46,6 +58,18 @@ export function parseHeroImageDisplay(o: Record<string, unknown> | null | undefi
     imageFit: parseHeroImageFit(o.image_fit ?? o.imageFit),
     imagePosition: parseHeroImagePosition(o.image_position ?? o.imagePosition),
     imagePositionMobile: mobile,
+    overlayStrength: clampInt(
+      o.hero_overlay_strength ?? o.overlayStrength ?? o.overlay_strength,
+      0,
+      100,
+      DEFAULT_HERO_IMAGE_DISPLAY.overlayStrength!,
+    ),
+    backgroundBlurScale: clampInt(
+      o.hero_background_blur ?? o.backgroundBlurScale ?? o.background_blur,
+      100,
+      140,
+      DEFAULT_HERO_IMAGE_DISPLAY.backgroundBlurScale!,
+    ),
   };
 }
 

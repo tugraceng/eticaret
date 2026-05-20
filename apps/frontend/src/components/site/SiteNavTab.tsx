@@ -29,10 +29,10 @@ export function SiteNavTab({
         onMouseEnter={onMouseEnter}
         onClick={onClick}
         className={cn(
-          "inline-flex items-center gap-1 px-2.5 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:text-slate-900",
+          "inline-flex items-center gap-1 px-3 text-xs font-bold uppercase tracking-[0.14em] transition-colors hover:text-white",
           compact ? "py-2" : "py-3",
-          muted && !active ? "text-slate-400" : "text-slate-600",
-          active && "text-slate-900",
+          muted && !active ? "text-slate-500" : "text-slate-400",
+          active && "text-white",
           className,
         )}
       >
@@ -40,7 +40,7 @@ export function SiteNavTab({
       </Link>
       <span
         className={cn(
-          "pointer-events-none absolute inset-x-1 bottom-0 h-[2px] rounded-full bg-sky-600 transition-opacity duration-200",
+          "pointer-events-none absolute inset-x-1 bottom-0 h-[2px] rounded-full bg-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.5)] transition-opacity duration-200",
           active ? "opacity-100" : "opacity-0",
         )}
         aria-hidden

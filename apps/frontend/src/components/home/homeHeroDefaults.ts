@@ -26,15 +26,15 @@ export function defaultHeroSlides(
 ): HomeHeroSlide[] {
   return [
     {
-      eyebrow: "Atölyeden hazır",
-      title: "3D baskı hediyelik & dekor",
+      eyebrow: "Precision Engineering",
+      title: "Yeni nesil 3D baskı dünyası",
       body:
         settings.defaultMetaDesc?.trim() ||
-        "Anahtarlık, figür ve masaüstü parçalar — hepsini kendi atölyemizde basıyoruz. Güvenli ödeme ve stoktan gönderim.",
+        "Koleksiyon parçalar, dekor ve özel üretim — katman katman hassasiyetle atölyemizde.",
       cta: "/shop",
-      ctaLabel: "Alışverişe başla",
-      secondaryHref: "/about",
-      secondaryLabel: "Daha fazla bilgi",
+      ctaLabel: "Koleksiyonu keşfet →",
+      secondaryHref: "/contact",
+      secondaryLabel: "Özel sipariş",
       image:
         "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?auto=format&fit=crop&w=2000&q=80",
       ...DEFAULT_HERO_IMAGE_DISPLAY,

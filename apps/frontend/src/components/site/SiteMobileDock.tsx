@@ -103,7 +103,13 @@ function DockChevron({ open }: { open: boolean }) {
   );
 }
 
-export function SiteMobileDock({ categoryNav = [] }: { categoryNav?: HeaderNavCategory[] }) {
+export function SiteMobileDock({
+  categoryNav = [],
+  className,
+}: {
+  categoryNav?: HeaderNavCategory[];
+  className?: string;
+}) {
   const pathname = usePathname() ?? "/";
   const [searchOpen, setSearchOpen] = useState(false);
   const [dockSubcatsOpen, setDockSubcatsOpen] = useState<Set<string>>(new Set());
@@ -156,15 +162,15 @@ export function SiteMobileDock({ categoryNav = [] }: { categoryNav?: HeaderNavCa
             onClick={closeSearch}
           />
           <div
-            className="fixed left-2 right-2 z-[42] max-h-[min(88dvh,560px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl md:hidden"
+            className="fixed left-2 right-2 z-[42] max-h-[min(88dvh,560px)] overflow-y-auto rounded-2xl border border-white/10 bg-[#0a0f18] p-4 shadow-2xl md:hidden"
             style={{ bottom: "max(5.5rem, calc(4.75rem + env(safe-area-inset-bottom)))" }}
           >
             <div className="mb-3 flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-slate-900">Ürün ara</p>
+              <p className="text-sm font-semibold text-slate-100">Ürün ara</p>
               <button
                 type="button"
                 onClick={closeSearch}
-                className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-400 hover:bg-white/8 hover:text-white"
               >
                 Kapat
               </button>
@@ -277,12 +283,15 @@ export function SiteMobileDock({ categoryNav = [] }: { categoryNav?: HeaderNavCa
 
       <nav
         aria-label="Mobil kısayollar"
-        className="site-mobile-dock fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_-18px_rgba(15,23,42,0.25)] backdrop-blur-md md:hidden"
+        className={cn(
+          "site-mobile-dock fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#121212]/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 text-slate-300 shadow-[0_-8px_30px_-18px_rgba(0,0,0,0.5)] backdrop-blur-md md:hidden",
+          className,
+        )}
       >
         <ul className="mx-auto flex max-w-lg items-stretch justify-between gap-0.5 px-1">
           {items.map((it) => {
             const active = it.kind === "link" ? it.match(pathname) : false;
-            const cls = active ? "text-slate-900" : "text-slate-500";
+            const cls = active ? "text-sky-400" : "text-slate-500";
             const isCartDock = it.kind === "link" && it.href === "/cart";
             const inner = (
               <>
@@ -309,7 +318,7 @@ export function SiteMobileDock({ categoryNav = [] }: { categoryNav?: HeaderNavCa
                   <button
                     type="button"
                     onClick={() => openMiniCart()}
-                    className={`flex w-full flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10px] font-semibold transition-colors ${cls} hover:bg-slate-100 hover:text-slate-900`}
+                    className={`flex w-full flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10px] font-semibold transition-colors ${cls} hover:bg-white/8 hover:text-sky-300`}
                     aria-label={cartCount > 0 ? `Sepeti aç, ${cartCount} ürün` : "Sepeti aç"}
                     aria-haspopup="dialog"
                     aria-controls="mini-cart-panel"
@@ -319,7 +328,7 @@ export function SiteMobileDock({ categoryNav = [] }: { categoryNav?: HeaderNavCa
                 ) : it.kind === "link" ? (
                   <Link
                     href={it.href}
-                    className={`flex flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10px] font-semibold transition-colors ${cls} hover:bg-slate-100 hover:text-slate-900`}
+                    className={`flex flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10px] font-semibold transition-colors ${cls} hover:bg-white/8 hover:text-sky-300`}
                   >
                     {inner}
                   </Link>
@@ -327,7 +336,7 @@ export function SiteMobileDock({ categoryNav = [] }: { categoryNav?: HeaderNavCa
                   <button
                     type="button"
                     onClick={() => setSearchOpen(true)}
-                    className="flex w-full flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                    className="flex w-full flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10px] font-semibold text-slate-500 transition-colors hover:bg-white/8 hover:text-sky-300"
                   >
                     {inner}
                   </button>

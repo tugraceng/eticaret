@@ -1,0 +1,393 @@
+/**
+ * StoneIron3D — premium dark industrial theme (plain CSS, @apply yok)
+ */
+
+.site-theme-stoneiron {
+  color-scheme: dark;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  --si-bg-deep: #121212;
+  --si-bg: #161b24;
+  --si-bg-elevated: #1a222e;
+  --si-bg-card: #1e2736;
+  --si-accent: #7eb8d4;
+  --si-accent-muted: rgba(126, 184, 212, 0.15);
+  --si-text: #e8edf5;
+  --si-text-muted: #94a3b8;
+  --si-glow: 0 0 40px -8px rgba(59, 130, 246, 0.45);
+  --ds-surface: var(--si-bg);
+  --ds-surface-muted: var(--si-bg-elevated);
+  --ds-text: var(--si-text);
+  --ds-text-muted: var(--si-text-muted);
+  --ds-border: rgba(148, 163, 184, 0.12);
+  --brand-primary: #0c111b;
+  --brand-secondary: #3b82f6;
+  --brand-accent: #60a5fa;
+  background-color: var(--si-bg-deep);
+  color: var(--si-text);
+}
+
+.site-theme-stoneiron ::selection {
+  background: rgba(59, 130, 246, 0.45);
+  color: #fff;
+}
+
+.site-theme-stoneiron .si-kicker {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(96, 165, 250, 0.9);
+}
+
+.site-theme-stoneiron .si-display {
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
+  font-size: 1.85rem;
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+@media (min-width: 640px) {
+  .site-theme-stoneiron .si-display {
+    font-size: 2.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .site-theme-stoneiron .si-display {
+    font-size: 3.25rem;
+  }
+}
+@media (min-width: 1280px) {
+  .site-theme-stoneiron .si-display {
+    font-size: 3.75rem;
+  }
+}
+
+.site-theme-stoneiron .si-heading {
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+@media (min-width: 640px) {
+  .site-theme-stoneiron .si-heading {
+    font-size: 1.875rem;
+  }
+}
+@media (min-width: 1024px) {
+  .site-theme-stoneiron .si-heading {
+    font-size: 2.25rem;
+  }
+}
+
+.site-theme-stoneiron .si-product-name {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #f1f5f9;
+}
+
+.site-theme-stoneiron .si-price {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--si-accent);
+}
+
+.site-theme-stoneiron .si-body {
+  font-size: 0.875rem;
+  line-height: 1.625;
+  color: #cbd5e1;
+}
+
+.site-theme-stoneiron .si-btn-primary {
+  display: inline-flex;
+  min-height: 44px;
+  min-width: 8.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.375rem;
+  background: #5a9cb8;
+  padding: 0 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff;
+  box-shadow: var(--si-glow), 0 4px 14px -4px rgba(0, 0, 0, 0.5);
+  transition: background-color 0.2s ease;
+}
+.site-theme-stoneiron .si-btn-primary:hover {
+  background: #7eb8d4;
+}
+
+.site-theme-stoneiron .si-btn-ghost {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.site-theme-stoneiron .si-btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.site-theme-stoneiron header.z-50 {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+  background: rgba(7, 11, 18, 0.82);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+
+.site-theme-stoneiron header.z-50 nav {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(10, 15, 24, 0.95);
+}
+
+.site-theme-stoneiron .header-auth-outline {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+}
+.site-theme-stoneiron .header-auth-outline:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.site-theme-stoneiron .header-auth-solid {
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  background: rgba(37, 99, 235, 0.9);
+  color: #fff;
+}
+.site-theme-stoneiron .header-auth-solid:hover {
+  background: #0ea5e9;
+}
+
+.site-theme-stoneiron #site-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: #080c14;
+  color: #e2e8f0;
+}
+
+.site-theme-stoneiron #site-footer .text-neutral-500,
+.site-theme-stoneiron #site-footer .text-neutral-400,
+.site-theme-stoneiron #site-footer .text-neutral-600 {
+  color: #94a3b8;
+}
+
+.site-theme-stoneiron #site-footer .text-neutral-900,
+.site-theme-stoneiron #site-footer h2 {
+  color: #fff;
+}
+
+.site-theme-stoneiron #site-footer a:hover {
+  color: #7dd3fc;
+}
+
+.site-theme-stoneiron .si-product-card {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--si-bg-card);
+  box-shadow: 0 16px 48px -28px rgba(0, 0, 0, 0.65);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.site-theme-stoneiron .si-product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 56px -24px rgba(0, 0, 0, 0.75), var(--si-glow);
+}
+
+.site-theme-stoneiron .si-product-card-media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  width: 100%;
+  overflow: hidden;
+  background: linear-gradient(to bottom, rgba(30, 41, 59, 0.8), #0a0f18);
+}
+
+.site-theme-stoneiron .si-section {
+  background: var(--si-bg);
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+@media (min-width: 640px) {
+  .site-theme-stoneiron .si-section {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+}
+
+.site-theme-stoneiron .si-section-alt {
+  background: var(--si-bg-elevated);
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+.site-theme-stoneiron .card-soft,
+.site-theme-stoneiron .section-shell {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--si-bg-card);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+.site-theme-stoneiron .input-soft {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #f1f5f9;
+}
+
+.site-theme-stoneiron .btn-primary {
+  border-radius: 0.5rem;
+  background: #0284c7;
+  color: #fff;
+}
+
+.site-theme-stoneiron .si-category-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1.25rem 0.75rem;
+  text-align: center;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.site-theme-stoneiron .si-category-card:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.site-theme-stoneiron .si-category-icon {
+  display: grid;
+  height: 3.25rem;
+  width: 3.25rem;
+  place-items: center;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(126, 184, 212, 0.25);
+  background: rgba(126, 184, 212, 0.08);
+  color: var(--si-accent);
+}
+
+@media (max-width: 767px) {
+  .site-theme-stoneiron .si-category-card {
+    min-height: 7.5rem;
+    padding: 1.25rem 0.75rem;
+  }
+}
+
+.site-theme-stoneiron .si-trust-strip {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(10, 15, 24, 0.8);
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+}
+
+.site-theme-stoneiron .si-trust-icon {
+  display: grid;
+  height: 3rem;
+  width: 3rem;
+  place-items: center;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #38bdf8;
+}
+
+.site-theme-stoneiron .auth-page-root {
+  background-color: rgba(7, 11, 18, 0.92);
+}
+
+.site-theme-stoneiron .auth-shell {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--si-bg-card);
+  box-shadow: 0 32px 80px -32px rgba(0, 0, 0, 0.75);
+}
+
+.site-theme-stoneiron .auth-field-input {
+  border-color: rgba(255, 255, 255, 0.1);
+  background-color: #0a0f18;
+  color: #e8edf5;
+}
+
+.site-theme-stoneiron .auth-btn-primary {
+  background: #0284c7;
+}
+.site-theme-stoneiron .auth-btn-primary:hover {
+  background: #0ea5e9;
+}
+
+/* Mağaza / iç sayfa — açık kartları koyu temaya uyarla */
+.site-theme-stoneiron .section-shell,
+.site-theme-stoneiron main .rounded-2xl.border-slate-200,
+.site-theme-stoneiron main .rounded-3xl.border-slate-200 {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.site-theme-stoneiron main .bg-white {
+  background-color: var(--si-bg-card);
+  color: var(--si-text);
+}
+
+.site-theme-stoneiron main .text-slate-900 {
+  color: #f1f5f9;
+}
+
+.site-theme-stoneiron main .text-slate-800,
+.site-theme-stoneiron main .text-slate-700,
+.site-theme-stoneiron main .text-slate-600 {
+  color: #94a3b8;
+}
+
+.site-theme-stoneiron main .border-slate-200,
+.site-theme-stoneiron main .border-slate-200\/90,
+.site-theme-stoneiron main .border-slate-200\/80 {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.site-theme-stoneiron main .bg-slate-50,
+.site-theme-stoneiron main .bg-slate-50\/50 {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.site-theme-stoneiron .btn-ghost {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.site-theme-stoneiron .btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}

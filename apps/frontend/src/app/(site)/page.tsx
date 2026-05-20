@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Fragment, type ReactNode } from "react";
+import { HomeBrandStats } from "@/components/home/HomeBrandStats";
+import { HomeCraftsmanship } from "@/components/home/HomeCraftsmanship";
 import { HomeSectionRenderer } from "@/components/home/HomeSections";
 import type { HomeRenderContext } from "@/components/home/HomeSections";
 import { HomeRetailSection } from "@/components/home/HomeRetailSection";
@@ -159,6 +161,13 @@ export default async function HomePage({
         </section>
       ) : null}
       {!filtering ? streamNodes : null}
+
+      {!filtering ? (
+        <>
+          <HomeBrandStats />
+          <HomeCraftsmanship />
+        </>
+      ) : null}
 
       {filtering ? (
         <HomeRetailSection {...retailProps} />

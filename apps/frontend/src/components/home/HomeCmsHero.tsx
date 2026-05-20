@@ -8,7 +8,14 @@ import { HomeHeroBackdrop } from "@/components/home/HomeHeroBackdrop";
 import { apiAssetUrl } from "@/lib/api";
 import type { HomeSection, SiteSettings } from "@/lib/settings";
 import { defaultHeroSlides, parseHeroSlides, type HomeHeroSlide } from "@/components/home/homeHeroDefaults";
-import { heroContentLayoutClass, heroContentPaddingClass, heroSectionMinHeightClass } from "@/components/home/homeHeroLayout";
+import { HomeHeroTitle } from "@/components/home/HomeHeroTitle";
+import {
+  heroContentLayoutClass,
+  heroContentPaddingClass,
+  heroGridClass,
+  heroSectionMinHeightClass,
+  heroVisualPanelClass,
+} from "@/components/home/homeHeroLayout";
 
 type Props = {
   section: HomeSection;
@@ -36,9 +43,9 @@ export function HomeCmsHero({ section, settings }: Props) {
           secondaryHref: "/shop",
           secondaryLabel: "Tümü",
           image: apiAssetUrl(section.mediaUrl) ?? "",
-          imageFit: "cover",
+          imageFit: "contain_blur",
           imagePosition: "center center",
-          imagePositionMobile: null,
+          imagePositionMobile: "center center",
         },
       ];
     }
@@ -68,71 +75,90 @@ export function HomeCmsHero({ section, settings }: Props) {
 
   return (
     <section
-      className={`home-hero-default relative isolate flex w-full flex-col overflow-hidden bg-neutral-950 ${heroSectionMinHeightClass}`}
+      className={`relative isolate flex w-full flex-col overflow-hidden bg-[#121212] ${heroSectionMinHeightClass}`}
+      aria-label="Ana vitrin"
     >
-      <HomeHeroBackdrop slides={slides} index={index} />
+      <div className={heroVisualPanelClass}>
+        <HomeHeroBackdrop slides={slides} index={index} />
+      </div>
+
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_70%_40%,rgba(59,130,246,0.12),transparent_55%)]" aria-hidden />
+
       <HomeHeroArrows visible={slides.length > 1} onPrev={goPrev} onNext={goNext} />
 
-      <div
-        className={`relative z-10 ${heroContentPaddingClass} ${heroContentLayoutClass}`}
-      >
-        <motion.div
-          key={index}
-          className="mx-auto w-full max-w-7xl md:py-6"
-          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: reduceMotion ? 0 : 0.58,
-            ease: [0.22, 1, 0.36, 1],
-            delay: reduceMotion ? 0 : 0.08,
-          }}
-        >
-          {active.eyebrow ? (
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#5b8def]">
-              {active.eyebrow}
-            </p>
-          ) : null}
-          <h1 className="mt-3 max-w-[18ch] text-[1.75rem] font-medium leading-[1.08] tracking-tight text-white sm:text-4xl md:mt-4 md:max-w-[20ch] md:text-6xl lg:text-7xl">
-            {active.title}
-          </h1>
-          {active.body ? (
-            <p className="mt-6 max-w-md text-sm leading-relaxed text-white/85 sm:text-base md:max-w-lg">
-              {active.body}
-            </p>
-          ) : null}
-
-          <div className="mt-8 flex flex-wrap items-center gap-3 md:mt-10">
-            <Link
-              href={active.cta}
-              className="inline-flex min-h-[44px] items-center justify-center bg-neutral-950 px-8 py-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-white ring-1 ring-white/10 transition hover:bg-black"
-            >
-              {active.ctaLabel}
-            </Link>
-            <Link
-              href={active.secondaryHref}
-              className="inline-flex min-h-[44px] items-center justify-center border border-white/90 bg-transparent px-8 py-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-white/10"
-            >
-              {active.secondaryLabel}
-            </Link>
-          </div>
-
-          {slides.length > 1 ? (
-            <div className="mt-8 flex items-center gap-2 md:mt-14">
-              {slides.map((s, i) => (
-                <button
-                  key={`${s.title}-${i}`}
-                  type="button"
-                  onClick={() => setIndex(i)}
-                  aria-label={`Slayt ${i + 1}`}
-                  aria-current={i === index ? "true" : undefined}
-                  className={`h-1.5 rounded-full transition-[width,background-color,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                    i === index ? "w-10 scale-100 bg-white" : "w-6 bg-white/35 hover:bg-white/55"
-                  }`}
-                />
-              ))}
+      <div className={`relative z-10 flex flex-1 flex-col ${heroContentPaddingClass}`}>
+        <div className={heroGridClass}>
+          <motion.div
+            key={index}
+            className={heroContentLayoutClass}
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: reduceMotion ? 0 : 0.55,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {active.eyebrow ? (
+                <span className="si-kicker">{active.eyebrow}</span>
+              ) : (
+                <span className="si-kicker">Precision Engineering</span>
+              )}
             </div>
-          ) : null}
-        </motion.div>
+
+            <h1 className="si-display max-w-[14ch] sm:max-w-[16ch]">
+              <HomeHeroTitle title={active.title} />
+            </h1>
+
+            {active.body ? (
+              <p className="si-body mt-4 max-w-md max-md:hidden lg:mt-5 lg:block lg:max-w-lg">{active.body}</p>
+            ) : null}
+
+            <div className="mt-4 hidden flex-wrap gap-4 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500 md:flex">
+              <span className="flex items-center gap-1.5">
+                <span className="h-1 w-1 rounded-full bg-sky-500" aria-hidden />
+                Precision print
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-1 w-1 rounded-full bg-sky-500/60" aria-hidden />
+                Collectible finish
+              </span>
+            </div>
+
+            <div className="si-hero-cta mt-6 flex w-full max-w-md flex-col gap-3 sm:mt-10 md:max-w-none md:flex-row md:flex-wrap md:items-center">
+              <Link href={active.cta} className="si-btn-primary w-full md:w-auto">
+                {active.ctaLabel}
+              </Link>
+              <Link
+                href={active.secondaryHref}
+                className="inline-flex min-h-[44px] w-full items-center justify-center gap-1 text-sm font-semibold text-slate-300 transition hover:text-sky-300 md:w-auto md:min-h-0 md:justify-start"
+              >
+                {active.secondaryLabel}
+                <span aria-hidden>→</span>
+              </Link>
+            </div>
+
+            {slides.length > 1 ? (
+              <div className="mt-8 flex items-center gap-2 lg:mt-10" role="tablist" aria-label="Hero slaytları">
+                {slides.map((s, i) => (
+                  <button
+                    key={`${s.title}-${i}`}
+                    type="button"
+                    role="tab"
+                    onClick={() => setIndex(i)}
+                    aria-label={`Slayt ${i + 1}`}
+                    aria-selected={i === index}
+                    className={`h-1 rounded-full transition-all duration-500 ${
+                      i === index ? "w-10 bg-sky-400" : "w-6 bg-white/25 hover:bg-white/45"
+                    }`}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </motion.div>
+
+          <div className="hidden min-h-[12rem] lg:block" aria-hidden />
+        </div>
       </div>
     </section>
   );

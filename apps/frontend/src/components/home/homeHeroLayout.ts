@@ -1,18 +1,20 @@
 /**
- * Hero çerçevesi — tam genişlik.
- *
- * Önerilen kaynak görsel: **48:23** (örn. 1920×920). Çerçeve masaüstünde ~**2:1** (24/48) ile hafif uzatılmıştır.
+ * StoneIron cinematic hero — mobile-first, desktop split (metin sol / ürün sağ).
  */
 
-/** Yalnızca section için min-yükseklik — biraz daha uzun çerçeve görselin cover ile oturmasını kolaylaştırır. */
 export const heroSectionMinHeightClass =
-  "max-md:min-h-[clamp(26rem,min(78svh,40rem),44rem)] md:min-h-[max(29rem,min(96svh,min(60rem,calc(100vw*24/48))))]";
+  "min-h-[clamp(20rem,min(68svh,32rem),36rem)] md:min-h-[clamp(28rem,min(88svh,44rem),52rem)] lg:min-h-[min(92svh,44rem)]";
 
-/** Yatay padding — iç sütun için */
-export const heroContentPaddingClass = "px-4 sm:px-6 md:px-10 lg:px-14 xl:px-20";
+export const heroContentPaddingClass =
+  "px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16";
 
-/**
- * Dikey yerleşim: metin ve CTA alt banda — mobilde güvenli alt boşluk, masaüstünde geniş alt padding.
- */
+/** Masaüstünde dikey orta; mobilde alt bant */
 export const heroContentLayoutClass =
-  "flex w-full flex-1 flex-col justify-end pb-14 pt-[max(3.5rem,env(safe-area-inset-top,0px)+2.25rem)] max-md:pb-[max(3.75rem,env(safe-area-inset-bottom,0px)+1.25rem)] md:pb-[clamp(5.5rem,11svh,9rem)] md:pt-[max(5rem,env(safe-area-inset-top,0px)+3.25rem)] lg:pb-[clamp(6rem,12svh,10rem)] lg:pt-36";
+  "flex w-full flex-1 flex-col justify-end pb-10 pt-[max(5.5rem,env(safe-area-inset-top,0px)+3.5rem)] max-md:pb-12 lg:max-w-[min(100%,34rem)] lg:justify-center lg:pb-16 lg:pt-24";
+
+export const heroGridClass =
+  "relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-center lg:gap-8 xl:gap-12";
+
+/** Görsel paneli — masaüstünde sağ yarı */
+export const heroVisualPanelClass =
+  "pointer-events-none absolute inset-0 lg:absolute lg:inset-y-0 lg:left-[38%] lg:right-0";
