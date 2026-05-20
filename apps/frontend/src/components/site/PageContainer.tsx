@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import { headingClass, sectionSpacing, siteContainerClass } from "@/lib/design-system";
+import { sectionSpacing, siteContainerClass } from "@/lib/design-system";
 
 export { siteContainerClass };
 
@@ -46,15 +46,9 @@ export function PageHeader({
 }) {
   return (
     <header className={cn("fade-up max-w-3xl", className)}>
-      {eyebrow ? (
-        <p className={headingClass.eyebrow}>{eyebrow}</p>
-      ) : null}
-      <h1 className={cn("mt-2", headingClass.h1)}>
-        {title}
-      </h1>
-      {description ? (
-        <p className="mt-4 text-base leading-relaxed text-slate-600">{description}</p>
-      ) : null}
+      {eyebrow ? <p className="si-kicker">{eyebrow}</p> : null}
+      <h1 className="si-heading mt-2">{title}</h1>
+      {description ? <p className="si-body mt-4 max-w-2xl">{description}</p> : null}
     </header>
   );
 }

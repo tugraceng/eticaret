@@ -19,16 +19,12 @@ export function HomeStoryStrip({
   if (picks.length < 3) return null;
 
   return (
-    <section className="border-y border-slate-200 bg-gradient-to-b from-white to-slate-50/90 py-10">
+    <section className="si-section-alt border-y border-white/[0.06] py-10 sm:py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-1 text-center sm:text-left">
-          {kicker ? (
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">{kicker}</p>
-          ) : null}
-          {heading ? (
-            <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{heading}</h2>
-          ) : null}
-          {subheading ? <p className="text-sm text-slate-600">{subheading}</p> : null}
+          {kicker ? <p className="si-kicker">{kicker}</p> : null}
+          {heading ? <h2 className="si-heading mt-1 text-xl sm:text-2xl">{heading}</h2> : null}
+          {subheading ? <p className="si-body mt-1">{subheading}</p> : null}
         </div>
         <ul className="mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 [scrollbar-width:thin]">
           {picks.map((p) => {
@@ -44,7 +40,7 @@ export function HomeStoryStrip({
                   href={`/shop/${p.slug}`}
                   className="group flex flex-col items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/25 focus-visible:ring-offset-2"
                 >
-                  <div className="relative h-[152px] w-[118px] overflow-hidden rounded-3xl border border-slate-200/80 bg-slate-100 shadow-sm ring-4 ring-white transition duration-300 group-hover:scale-[1.03] group-hover:shadow-lg sm:h-[168px] sm:w-[132px]">
+                  <div className="relative h-[152px] w-[118px] overflow-hidden rounded-2xl border border-white/10 bg-[#1a222e] shadow-lg transition duration-300 group-hover:scale-[1.03] group-hover:border-sky-500/30 sm:h-[168px] sm:w-[132px]">
                     <Image
                       src={src}
                       alt={alt}
@@ -53,7 +49,7 @@ export function HomeStoryStrip({
                       sizes="132px"
                     />
                   </div>
-                  <span className="line-clamp-2 max-w-[7.5rem] text-center text-[11px] font-medium leading-tight text-slate-800">
+                  <span className="line-clamp-2 max-w-[7.5rem] text-center text-[11px] font-medium leading-tight text-slate-300 group-hover:text-white">
                     {p.name}
                   </span>
                 </Link>

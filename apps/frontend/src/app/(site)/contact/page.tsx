@@ -50,7 +50,7 @@ export default async function ContactPage() {
   ]);
 
   return (
-    <PageContainer className="py-12 sm:py-16">
+    <PageContainer className="py-10 sm:py-14">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbsLd) }} />
       <PageHeader
@@ -59,15 +59,15 @@ export default async function ContactPage() {
         description="Soru, teklif veya işbirliği için formu doldurun veya aşağıdaki kanallardan bize ulaşın."
       />
 
-      <div className="mt-10 grid items-stretch gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-10">
+      <div className="mt-8 grid items-stretch gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.12fr)] lg:gap-8">
         <div className="flex flex-col gap-4">
-          <div className="card-soft grid gap-4 p-6 sm:grid-cols-2 sm:p-7 lg:grid-cols-1">
+          <div className="si-page-card grid gap-5 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-1">
             {settings.contactPhone?.trim() ? (
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Telefon</p>
+                <p className="si-kicker !text-[10px]">Telefon</p>
                 <a
                   href={`tel:${settings.contactPhone.replace(/\s/g, "")}`}
-                  className="mt-1 block text-base font-semibold text-slate-900 hover:text-sky-700"
+                  className="mt-1 block text-base font-semibold text-slate-100 hover:text-sky-300"
                 >
                   {settings.contactPhone}
                 </a>
@@ -75,10 +75,10 @@ export default async function ContactPage() {
             ) : null}
             {settings.contactEmail?.trim() ? (
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">E-posta</p>
+                <p className="si-kicker !text-[10px]">E-posta</p>
                 <a
                   href={`mailto:${settings.contactEmail}`}
-                  className="mt-1 block break-all text-base font-semibold text-slate-900 hover:text-sky-700"
+                  className="mt-1 block break-all text-base font-semibold text-slate-100 hover:text-sky-300"
                 >
                   {settings.contactEmail}
                 </a>
@@ -86,15 +86,15 @@ export default async function ContactPage() {
             ) : null}
             {settings.address?.trim() ? (
               <div className="sm:col-span-2 lg:col-span-1">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Adres</p>
-                <p className="mt-1 text-sm leading-relaxed text-slate-700">{settings.address}</p>
+                <p className="si-kicker !text-[10px]">Adres</p>
+                <p className="si-body mt-1">{settings.address}</p>
               </div>
             ) : null}
           </div>
 
           {socialEntries.length > 0 ? (
-            <div className="card-soft p-6">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Sosyal medya</p>
+            <div className="si-page-card p-5 sm:p-6">
+              <p className="si-kicker !text-[10px]">Sosyal medya</p>
               <ul className="mt-3 flex flex-wrap gap-2">
                 {socialEntries.map(([key, url]) => (
                   <li key={key}>
@@ -102,7 +102,7 @@ export default async function ContactPage() {
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 transition-colors hover:border-sky-200 hover:text-sky-800"
+                      className="inline-flex rounded-full border border-white/12 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-sky-500/40 hover:text-sky-300"
                     >
                       {SOCIAL_LABELS[key] ?? key}
                     </a>
@@ -112,21 +112,21 @@ export default async function ContactPage() {
             </div>
           ) : null}
 
-          <div className="card-soft overflow-hidden">
-            <div className="relative aspect-[16/10] w-full bg-gradient-to-br from-slate-100 to-slate-200">
+          <div className="si-page-card overflow-hidden">
+            <div className="relative aspect-[16/10] w-full bg-gradient-to-br from-[#1a222e] to-[#121212]">
               <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Konum</p>
+                <p className="si-kicker !text-[10px]">Konum</p>
                 {settings.address?.trim() ? (
-                  <p className="mt-2 max-w-xs text-sm text-slate-700">{settings.address}</p>
+                  <p className="si-body mt-2 max-w-xs">{settings.address}</p>
                 ) : (
-                  <p className="mt-2 text-sm text-slate-600">Adres bilgisi ayarlardan eklenebilir.</p>
+                  <p className="si-body mt-2">Adres bilgisi ayarlardan eklenebilir.</p>
                 )}
                 {settings.address?.trim() ? (
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-4 text-sm font-semibold text-sky-700 hover:underline"
+                    className="mt-4 text-sm font-semibold text-sky-400 hover:text-sky-300"
                   >
                     Haritada aç
                   </a>
@@ -139,9 +139,9 @@ export default async function ContactPage() {
         <ContactForm />
       </div>
 
-      <p className="mt-8 text-center text-xs text-slate-500">
+      <p className="si-body mt-8 text-center text-xs">
         Mağaza politikaları için{" "}
-        <Link href="/kvkk" className="font-medium text-slate-700 hover:underline">
+        <Link href="/kvkk" className="font-medium text-sky-400/90 hover:text-sky-300 hover:underline">
           KVKK
         </Link>{" "}
         sayfasına göz atabilirsiniz.

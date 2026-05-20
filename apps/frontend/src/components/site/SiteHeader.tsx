@@ -453,7 +453,7 @@ export function SiteHeader({
           </div>
         </div>
 
-        <div className="hidden min-w-0 flex-1 items-center gap-3 md:flex md:contents">
+        <div className="hidden min-w-0 flex-1 items-center gap-4 md:flex">
           <Link
             href="/"
             className="relative z-20 flex shrink-0 flex-col justify-center outline-none focus-visible:ring-2 focus-visible:ring-sky-500/35 focus-visible:ring-offset-2"
@@ -467,7 +467,7 @@ export function SiteHeader({
                 "w-auto object-contain object-left transition-[height,max-height] duration-300",
                 headerCompact
                   ? "h-14 max-h-[4rem] max-w-[min(72vw,360px)] sm:h-16 sm:max-w-[400px] md:h-[4.25rem] md:max-w-[440px]"
-                  : "h-[4.25rem] max-h-[6rem] max-w-[min(82vw,420px)] sm:h-20 sm:max-w-[460px] md:h-[5.5rem] md:max-w-[500px] lg:h-[6rem] lg:max-w-[540px]",
+                  : "h-16 max-h-[4.5rem] max-w-[min(72vw,360px)] sm:h-[4.25rem] sm:max-w-[400px] md:h-[4.5rem] md:max-w-[440px] lg:h-[4.75rem] lg:max-w-[460px]",
               )}
             />
           </Link>

@@ -33,18 +33,20 @@ export function ContactForm() {
 
   if (done) {
     return (
-      <div className="card-soft flex h-full min-h-[280px] flex-col justify-center p-6 text-center sm:p-8">
-        <p className="text-lg font-semibold text-emerald-700">Mesajınız alındı</p>
-        <p className="mt-2 text-sm text-slate-600">En kısa sürede size dönüş yapacağız.</p>
+      <div className="si-page-card flex h-full min-h-[280px] flex-col justify-center p-6 text-center sm:p-8">
+        <p className="text-lg font-semibold text-emerald-400">Mesajınız alındı</p>
+        <p className="si-body mt-2">En kısa sürede size dönüş yapacağız.</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="card-soft flex h-full flex-col p-6 sm:p-8">
-      <div className="space-y-4">
+    <form onSubmit={submit} className="si-page-card flex h-full flex-col p-6 sm:p-8">
+      <h2 className="si-heading text-lg sm:text-xl">Mesaj gönderin</h2>
+      <p className="si-body mt-1 text-sm">Formu doldurun, en kısa sürede yanıtlayalım.</p>
+      <div className="mt-6 space-y-4">
         <div>
-          <label className="text-xs font-semibold uppercase tracking-widest text-slate-500" htmlFor="contact-name">
+          <label className="si-kicker !text-[10px]" htmlFor="contact-name">
             Ad Soyad
           </label>
           <input
@@ -61,7 +63,7 @@ export function ContactForm() {
           />
         </div>
         <div>
-          <label className="text-xs font-semibold uppercase tracking-widest text-slate-500" htmlFor="contact-email">
+          <label className="si-kicker !text-[10px]" htmlFor="contact-email">
             E-posta
           </label>
           <input
@@ -94,9 +96,11 @@ export function ContactForm() {
         </div>
       </div>
       {error ? (
-        <p className="mt-4 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+        <p className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
+          {error}
+        </p>
       ) : null}
-      <button type="submit" disabled={busy} className="btn-primary mt-6 w-full sm:w-auto">
+      <button type="submit" disabled={busy} className="si-btn-primary mt-6 w-full sm:w-auto">
         {busy ? "Gönderiliyor…" : "Gönder"}
       </button>
     </form>

@@ -56,13 +56,9 @@ export function HomeRetailSection({
           />
           <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6">
             <div className="fade-up min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500 sm:text-[11px]">
-                Sonuçlar
-              </p>
-              <h2 className="mt-1.5 text-2xl font-semibold tracking-tight text-slate-900 sm:mt-2 sm:text-3xl md:text-4xl">
-                {title}
-              </h2>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">
+              <p className="si-kicker">Sonuçlar</p>
+              <h2 className="si-heading mt-2 text-2xl sm:text-3xl">{title}</h2>
+              <p className="si-body mt-2 max-w-xl">
                 {`${products.length} ürün listeleniyor.`}
               </p>
             </div>
@@ -87,10 +83,9 @@ export function HomeRetailSection({
         )}
 
         {isEmpty ? (
-          <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/90 p-8 text-center">
-            <p className="text-base font-semibold text-slate-900">Henüz ürün eklenmedi</p>
-            <p className="mt-2 text-sm text-slate-600">Admin panelinden ürün ekleyip tekrar deneyin.</p>
-            <p className="mt-1 text-xs text-slate-500">Kategori ekleyin ve ürünleri kategorilere bağlayın.</p>
+          <div className="si-page-card mt-8 rounded-2xl border border-dashed p-8 text-center">
+            <p className="text-base font-semibold text-slate-100">Henüz ürün eklenmedi</p>
+            <p className="si-body mt-2">Admin panelinden ürün ekleyip tekrar deneyin.</p>
           </div>
         ) : null}
 
@@ -104,37 +99,30 @@ export function HomeRetailSection({
   }
 
   return (
-    <div className="home-retail bg-white">
-      <section id="urunler" className="mx-auto max-w-7xl px-4 py-16 sm:px-8 md:px-12 lg:px-16">
+    <div className="home-retail si-section">
+      <section id="urunler" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-neutral-500">
-            Öne çıkan
-          </p>
-          <h2 className="mt-3 text-2xl font-medium tracking-tight text-neutral-900 md:text-3xl">
-            Öne çıkan seri
-          </h2>
-          <p className="mx-auto mt-3 max-w-lg text-sm text-neutral-500">
+          <p className="si-kicker">Öne çıkan</p>
+          <h2 className="si-heading mt-2">Öne çıkan seri</h2>
+          <p className="si-body mx-auto mt-3 max-w-lg">
             Atölyemizde bastığımız ürünlerden seçtiklerimiz. Tüm modeller için{" "}
-            <Link href="/shop" className="font-medium text-neutral-800 underline-offset-2 hover:underline">
+            <Link href="/shop" className="font-medium text-sky-400/90 hover:text-sky-300 hover:underline">
               mağazaya
             </Link>{" "}
             göz atın.
           </p>
         </div>
 
-        <div className="mt-12">
+        <div className="mt-10 sm:mt-12">
           {isEmpty ? (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
-              <p className="text-xl font-semibold text-slate-900">Öne çıkan ürün yok</p>
-              <p className="mt-2 text-sm text-slate-600">
+            <div className="si-page-card rounded-2xl border border-dashed p-10 text-center">
+              <p className="text-lg font-semibold text-slate-100">Öne çıkan ürün yok</p>
+              <p className="si-body mt-2">
                 Bu alanda yalnızca ürün kartında «Öne çıkan» işaretli yayında ürünler gösterilir. İsterseniz{" "}
-                <Link href="/shop" className="font-medium text-slate-800 underline-offset-2 hover:underline">
+                <Link href="/shop" className="font-medium text-sky-400/90 hover:text-sky-300 hover:underline">
                   mağazadaki
                 </Link>{" "}
                 tüm modellere göz atın.
-              </p>
-              <p className="mt-2 text-xs text-slate-500">
-                Admin panelinde ürünü düzenleyip «Öne çıkan» kutusunu işaretleyin.
               </p>
             </div>
           ) : (

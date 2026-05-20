@@ -391,3 +391,57 @@
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
+
+/* İç sayfalar — hakkımızda, iletişim, yasal */
+.site-theme-stoneiron .si-page-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--si-bg-card);
+  color: var(--si-text);
+}
+
+.site-theme-stoneiron .si-page-cta {
+  border-radius: 1rem;
+  border: 1px solid rgba(126, 184, 212, 0.2);
+  background: linear-gradient(135deg, #1a2738 0%, #121a28 55%, #0f141c 100%);
+  color: #fff;
+}
+
+.site-theme-stoneiron .home-retail {
+  background: var(--si-bg);
+}
+
+.site-theme-stoneiron .home-retail .text-neutral-900,
+.site-theme-stoneiron .home-retail .text-neutral-800 {
+  color: #f1f5f9;
+}
+
+.site-theme-stoneiron .home-retail .text-neutral-500 {
+  color: #94a3b8;
+}
+
+.site-theme-stoneiron .home-retail .from-sky-50\/70 {
+  --tw-gradient-from: rgba(126, 184, 212, 0.08);
+}
+
+.site-theme-stoneiron .home-retail .border-dashed.border-slate-300 {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+@media (max-width: 639px) {
+  .site-theme-stoneiron .si-display {
+    font-size: 1.65rem;
+    max-width: 18ch;
+  }
+}
+
+.site-theme-stoneiron .si-product-card-media {
+  aspect-ratio: 1 / 1;
+}
+
+@media (min-width: 640px) {
+  .site-theme-stoneiron .si-product-card-media {
+    aspect-ratio: 4 / 5;
+  }
+}
