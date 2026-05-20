@@ -190,10 +190,7 @@ export function CustomerLoginForm({
             <label className="auth-field-label" htmlFor="login-password">
               Şifre
             </label>
-            <Link
-              href="/hesap/sifre-unuttum"
-              className="text-xs font-medium text-slate-600 underline decoration-slate-300 underline-offset-2 hover:text-slate-900"
-            >
+            <Link href="/hesap/sifre-unuttum" className="auth-footer-link text-xs font-medium">
               Şifremi unuttum
             </Link>
           </div>

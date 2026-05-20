@@ -23,7 +23,7 @@ export function AuthSplitShell({
   panelTitle = "Her adımda kalite.",
   panelSubtitle = "Hassas üretim ve zamansız tasarımı bir araya getiren seçkin ürünler, tek tıkla kapınızda.",
   panelImageUrl = null,
-  panelGradientFrom = "#1e293b",
+  panelGradientFrom = "#0f172a",
   panelGradientTo = "#020617",
   panelTextColor = "#ffffff",
 }: {
@@ -88,7 +88,7 @@ export function AuthSplitShell({
           <div className="relative z-10 flex flex-1 flex-col justify-between p-6 sm:p-8 lg:p-10">
             <p className="text-[10px] font-bold uppercase tracking-[0.24em] opacity-80">{siteName}</p>
             <div>
-              <p className="text-2xl font-semibold leading-tight tracking-tight sm:text-[1.65rem]">
+              <p className="font-[family-name:var(--font-playfair)] text-2xl font-semibold leading-tight tracking-tight sm:text-[1.65rem]">
                 {panelTitle}
               </p>
               <p className="mt-3 max-w-sm text-sm leading-relaxed opacity-90 sm:text-[0.9375rem]">
@@ -109,16 +109,12 @@ export function AuthSplitShell({
           </div>
         </aside>
 
-        <div className="auth-shell-form border-t border-slate-100 lg:border-l lg:border-t-0">
+        <div className="auth-shell-form border-t border-white/10 lg:border-l lg:border-t-0">
           <div className="auth-shell-form-inner">
             <header className="shrink-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 lg:hidden">
-                {siteName}
-              </p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">
-                {title}
-              </h1>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{subtitle}</p>
+              <p className="si-kicker lg:hidden">{siteName}</p>
+              <h1 className="si-heading mt-2 text-2xl sm:text-[1.75rem]">{title}</h1>
+              <p className="si-body mt-2">{subtitle}</p>
             </header>
 
             <div className={compactForm ? "auth-shell-form-scroll mt-5" : "mt-6 sm:mt-8"}>
@@ -134,7 +130,7 @@ export function AuthSplitShell({
             </div>
 
             {bottomAccessory ? (
-              <footer className="shrink-0 border-t border-slate-100 pt-5 text-center text-sm text-slate-600">
+              <footer className="shrink-0 border-t border-white/10 pt-5 text-center text-sm text-slate-400">
                 {bottomAccessory}
               </footer>
             ) : null}

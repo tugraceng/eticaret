@@ -78,7 +78,7 @@ export function ShopCatalogGrid({
           )}
         </ul>
       ) : (
-        <ul className="mt-2 grid items-stretch gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+        <ul className="mt-2 grid auto-rows-fr grid-cols-2 gap-4 md:gap-5 lg:grid-cols-3 xl:grid-cols-4">
           {items.length === 0 ? (
             <li className="col-span-full rounded-ds-xl border border-dashed border-[var(--ds-border)] bg-[var(--ds-surface-muted)] p-10 text-center text-small text-[var(--ds-text-muted)]">
               {emptyCopy}
@@ -86,7 +86,7 @@ export function ShopCatalogGrid({
           ) : (
             items.map((p) => (
               <li key={p.id} className="flex h-full min-h-0">
-                <ProductCard product={p} />
+                <ProductCard product={p} showCategory={!hasActiveFilters} />
               </li>
             ))
           )}

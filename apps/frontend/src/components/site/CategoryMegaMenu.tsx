@@ -14,7 +14,7 @@ type Props = {
   onMouseLeavePanel: () => void;
 };
 
-/** Masaüstü kategori mega menü — sol ana kategori şeridi, sağ alt kategoriler. */
+/** Masaüstü kategori mega menü — koyu tema */
 export function CategoryMegaMenu({
   categories,
   activeCategory,
@@ -25,13 +25,13 @@ export function CategoryMegaMenu({
 }: Props) {
   return (
     <div
-      className="absolute inset-x-0 top-full z-[80] -mt-px border-t border-slate-200/90 bg-white shadow-[0_28px_56px_-24px_rgba(15,23,42,0.22)]"
+      className="si-mega-menu absolute inset-x-0 top-full z-[80] -mt-px border-t border-white/10 bg-[#0c111b] shadow-[0_28px_56px_-20px_rgba(0,0,0,0.65)]"
       onMouseEnter={onMouseEnterPanel}
       onMouseLeave={onMouseLeavePanel}
     >
       <div className={cn(siteContainerClass, "py-6")}>
         <div className="flex min-h-[11rem] gap-0 md:gap-2">
-          <ul className="hidden w-52 shrink-0 flex-col border-r border-slate-200/90 pr-4 md:flex">
+          <ul className="hidden w-52 shrink-0 flex-col border-r border-white/10 pr-4 md:flex">
             {categories.map((cat) => {
               const selected = activeCategoryId === cat.id;
               return (
@@ -44,8 +44,8 @@ export function CategoryMegaMenu({
                     className={cn(
                       "block rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors duration-200",
                       selected
-                        ? "bg-sky-50 text-sky-900"
-                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-900",
+                        ? "bg-sky-500/15 text-sky-300"
+                        : "text-slate-300 hover:bg-white/6 hover:text-white",
                     )}
                   >
                     {cat.name}
@@ -55,18 +55,18 @@ export function CategoryMegaMenu({
             })}
           </ul>
           <div className="min-w-0 flex-1 md:pl-6">
-            <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200/90 pb-4">
+            <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
                   Kategori
                 </p>
-                <p className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
+                <p className="mt-1 font-[family-name:var(--font-playfair)] text-lg font-semibold tracking-tight text-white">
                   {activeCategory.name}
                 </p>
               </div>
               <Link
                 href={shopCategoryHref(activeCategory.id)}
-                className="shrink-0 text-xs font-semibold uppercase tracking-wider text-sky-700 transition-colors hover:text-sky-900"
+                className="shrink-0 text-xs font-semibold uppercase tracking-wider text-sky-400 transition-colors hover:text-sky-300"
               >
                 Tümünü gör →
               </Link>
@@ -83,7 +83,7 @@ export function CategoryMegaMenu({
                 <li key={sub.id}>
                   <Link
                     href={shopCategoryHref(sub.id)}
-                    className="flex min-h-[2.75rem] items-center rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 shadow-sm transition-[border-color,box-shadow,background-color] duration-200 hover:border-sky-200/90 hover:bg-sky-50/40 hover:shadow-md"
+                    className="flex min-h-[2.75rem] items-center rounded-xl border border-white/10 bg-[#121a28] px-4 py-2.5 text-sm font-medium text-slate-200 transition-[border-color,background-color,box-shadow] duration-200 hover:border-sky-500/35 hover:bg-sky-500/10 hover:text-white"
                   >
                     {sub.name}
                   </Link>
@@ -92,7 +92,7 @@ export function CategoryMegaMenu({
             </ul>
           </div>
         </div>
-        </div>
+      </div>
     </div>
   );
 }

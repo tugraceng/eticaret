@@ -39,30 +39,40 @@ export const ProductInlineCartQty = memo(function ProductInlineCartQty({
   const btnBase =
     "flex h-10 w-10 shrink-0 items-center justify-center text-lg font-medium leading-none text-slate-700 transition-colors hover:bg-slate-100 active:bg-slate-200 disabled:pointer-events-none disabled:opacity-40";
 
-  if (qty <= 0) {
-    if (variant === "icon") {
-      return (
-        <button
-          type="button"
-          className={cn(
-            "grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#5a9cb8] text-white shadow-sm transition hover:bg-[#7eb8d4]",
-            className,
-          )}
-          aria-label="Sepete ekle"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+  if (variant === "icon") {
+    return (
+      <button
+        type="button"
+        className={cn(
+          "relative grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#5a9cb8] text-white shadow-sm transition hover:bg-[#7eb8d4]",
+          className,
+        )}
+        aria-label={qty > 0 ? `Sepette ${qty} adet` : "Sepete ekle"}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (qty <= 0) {
             addLine({ productId, quantity: 1, title, priceCents, slug, imageUrl });
-          }}
-        >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <path d="M3 4h2l2.4 12.3a2 2 0 0 0 2 1.7h8.2a2 2 0 0 0 2-1.5L21 8H6" strokeLinecap="round" />
-            <circle cx="10" cy="20" r="1.5" />
-            <circle cx="17" cy="20" r="1.5" />
-          </svg>
-        </button>
-      );
-    }
+          } else {
+            useCartStore.getState().openMiniCart();
+          }
+        }}
+      >
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+          <path d="M3 4h2l2.4 12.3a2 2 0 0 0 2 1.7h8.2a2 2 0 0 0 2-1.5L21 8H6" strokeLinecap="round" />
+          <circle cx="10" cy="20" r="1.5" />
+          <circle cx="17" cy="20" r="1.5" />
+        </svg>
+        {qty > 0 ? (
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-white px-0.5 text-[10px] font-bold text-slate-900">
+            {qty > 99 ? "99+" : qty}
+          </span>
+        ) : null}
+      </button>
+    );
+  }
+
+  if (qty <= 0) {
     return (
       <Button
         type="button"

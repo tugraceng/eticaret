@@ -64,9 +64,11 @@ export function HomeProductRail({ title, href, products, subtitle }: Props) {
         {products.map((p) => (
           <li
             key={p.id}
-            className="w-[min(72vw,220px)] shrink-0 snap-start sm:w-[200px] md:w-[220px] lg:w-[240px]"
+            className="flex w-[min(72vw,220px)] shrink-0 snap-start sm:w-[200px] md:w-[220px] lg:w-[240px]"
           >
-            <ProductCard product={p} />
+            <div className="flex h-full min-h-[22rem] w-full sm:min-h-[24rem]">
+              <ProductCard product={p} />
+            </div>
           </li>
         ))}
       </ul>

@@ -322,9 +322,9 @@ export default async function ProductPage({
                 </Link>
               )}
             </div>
-            <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <ul className="mt-8 grid auto-rows-fr grid-cols-2 gap-4 md:gap-5 lg:grid-cols-3 xl:grid-cols-4">
               {related.slice(0, 8).map((p, i) => (
-                <li key={p.id} className="fade-up flex h-full min-h-0" style={{ animationDelay: `${i * 40}ms` }}>
+                <li key={p.id} className="fade-up flex min-h-0" style={{ animationDelay: `${i * 40}ms` }}>
                   <ProductCard product={p} />
                 </li>
               ))}

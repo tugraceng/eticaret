@@ -65,28 +65,34 @@ export function RecentlyViewedRail() {
   if (!show) return null;
 
   return (
-    <section className="mx-auto mt-16 w-full max-w-7xl border-t border-slate-200 px-4 pt-10 sm:px-6">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-            Son görüntülenenler
-          </p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-            Kaldığınız yerden devam edin
-          </h2>
+    <section className="si-section-alt border-t border-white/[0.06]">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="si-kicker">Son görüntülenenler</p>
+            <h2 className="si-heading mt-2 text-xl sm:text-2xl">Kaldığınız yerden devam edin</h2>
+          </div>
+          <Link
+            href="/shop"
+            className="hidden shrink-0 text-sm font-semibold text-sky-400/90 hover:text-sky-300 sm:inline-flex"
+          >
+            Tüm ürünler →
+          </Link>
         </div>
-        <Link href="/shop" className="hidden text-sm font-semibold text-slate-700 hover:text-slate-900 sm:inline-flex">
+        <ul className="mt-6 grid auto-rows-fr grid-cols-2 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-4">
+          {items.slice(0, 8).map((p) => (
+            <li key={p.id} className="flex min-h-0">
+              <ProductCard product={p} />
+            </li>
+          ))}
+        </ul>
+        <Link
+          href="/shop"
+          className="mt-4 inline-flex text-sm font-semibold text-sky-400/90 hover:text-sky-300 sm:hidden"
+        >
           Tüm ürünler →
         </Link>
       </div>
-      <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {items.slice(0, 8).map((p) => (
-          <li key={p.id} className="flex h-full min-h-0">
-            <ProductCard product={p} />
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }
-

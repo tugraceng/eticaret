@@ -284,28 +284,28 @@ export function CustomerRegisterForm({
           </div>
         </div>
 
-        <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
-          <label className="flex items-start gap-3 text-sm text-slate-700">
+        <div className="auth-consent-box space-y-2">
+          <label className="flex items-start gap-3 text-sm">
             <input
               type="checkbox"
               checked={kvkk}
               onChange={(e) => setKvkk(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300"
+              className="mt-0.5 h-4 w-4 rounded border-white/20 bg-[#0a0f18] accent-sky-500"
               required
             />
             <span>
-              <Link href="/kvkk" target="_blank" className="link-underline font-semibold text-slate-900">
+              <Link href="/kvkk" target="_blank" className="auth-footer-link">
                 KVKK Aydınlatma Metni
               </Link>
               &apos;ni okudum ve kişisel verilerimin işlenmesini kabul ediyorum. *
             </span>
           </label>
-          <label className="flex items-start gap-3 text-sm text-slate-700">
+          <label className="flex items-start gap-3 text-sm">
             <input
               type="checkbox"
               checked={marketing}
               onChange={(e) => setMarketing(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300"
+              className="mt-0.5 h-4 w-4 rounded border-white/20 bg-[#0a0f18] accent-sky-500"
             />
             <span>Kampanya ve fırsatlardan e-posta/SMS ile haberdar olmak istiyorum (opsiyonel).</span>
           </label>

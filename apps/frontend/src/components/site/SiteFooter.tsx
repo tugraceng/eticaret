@@ -168,14 +168,6 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
 
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-7">
 
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-400/90">
-
-                Engineered for Precision
-
-              </p>
-
-              <p className="mt-1 text-xs text-slate-500">Crafted Layer by Layer</p>
-
               <Link
 
                 href="/"

@@ -14,6 +14,7 @@ import {
 } from "react";
 import { SiteHeaderSearch } from "@/components/site/SiteHeaderSearch";
 import { CategoryMegaMenu } from "@/components/site/CategoryMegaMenu";
+import { MobileSiteNavDrawer } from "@/components/site/MobileSiteNavDrawer";
 import { SiteNavTab } from "@/components/site/SiteNavTab";
 import { shopCategoryHref, type HeaderNavCategory } from "@/lib/category-nav";
 import { parseHeaderNav, type HeaderNavLink } from "@/lib/header-nav";
@@ -409,7 +410,7 @@ export function SiteHeader({
         )}
       >
         {/* Mobil: hamburger — logo ortada — sepet + hesap */}
-        <div className="relative flex min-h-[3rem] w-full items-center justify-between md:hidden">
+        <div className="relative z-[62] flex min-h-[3rem] w-full items-center justify-between md:hidden">
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
@@ -607,7 +608,7 @@ export function SiteHeader({
                     <DownIcon
                       className={cn(
                         "h-3 w-3 shrink-0 text-slate-400 transition-transform duration-200 ease-out",
-                        megaOpen ? "-rotate-180 text-sky-600" : "group-hover:text-slate-600",
+                        megaOpen ? "-rotate-180 text-sky-400" : "group-hover:text-sky-300",
                       )}
                     />
                   ) : null}
@@ -654,36 +655,7 @@ export function SiteHeader({
         ) : null}
       </nav>
 
-      {open ? (
-        <button
-          type="button"
-          className="fixed inset-0 z-[60] bg-black/65 backdrop-blur-[2px] md:hidden"
-          aria-label="Menüyü kapat"
-          onClick={() => setOpen(false)}
-        />
-      ) : null}
-
-      <aside
-        id="mobile-nav-drawer"
-        className={cn(
-          "si-mobile-drawer fixed inset-y-0 right-0 z-[61] flex w-[min(88vw,20rem)] flex-col border-l border-white/10 bg-[#0f141c] shadow-2xl transition-transform duration-300 ease-out md:hidden",
-          open ? "translate-x-0" : "pointer-events-none translate-x-full",
-        )}
-        aria-hidden={!open}
-        aria-label="Site menüsü"
-      >
-        <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
-          <p className="font-[family-name:var(--font-playfair)] text-lg font-semibold text-white">Menü</p>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="grid h-10 w-10 place-items-center rounded-lg text-slate-400 hover:bg-white/8 hover:text-white"
-            aria-label="Kapat"
-          >
-            <MenuIcon open className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="flex flex-1 flex-col gap-1 overflow-y-auto overscroll-y-contain px-4 py-4 [-webkit-overflow-scrolling:touch]">
+      <MobileSiteNavDrawer open={open} onClose={() => setOpen(false)}>
             <Link
               href="/shop"
               className="rounded-lg px-3 py-3 font-[family-name:var(--font-playfair)] text-lg text-slate-100 hover:bg-white/6"
@@ -803,8 +775,7 @@ export function SiteHeader({
                 {item.label}
               </Link>
             ))}
-        </div>
-      </aside>
+      </MobileSiteNavDrawer>
     </header>
   );
 }

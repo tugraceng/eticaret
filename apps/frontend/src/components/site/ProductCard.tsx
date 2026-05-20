@@ -21,6 +21,12 @@ export type ProductCardData = {
   isNew?: boolean;
 };
 
+type ProductCardProps = {
+  product: ProductCardData;
+  /** Kategori sayfasında tekrarlayan etiket gösterme */
+  showCategory?: boolean;
+};
+
 function Stars({ value }: { value: number }) {
   const rounded = Math.round(value * 2) / 2;
   const nodes = [] as JSX.Element[];
@@ -51,7 +57,7 @@ function priceFmt(cents: number) {
   return (cents / 100).toLocaleString("tr-TR", { style: "currency", currency: "TRY" });
 }
 
-function ProductCardInner({ product }: { product: ProductCardData }) {
+function ProductCardInner({ product, showCategory = false }: ProductCardProps) {
   const cover = apiAssetUrl(product.images?.[0]?.url) ?? undefined;
   const second = apiAssetUrl(product.images?.[1]?.url) ?? undefined;
   const alt = product.images?.[0]?.alt ?? product.name;
@@ -61,9 +67,40 @@ function ProductCardInner({ product }: { product: ProductCardData }) {
   const discount = onSale
     ? Math.round(((product.compareAtCents! - product.priceCents) / product.compareAtCents!) * 100)
     : 0;
+  const hasReviews = typeof product.reviewCount === "number" && product.reviewCount > 0;
+
+  const badges: { key: string; node: JSX.Element }[] = [];
+  if (onSale) {
+    badges.push({
+      key: "sale",
+      node: (
+        <span className="rounded bg-rose-600/90 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
+          %{discount}
+        </span>
+      ),
+    });
+  } else if (product.isNew) {
+    badges.push({
+      key: "new",
+      node: (
+        <span className="rounded border border-emerald-500/35 bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase text-emerald-200">
+          Yeni
+        </span>
+      ),
+    });
+  } else if (product.isFeatured) {
+    badges.push({
+      key: "feat",
+      node: (
+        <span className="rounded border border-amber-500/35 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-200">
+          Öne çıkan
+        </span>
+      ),
+    });
+  }
 
   return (
-    <div className="si-product-card group fade-up relative">
+    <div className="si-product-card group fade-up relative flex h-full w-full flex-col">
       <Link
         prefetch={false}
         href={`/shop/${product.slug}`}
@@ -71,8 +108,8 @@ function ProductCardInner({ product }: { product: ProductCardData }) {
         aria-label={`${product.name} — ürüne git`}
       />
 
-      <div className="pointer-events-none relative z-[2] flex min-h-0 flex-1 flex-col">
-        <div className="si-product-card-media">
+      <div className="relative z-[2] flex min-h-0 flex-1 flex-col">
+        <div className="si-product-card-media shrink-0">
           {second ? (
             <div className="absolute inset-0 z-[1]" role="img" aria-hidden>
               <Image
@@ -81,7 +118,7 @@ function ProductCardInner({ product }: { product: ProductCardData }) {
                 fill
                 quality={55}
                 className="object-cover object-center opacity-0 transition-all duration-500 ease-out group-hover:scale-[1.03] group-hover:opacity-100"
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               />
             </div>
           ) : null}
@@ -100,7 +137,7 @@ function ProductCardInner({ product }: { product: ProductCardData }) {
                 fill
                 quality={80}
                 className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               />
             </div>
           ) : (
@@ -109,31 +146,21 @@ function ProductCardInner({ product }: { product: ProductCardData }) {
             </div>
           )}
 
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-1/3 bg-gradient-to-t from-[#141d2e] to-transparent opacity-80" />
+          {badges.length > 0 ? (
+            <div className="absolute left-2.5 top-2.5 z-[4] flex max-w-[calc(100%-3.5rem)] flex-wrap gap-1">
+              {badges.map((b) => (
+                <span key={b.key}>{b.node}</span>
+              ))}
+            </div>
+          ) : null}
 
-          <div className="absolute left-3 top-3 z-[4] flex max-w-[70%] flex-col gap-1.5">
-            {onSale ? (
-              <span className="w-fit rounded-md bg-rose-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                %{discount}
-              </span>
-            ) : null}
-            {product.isFeatured ? (
-              <span className="w-fit rounded-md border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-200">
-                Öne çıkan
-              </span>
-            ) : null}
-            {product.isNew ? (
-              <span className="w-fit rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-200">
-                Yeni
-              </span>
-            ) : null}
-          </div>
-          {product.category ? (
-            <span className="absolute right-3 top-3 z-[4] rounded-md border border-white/10 bg-black/40 px-2 py-0.5 text-[10px] font-medium text-slate-300 backdrop-blur-sm">
+          {showCategory && product.category ? (
+            <span className="absolute right-2.5 top-2.5 z-[4] max-w-[45%] truncate rounded border border-white/10 bg-black/50 px-1.5 py-0.5 text-[9px] font-medium text-slate-300 backdrop-blur-sm">
               {product.category.name}
             </span>
           ) : null}
-          <div className="pointer-events-auto absolute bottom-3 right-3 z-[5]">
+
+          <div className="pointer-events-auto absolute bottom-2.5 right-2.5 z-[5]">
             <WishlistButton
               productId={product.id}
               slug={product.slug}
@@ -145,26 +172,33 @@ function ProductCardInner({ product }: { product: ProductCardData }) {
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
-          <p className="si-product-name line-clamp-2 transition-colors group-hover:text-white">
-            {product.name}
-          </p>
-          {typeof product.reviewCount === "number" && product.reviewCount > 0 ? (
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
-              <Stars value={product.avgRating ?? 0} />
-              <span>
-                {(product.avgRating ?? 0).toFixed(1)} ({product.reviewCount})
-              </span>
-            </div>
-          ) : (
-            <div className="mt-2 min-h-[1.25rem]" aria-hidden />
-          )}
-          <div className="mt-auto flex shrink-0 items-end justify-between gap-3 border-t border-white/[0.06] pt-4">
-            <div>
-              <p className="si-price">{priceFmt(product.priceCents)}</p>
-              {onSale ? (
-                <p className="text-xs text-slate-500 line-through">{priceFmt(product.compareAtCents!)}</p>
-              ) : null}
+        <div className="si-product-card-body flex min-h-0 flex-1 flex-col p-4">
+          <p className="si-product-name line-clamp-2 min-h-[2.75rem]">{product.name}</p>
+
+          <div className="mt-2 flex h-5 items-center gap-1.5">
+            {hasReviews ? (
+              <>
+                <Stars value={product.avgRating ?? 0} />
+                <span className="text-xs text-slate-500">
+                  {(product.avgRating ?? 0).toFixed(1)}
+                </span>
+              </>
+            ) : (
+              <span className="block h-5" aria-hidden />
+            )}
+          </div>
+
+          <div className="si-product-card-footer mt-auto flex h-12 shrink-0 items-center justify-between gap-2 border-t border-white/[0.06] pt-3">
+            <div className="min-h-[2.5rem] min-w-0">
+              <p className="si-price leading-tight">{priceFmt(product.priceCents)}</p>
+              <p
+                className={cn(
+                  "text-xs leading-tight text-slate-500 line-through",
+                  onSale ? "visible" : "invisible",
+                )}
+              >
+                {onSale ? priceFmt(product.compareAtCents!) : "—"}
+              </p>
             </div>
             <div className="pointer-events-auto relative z-[6] shrink-0">
               <ProductCardAddToCart

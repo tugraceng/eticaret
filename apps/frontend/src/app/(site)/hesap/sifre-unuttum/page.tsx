@@ -36,21 +36,17 @@ export default function ForgotPasswordPage() {
 
   return (
     <PageContainer width="narrow" className="py-10 sm:py-12">
-      <div className="fade-up section-shell text-center">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-          Hesabım
-        </p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-900">
-          Şifremi unuttum
-        </h1>
-        <p className="mt-2 text-sm text-slate-600">
+      <div className="fade-up si-page-card text-center">
+        <p className="si-kicker">Hesabım</p>
+        <h1 className="si-heading mt-2 text-3xl sm:text-4xl">Şifremi unuttum</h1>
+        <p className="si-body mt-2">
           E-posta adresinizi girin, size bir sıfırlama bağlantısı gönderelim.
         </p>
       </div>
 
       {done ? (
-        <div className="surface-soft mt-10 space-y-4 p-6 text-sm text-slate-700">
-          <p className="font-semibold text-emerald-700">
+        <div className="si-page-card mt-10 space-y-4 p-6 text-sm">
+          <p className="font-semibold text-emerald-400">
             Eğer bu e-posta kayıtlıysa, sıfırlama bağlantısı gönderildi.
           </p>
           <p>Lütfen gelen kutunuzu (ve spam klasörünüzü) kontrol edin.</p>
@@ -67,31 +63,28 @@ export default function ForgotPasswordPage() {
           </Link>
         </div>
       ) : (
-        <form onSubmit={submit} className="surface-soft mt-10 space-y-4 p-6 sm:p-7">
+        <form onSubmit={submit} className="si-page-card mt-10 space-y-4 p-6 sm:p-7">
           <div>
-            <label className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+            <label className="auth-field-label" htmlFor="forgot-email">
               E-posta
             </label>
             <input
+              id="forgot-email"
               type="email"
-              className="input-soft mt-2"
+              className="auth-field-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               required
             />
           </div>
-          {error && (
-            <pre className="max-h-32 overflow-auto rounded-xl bg-rose-50 p-3 text-xs text-rose-700">
-              {error}
-            </pre>
-          )}
-          <button type="submit" disabled={busy} className="btn-primary w-full disabled:opacity-50">
+          {error ? <p className="auth-error whitespace-pre-wrap">{error}</p> : null}
+          <button type="submit" disabled={busy} className="auth-btn-primary">
             {busy ? "Gönderiliyor…" : "Bağlantı gönder"}
           </button>
-          <p className="text-center text-sm text-slate-600">
+          <p className="text-center text-sm text-slate-400">
             Hatırladınız mı?{" "}
-            <Link href="/hesap/giris" className="link-underline font-semibold text-slate-900">
+            <Link href="/hesap/giris" className="auth-footer-link">
               Giriş yapın
             </Link>
           </p>

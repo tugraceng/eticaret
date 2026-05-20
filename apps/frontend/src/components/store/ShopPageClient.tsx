@@ -159,13 +159,13 @@ export function ShopPageClient({
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-      <header className="mb-6 flex flex-col gap-4 lg:mb-10 lg:gap-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+      <header className="si-page-card mb-6 p-5 sm:p-6 lg:mb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
           <div className="min-w-0">
-            <h1 className="text-h1 text-[var(--ds-text)] md:text-display md:text-4xl">{title}</h1>
-            <p className="mt-2 text-body text-[var(--ds-text-muted)]">{`${catalog.total} ürün bulundu`}</p>
+            <h1 className="si-heading text-2xl sm:text-3xl">{title}</h1>
+            <p className="mt-1.5 text-sm text-slate-400">{catalog.total} ürün</p>
           </div>
-          <div className="hidden w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center lg:flex lg:max-w-2xl">
+          <div className="flex w-full min-w-0 flex-col gap-2 sm:max-w-md sm:flex-row sm:items-center">
             <div className="min-w-0 flex-1">
               <ShopToolbar />
             </div>
@@ -173,11 +173,7 @@ export function ShopPageClient({
           </div>
         </div>
 
-        <div className="w-full min-w-0 lg:hidden">
-          <ShopToolbar />
-        </div>
-
-        <div className="flex w-full flex-wrap items-stretch gap-2 lg:hidden">
+        <div className="mt-3 flex w-full flex-wrap items-stretch gap-2 lg:hidden">
           <div className="min-w-0 min-h-11 flex-1 basis-[min(100%,11rem)]">
             <ViewToggle view={view} />
           </div>

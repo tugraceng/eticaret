@@ -205,9 +205,9 @@ async function FeaturedProducts({ section }: { section: HomeSection }) {
         <SectionHeading subtitle={section.subtitle} title={section.title ?? "Öne çıkan ürünler"} />
         {ctaButton(section, "ghost")}
       </div>
-      <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-10 grid auto-rows-fr grid-cols-2 gap-4 md:gap-5 lg:grid-cols-3">
         {products.map((p) => (
-          <li key={p.id} className="flex h-full min-h-0">
+          <li key={p.id} className="flex min-h-0">
             <ProductCard product={p} />
           </li>
         ))}
