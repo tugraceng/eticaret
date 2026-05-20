@@ -397,11 +397,11 @@ function CTA({ section }: { section: HomeSection }) {
         }}
       >
         <div
-          className="absolute -left-16 -top-16 h-64 w-64 rounded-full bg-white/20 blur-3xl"
+          className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-white/[0.06] blur-2xl"
           aria-hidden
         />
         <div
-          className="absolute -bottom-16 -right-10 h-72 w-72 rounded-full bg-black/20 blur-3xl"
+          className="absolute -bottom-16 -right-10 h-56 w-56 rounded-full bg-black/15 blur-2xl"
           aria-hidden
         />
         <div className="relative flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">

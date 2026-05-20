@@ -8,6 +8,7 @@ import { HomeHeroBackdrop } from "@/components/home/HomeHeroBackdrop";
 import { apiAssetUrl } from "@/lib/api";
 import type { HomeSection, SiteSettings } from "@/lib/settings";
 import { defaultHeroSlides, parseHeroSlides, type HomeHeroSlide } from "@/components/home/homeHeroDefaults";
+import { DEFAULT_HERO_IMAGE_DISPLAY } from "@/components/home/homeHeroImage";
 import { HomeHeroTitle } from "@/components/home/HomeHeroTitle";
 import {
   heroContentLayoutClass,
@@ -35,21 +36,24 @@ export function HomeCmsHero({ section, settings }: Props) {
     if (hasHeroFields) {
       return [
         {
-          eyebrow: section.subtitle?.trim() ?? "",
+          eyebrow: section.subtitle?.trim() ?? "StoneIron3D",
           title: section.title?.trim() || settings.siteName,
-          body: "",
+          body:
+            section.body?.trim() ||
+            "Engineered layer by layer — modern collectibles for desk, gift and display.",
           cta: section.ctaHref?.trim() || "/shop",
           ctaLabel: section.ctaLabel?.trim() || "Koleksiyonu keşfet",
-          secondaryHref: "/contact",
-          secondaryLabel: "Özel sipariş",
+          secondaryHref: "/about",
+          secondaryLabel: "Atölye hikayesi",
           image: apiAssetUrl(section.mediaUrl) ?? "",
-          imageFit: "contain_blur",
-          imagePosition: "center center",
-          imagePositionMobile: "center center",
+          ...DEFAULT_HERO_IMAGE_DISPLAY,
         },
       ];
     }
-    return defaultHeroSlides(settings).map((s) => ({ ...s, body: "" }));
+    return defaultHeroSlides(settings).map((s) => ({
+      ...s,
+      image: apiAssetUrl(s.image) ?? s.image,
+    }));
   }, [section, settings]);
 
   const [index, setIndex] = useState(0);
@@ -72,20 +76,16 @@ export function HomeCmsHero({ section, settings }: Props) {
   const goPrev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
   const goNext = () => setIndex((i) => (i + 1) % slides.length);
   const eyebrow = active.eyebrow?.trim();
+  const tagline = active.body?.trim();
 
   return (
     <section
-      className={`relative isolate flex w-full flex-col overflow-hidden bg-[#121212] ${heroSectionMinHeightClass}`}
+      className={`si-hero relative isolate flex w-full flex-col overflow-hidden bg-[#0c0e12] ${heroSectionMinHeightClass}`}
       aria-label="Ana vitrin"
     >
       <div className={heroVisualPanelClass}>
         <HomeHeroBackdrop slides={slides} index={index} />
       </div>
-
-      <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#121212]/40 via-transparent to-[#121212]/80 lg:bg-gradient-to-r lg:from-[#121212] lg:via-[#121212]/50 lg:to-transparent"
-        aria-hidden
-      />
 
       <HomeHeroArrows visible={slides.length > 1} onPrev={goPrev} onNext={goNext} />
 
@@ -94,26 +94,26 @@ export function HomeCmsHero({ section, settings }: Props) {
           <motion.div
             key={index}
             className={heroContentLayoutClass}
-            initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+            initial={reduceMotion ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.5, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
           >
             {eyebrow ? <p className="si-kicker mb-3">{eyebrow}</p> : null}
 
-            <h1 className="si-display max-w-[13ch]">
+            <h1 className="si-display max-w-[14ch] text-balance">
               <HomeHeroTitle title={active.title} />
             </h1>
 
-            <div className="si-hero-cta mt-6 flex w-full max-w-sm flex-col gap-3 sm:mt-8 lg:max-w-md">
+            {tagline ? (
+              <p className="si-hero-tagline mt-4 max-w-md">{tagline}</p>
+            ) : null}
+
+            <div className="si-hero-cta mt-6 flex w-full max-w-sm flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
               <Link href={active.cta} className="si-btn-primary w-full sm:w-auto">
                 {active.ctaLabel}
               </Link>
-              <Link
-                href={active.secondaryHref}
-                className="text-sm font-semibold text-slate-400 transition hover:text-sky-300"
-              >
+              <Link href={active.secondaryHref} className="si-btn-ghost w-full sm:w-auto">
                 {active.secondaryLabel}
-                <span aria-hidden> →</span>
               </Link>
             </div>
 
@@ -127,14 +127,15 @@ export function HomeCmsHero({ section, settings }: Props) {
                     onClick={() => setIndex(i)}
                     aria-label={`Slayt ${i + 1}`}
                     aria-selected={i === index}
-                    className={`h-1 rounded-full transition-all duration-500 ${
-                      i === index ? "w-8 bg-sky-400" : "w-5 bg-white/20 hover:bg-white/35"
+                    className={`h-0.5 rounded-full transition-all duration-500 ${
+                      i === index ? "w-8 bg-white/80" : "w-5 bg-white/25 hover:bg-white/40"
                     }`}
                   />
                 ))}
               </div>
             ) : null}
           </motion.div>
+          <div className="hidden min-h-[12rem] lg:block" aria-hidden />
         </div>
       </div>
     </section>

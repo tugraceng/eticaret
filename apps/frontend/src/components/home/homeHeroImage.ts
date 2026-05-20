@@ -16,18 +16,21 @@ export type HeroImageDisplay = {
   imageFit: HeroImageFit;
   imagePosition: HeroImagePosition;
   imagePositionMobile: HeroImagePosition | null;
-  /** 0–100 — metin okunabilirliği gradient (varsayılan 72) */
+  /** 0–100 — metin okunabilirliği gradient (varsayılan 58) */
   overlayStrength?: number;
-  /** contain_blur arka plan blur ölçeği % (100–140, varsayılan 110) */
+  /** contain_blur arka plan blur ölçeği % (100–130, varsayılan 105) */
   backgroundBlurScale?: number;
+  /** contain_blur arka plan parlaklığı % (20–80, varsayılan 52) */
+  heroBrightness?: number;
 };
 
 export const DEFAULT_HERO_IMAGE_DISPLAY: HeroImageDisplay = {
-  imageFit: "cover",
+  imageFit: "contain",
   imagePosition: "center center",
   imagePositionMobile: null,
-  overlayStrength: 72,
-  backgroundBlurScale: 110,
+  overlayStrength: 58,
+  backgroundBlurScale: 105,
+  heroBrightness: 52,
 };
 
 function clampInt(raw: unknown, min: number, max: number, fallback: number): number {
@@ -67,16 +70,18 @@ export function parseHeroImageDisplay(o: Record<string, unknown> | null | undefi
     backgroundBlurScale: clampInt(
       o.hero_background_blur ?? o.backgroundBlurScale ?? o.background_blur,
       100,
-      140,
+      130,
       DEFAULT_HERO_IMAGE_DISPLAY.backgroundBlurScale!,
+    ),
+    heroBrightness: clampInt(
+      o.hero_brightness ?? o.heroBrightness ?? o.brightness,
+      20,
+      80,
+      DEFAULT_HERO_IMAGE_DISPLAY.heroBrightness!,
     ),
   };
 }
 
-/**
- * Tailwind arbitrary object-position sınıfları build’de üretilmediği için
- * masaüstünde konum uygulanmıyordu — CSS değişkenleri kullanın (hero-image-position-host).
- */
 export function heroImagePositionVars(
   desktop: HeroImagePosition,
   mobile: HeroImagePosition | null,
@@ -100,8 +105,8 @@ export function heroObjectPositionClass(
 
 export const HERO_IMAGE_FIT_LABELS: Record<HeroImageFit, string> = {
   cover: "Kapla (alanı doldur, kırpılabilir)",
-  contain: "Sığdır (tam görünsün, kırpılmasın)",
-  contain_blur: "Sığdır + bulanık arka plan",
+  contain: "Sığdır (ürün önde, önerilen)",
+  contain_blur: "Sığdır + hafif bulanık arka plan",
 };
 
 export const HERO_IMAGE_POSITION_LABELS: Record<HeroImagePosition, string> = {

@@ -118,7 +118,7 @@ export function SiteHeaderSearch({
             isDesktop
               ? heroOverlay
                 ? "flex min-h-[2.5rem] items-center gap-2 rounded-full border border-white/30 bg-black/20 px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md"
-                : "si-header-search flex min-h-[2.75rem] items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 transition-shadow focus-within:border-sky-500/40 focus-within:bg-white/[0.08] focus-within:ring-2 focus-within:ring-sky-500/20"
+                : "si-header-search flex min-h-[2.875rem] items-center gap-2.5 px-4 py-2"
               : isSheet
                 ? "flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"
                 : "flex items-center gap-2"

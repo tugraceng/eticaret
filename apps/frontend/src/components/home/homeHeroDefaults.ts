@@ -22,47 +22,19 @@ export type { HeroImageFit, HeroImagePosition };
 export { DEFAULT_HERO_IMAGE_DISPLAY };
 
 export function defaultHeroSlides(
-  settings: Pick<SiteSettings, "defaultMetaDesc">,
+  _settings: Pick<SiteSettings, "defaultMetaDesc">,
 ): HomeHeroSlide[] {
   return [
     {
-      eyebrow: "Precision Engineering",
-      title: "Yeni nesil 3D baskı dünyası",
-      body:
-        settings.defaultMetaDesc?.trim() ||
-        "Koleksiyon parçalar, dekor ve özel üretim — katman katman hassasiyetle atölyemizde.",
+      eyebrow: "StoneIron3D",
+      title: "Precision Crafted Objects",
+      body: "Engineered layer by layer — modern collectibles for desk, gift and display.",
       cta: "/shop",
-      ctaLabel: "Koleksiyonu keşfet →",
-      secondaryHref: "/contact",
-      secondaryLabel: "Özel sipariş",
+      ctaLabel: "Koleksiyonu keşfet",
+      secondaryHref: "/about",
+      secondaryLabel: "Atölye hikayesi",
       image:
         "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?auto=format&fit=crop&w=2000&q=80",
-      ...DEFAULT_HERO_IMAGE_DISPLAY,
-    },
-    {
-      eyebrow: "Hediye",
-      title: "Anahtarlık & kişisel dokunuş",
-      body:
-        "Seçili ürünlerde kısa yazı veya renk tercihi; özenli paketleme ile kapınıza kadar.",
-      cta: "/shop",
-      ctaLabel: "Ürünlere git",
-      secondaryHref: "/contact",
-      secondaryLabel: "Bize ulaşın",
-      image:
-        "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=2000&q=80",
-      ...DEFAULT_HERO_IMAGE_DISPLAY,
-    },
-    {
-      eyebrow: "Ev & ofis",
-      title: "Dekor ve düzen",
-      body:
-        "Lambası gövdesinden masa düzenleyiciye; çalışma köşene hazır baskı çözümler.",
-      cta: "/shop",
-      ctaLabel: "Keşfet",
-      secondaryHref: "/#urunler",
-      secondaryLabel: "Vitrin",
-      image:
-        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=2000&q=80",
       ...DEFAULT_HERO_IMAGE_DISPLAY,
     },
   ];

@@ -13,7 +13,7 @@ function CategoryLineIcon({ index }: { index: number }) {
     "M10 6h4v12h-4z",
   ];
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-6 w-6 sm:h-7 sm:w-7" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
       <path d={paths[index % paths.length]} strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -21,9 +21,9 @@ function CategoryLineIcon({ index }: { index: number }) {
 
 export function HomeCategoryIconGrid({
   categories,
-  kicker = "Kategoriler",
-  heading = "Kategoriler",
-  description = "İlgilendiğiniz alana tek dokunuşla gidin.",
+  kicker = "Koleksiyonlar",
+  heading = "Kategoriye göre keşfet",
+  description = "Hassas baskı parçalar — tek dokunuşla vitrine gidin.",
 }: {
   categories: ShopCategory[];
   kicker?: string | null;
@@ -36,21 +36,19 @@ export function HomeCategoryIconGrid({
   return (
     <section className="si-section">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-1 sm:max-w-xl">
+        <div className="flex flex-col gap-1 sm:max-w-lg">
           {kicker ? <p className="si-kicker">{kicker}</p> : null}
           {heading ? <h2 className="si-heading mt-2">{heading}</h2> : null}
           {description ? <p className="si-body mt-2">{description}</p> : null}
         </div>
-        <ul className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 md:grid-cols-4 lg:grid-cols-8">
+        <ul className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-7 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">
           {show.map((c, i) => (
             <li key={c.id}>
               <Link href={`/shop?categoryId=${encodeURIComponent(c.id)}`} className="si-category-card group">
-                <span className="si-category-icon transition group-hover:border-sky-500/40 group-hover:text-sky-300">
+                <span className="si-category-icon">
                   <CategoryLineIcon index={i} />
                 </span>
-                <span className="line-clamp-2 text-xs font-semibold leading-tight text-slate-300 group-hover:text-white">
-                  {c.name}
-                </span>
+                <span className="si-category-label line-clamp-2">{c.name}</span>
               </Link>
             </li>
           ))}

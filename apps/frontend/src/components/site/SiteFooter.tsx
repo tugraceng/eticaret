@@ -130,21 +130,21 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
 
       <div className={cn(siteContainerClass, "py-12 sm:py-14")}>
 
-        <div className="flex flex-col gap-8 border-b border-white/[0.08] pb-10 md:flex-row md:items-start md:justify-between md:gap-12 md:pb-12">
+        <div className="flex flex-col gap-8 border-b border-white/[0.08] pb-10 md:flex-row md:items-start md:justify-between md:gap-10 md:pb-12">
 
           <div className="max-w-md">
 
             <p className="si-kicker">Bülten</p>
 
-            <h2 className="mt-2 text-lg font-semibold tracking-tight text-white sm:text-xl">
+            <h2 className="si-heading mt-2 text-xl sm:text-2xl">
 
               Koleksiyonlardan ilk siz haberdar olun
 
             </h2>
 
-            <p className="mt-2 text-sm leading-relaxed text-slate-400">
+            <p className="si-body mt-2">
 
-              Yeni parçalar ve sınırlı üretimler — doğrudan atölyeden.
+              Yeni parçalar ve sınırlı üretimler — doğrudan atölyeden, spam yok.
 
             </p>
 
@@ -154,7 +154,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
 
         </div>
 
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-4 text-sm text-slate-500">
 
           Abone olarak gizlilik politikasını kabul etmiş olursunuz. İstediğiniz zaman ayrılabilirsiniz.
 
@@ -256,11 +256,14 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
 
               ) : null}
 
+              <p className="si-footer-tagline mt-6">Engineered for Precision</p>
+              <p className="si-footer-motto">Crafted Layer by Layer</p>
+
               <Link
 
                 href={contactHref}
 
-                className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-sky-400 underline-offset-4 hover:text-sky-300 hover:underline"
+                className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-slate-300 underline-offset-4 hover:text-white hover:underline"
 
               >
 
@@ -300,7 +303,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
 
                           aria-label={label}
 
-                          className="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-slate-300 transition hover:border-sky-500/40 hover:text-sky-300"
+                          className="si-social-btn"
 
                         >
 

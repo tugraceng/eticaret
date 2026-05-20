@@ -137,6 +137,7 @@ type HeroSlideDraft = {
   imagePositionMobile: HeroImagePosition | "";
   overlayStrength: number;
   backgroundBlurScale: number;
+  heroBrightness: number;
 };
 
 function emptyHeroSlide(): HeroSlideDraft {
@@ -150,8 +151,9 @@ function emptyHeroSlide(): HeroSlideDraft {
     imageFit: DEFAULT_HERO_IMAGE_DISPLAY.imageFit,
     imagePosition: DEFAULT_HERO_IMAGE_DISPLAY.imagePosition,
     imagePositionMobile: "",
-    overlayStrength: DEFAULT_HERO_IMAGE_DISPLAY.overlayStrength ?? 72,
-    backgroundBlurScale: DEFAULT_HERO_IMAGE_DISPLAY.backgroundBlurScale ?? 110,
+    overlayStrength: DEFAULT_HERO_IMAGE_DISPLAY.overlayStrength ?? 58,
+    backgroundBlurScale: DEFAULT_HERO_IMAGE_DISPLAY.backgroundBlurScale ?? 105,
+    heroBrightness: DEFAULT_HERO_IMAGE_DISPLAY.heroBrightness ?? 52,
   };
 }
 
@@ -211,8 +213,9 @@ function draftFromSection(s: HomeSection): Draft {
             imageFit: display.imageFit,
             imagePosition: display.imagePosition,
             imagePositionMobile: display.imagePositionMobile ?? ("" as const),
-            overlayStrength: display.overlayStrength ?? 72,
-            backgroundBlurScale: display.backgroundBlurScale ?? 110,
+            overlayStrength: display.overlayStrength ?? 58,
+            backgroundBlurScale: display.backgroundBlurScale ?? 105,
+            heroBrightness: display.heroBrightness ?? 52,
           };
         })
     : [];
@@ -230,8 +233,9 @@ function draftFromSection(s: HomeSection): Draft {
             imageFit: DEFAULT_HERO_IMAGE_DISPLAY.imageFit,
             imagePosition: DEFAULT_HERO_IMAGE_DISPLAY.imagePosition,
             imagePositionMobile: "" as const,
-            overlayStrength: DEFAULT_HERO_IMAGE_DISPLAY.overlayStrength ?? 72,
-            backgroundBlurScale: DEFAULT_HERO_IMAGE_DISPLAY.backgroundBlurScale ?? 110,
+            overlayStrength: DEFAULT_HERO_IMAGE_DISPLAY.overlayStrength ?? 58,
+            backgroundBlurScale: DEFAULT_HERO_IMAGE_DISPLAY.backgroundBlurScale ?? 105,
+            heroBrightness: DEFAULT_HERO_IMAGE_DISPLAY.heroBrightness ?? 52,
           },
         ];
   const kind: HomeSectionKind = s.kind;
@@ -267,6 +271,7 @@ function buildConfig(d: Draft): Record<string, unknown> {
         image_position: s.imagePosition,
         hero_overlay_strength: s.overlayStrength,
         hero_background_blur: s.backgroundBlurScale,
+        hero_brightness: s.heroBrightness,
         ...(s.imagePositionMobile.trim()
           ? { image_position_mobile: s.imagePositionMobile.trim() }
           : {}),
@@ -671,11 +676,23 @@ export function HomeEditor({ token }: { token: string }) {
                     <input
                       type="range"
                       min={100}
-                      max={140}
+                      max={130}
                       className="w-full"
                       value={slide.backgroundBlurScale}
                       onChange={(e) =>
                         updateHeroSlide(idx, { backgroundBlurScale: Number(e.target.value) })
+                      }
+                    />
+                  </Field>
+                  <Field label={`Arka plan parlaklığı (${slide.heroBrightness}%)`}>
+                    <input
+                      type="range"
+                      min={20}
+                      max={80}
+                      className="w-full"
+                      value={slide.heroBrightness}
+                      onChange={(e) =>
+                        updateHeroSlide(idx, { heroBrightness: Number(e.target.value) })
                       }
                     />
                   </Field>

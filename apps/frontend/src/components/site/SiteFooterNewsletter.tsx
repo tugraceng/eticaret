@@ -2,22 +2,27 @@
 
 export function SiteFooterNewsletter() {
   return (
-    <form
-      className="flex w-full max-w-md flex-col gap-3 sm:flex-row sm:items-stretch"
-      onSubmit={(e) => e.preventDefault()}
-    >
-      <input
-        type="email"
-        name="newsletter-email"
-        placeholder="ornek@eposta.com"
-        className="input-soft min-h-[44px] flex-1 px-4 text-sm outline-none focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20"
-      />
-      <button
-        type="submit"
-        className="si-btn-primary min-h-[44px] shrink-0 px-6"
+    <div className="si-newsletter-panel w-full max-w-lg">
+      <form
+        className="flex w-full flex-col gap-3 sm:flex-row sm:items-stretch"
+        onSubmit={(e) => e.preventDefault()}
       >
-        Abone ol
-      </button>
-    </form>
+        <input
+          type="email"
+          name="newsletter-email"
+          placeholder="E-posta adresiniz"
+          className="si-newsletter-input"
+          autoComplete="email"
+        />
+        <button type="submit" className="si-btn-primary min-h-[3rem] shrink-0 px-6">
+          Abone ol
+        </button>
+      </form>
+      <div className="si-newsletter-benefits" aria-hidden>
+        <span>Yeni koleksiyonlardan ilk siz haberdar olun</span>
+        <span>Precision-crafted releases</span>
+        <span>Limited drops</span>
+      </div>
+    </div>
   );
 }

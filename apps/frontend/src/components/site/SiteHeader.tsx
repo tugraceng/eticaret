@@ -406,7 +406,7 @@ export function SiteHeader({
       <div
         className={cn(
           "mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-3 px-4 sm:px-6 lg:px-8 md:flex-row md:items-center md:gap-6 transition-[padding] duration-300",
-          headerCompact ? "py-2 md:py-2" : "py-3 md:py-3.5",
+          headerCompact ? "py-2.5 md:py-2.5" : "py-3.5 md:py-4",
         )}
       >
         {/* Mobil: hamburger — logo ortada — sepet + hesap */}

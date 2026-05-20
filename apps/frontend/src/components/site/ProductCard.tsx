@@ -136,7 +136,7 @@ function ProductCardInner({ product, showCategory = false }: ProductCardProps) {
                 alt={alt}
                 fill
                 quality={80}
-                className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               />
             </div>
@@ -172,8 +172,8 @@ function ProductCardInner({ product, showCategory = false }: ProductCardProps) {
           </div>
         </div>
 
-        <div className="si-product-card-body flex min-h-0 flex-1 flex-col p-4">
-          <p className="si-product-name line-clamp-2 min-h-[2.75rem]">{product.name}</p>
+        <div className="si-product-card-body flex min-h-0 flex-1 flex-col px-3 pb-3 pt-2.5 sm:px-3.5 sm:pb-3.5">
+          <p className="si-product-name line-clamp-2 min-h-[2.5rem]">{product.name}</p>
 
           <div className="mt-2 flex h-5 items-center gap-1.5">
             {hasReviews ? (

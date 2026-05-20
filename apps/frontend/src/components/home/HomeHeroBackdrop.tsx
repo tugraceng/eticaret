@@ -11,18 +11,18 @@ import {
 } from "@/components/home/homeHeroImage";
 import { useHeroObjectPosition } from "@/components/home/useHeroObjectPosition";
 import { apiAssetUrl } from "@/lib/api";
+
 function heroOverlayGradient(strength: number): string {
   const t = Math.min(100, Math.max(0, strength)) / 100;
-  const a = (0.55 + t * 0.4).toFixed(3);
-  const b = (0.28 + t * 0.35).toFixed(3);
-  const c = (0.12 + t * 0.2).toFixed(3);
-  return `linear-gradient(105deg, rgba(0,0,0,${a}) 0%, rgba(0,0,0,${b}) 42%, rgba(7,11,18,${c}) 68%, transparent 100%)`;
+  const a = (0.42 + t * 0.32).toFixed(3);
+  const b = (0.18 + t * 0.22).toFixed(3);
+  return `linear-gradient(100deg, rgba(10,12,16,${a}) 0%, rgba(10,12,16,${b}) 38%, transparent 62%)`;
 }
 
 function heroOverlayMobile(strength: number): string {
   const t = Math.min(100, Math.max(0, strength)) / 100;
-  const bottom = (0.65 + t * 0.3).toFixed(3);
-  return `linear-gradient(to top, rgba(7,11,18,${bottom}) 0%, rgba(7,11,18,0.25) 45%, transparent 72%)`;
+  const bottom = (0.5 + t * 0.28).toFixed(3);
+  return `linear-gradient(to top, rgba(10,12,16,${bottom}) 0%, rgba(10,12,16,0.12) 42%, transparent 70%)`;
 }
 
 export type HeroBackdropSlide = {
@@ -42,6 +42,7 @@ function slideDisplay(slide: HeroBackdropSlide | undefined): HeroImageDisplay {
     imagePositionMobile: slide?.imagePositionMobile ?? DEFAULT_HERO_IMAGE_DISPLAY.imagePositionMobile,
     overlayStrength: slide?.overlayStrength ?? DEFAULT_HERO_IMAGE_DISPLAY.overlayStrength,
     backgroundBlurScale: slide?.backgroundBlurScale ?? DEFAULT_HERO_IMAGE_DISPLAY.backgroundBlurScale,
+    heroBrightness: slide?.heroBrightness ?? DEFAULT_HERO_IMAGE_DISPLAY.heroBrightness,
   };
 }
 
@@ -50,21 +51,23 @@ function cssBackgroundUrl(src: string): string {
   return `url("${escaped}")`;
 }
 
-/** contain_blur — background-size/position masaüstünde img relative hatasından etkilenmez */
 function HeroContainBlurLayer({
   src,
   desktop,
   mobile,
-  blurScale = 110,
+  blurScale = 105,
+  brightness = 52,
 }: {
   src: string;
   desktop: HeroImagePosition;
   mobile: HeroImagePosition | null;
   blurScale?: number;
+  brightness?: number;
 }) {
   const backgroundPosition = useHeroObjectPosition(desktop, mobile);
   const bg = cssBackgroundUrl(src);
   const scale = blurScale / 100;
+  const bright = Math.min(80, Math.max(20, brightness)) / 100;
   const base: CSSProperties = {
     backgroundImage: bg,
     backgroundRepeat: "no-repeat",
@@ -74,13 +77,22 @@ function HeroContainBlurLayer({
   return (
     <div className="absolute inset-0">
       <div
-        className="absolute inset-0 blur-2xl brightness-[0.35] saturate-[0.85]"
-        style={{ ...base, backgroundSize: "cover", transform: `scale(${scale})` }}
+        className="absolute inset-0 blur-md saturate-[0.9]"
+        style={{
+          ...base,
+          backgroundSize: "cover",
+          transform: `scale(${scale})`,
+          filter: `brightness(${bright})`,
+        }}
         aria-hidden
       />
       <div
-        className="absolute inset-0 z-[1]"
+        className="absolute inset-[4%] z-[2] sm:inset-[6%] lg:inset-[5%_3%_5%_8%]"
         style={{ ...base, backgroundSize: "contain" }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-[4%] z-[3] sm:inset-[6%] lg:inset-[5%_3%_5%_8%] rounded-2xl shadow-[inset_0_0_120px_rgba(255,255,255,0.04)] ring-1 ring-white/[0.06]"
         aria-hidden
       />
     </div>
@@ -106,16 +118,18 @@ function HeroNativeImage({
   const objectFit: CSSProperties["objectFit"] = fit === "contain" ? "contain" : "cover";
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt={alt}
-      decoding="async"
-      loading={priority ? "eager" : "lazy"}
-      fetchPriority={priority ? "high" : "auto"}
-      className="absolute inset-0 h-full w-full"
-      style={{ objectFit, objectPosition }}
-    />
+    <div className="absolute inset-[4%] z-[2] sm:inset-[6%] lg:inset-[5%_2%_5%_6%]">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        decoding="async"
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
+        className="h-full w-full drop-shadow-[0_24px_48px_rgba(0,0,0,0.45)]"
+        style={{ objectFit, objectPosition }}
+      />
+    </div>
   );
 }
 
@@ -126,6 +140,7 @@ function HeroImageLayer({
   desktop,
   mobile,
   blurScale,
+  brightness,
   priority,
 }: {
   src: string;
@@ -134,6 +149,7 @@ function HeroImageLayer({
   desktop: HeroImagePosition;
   mobile: HeroImagePosition | null;
   blurScale?: number;
+  brightness?: number;
   priority?: boolean;
 }) {
   if (fit === "contain_blur") {
@@ -143,6 +159,7 @@ function HeroImageLayer({
         desktop={desktop}
         mobile={mobile}
         blurScale={blurScale}
+        brightness={brightness}
       />
     );
   }
@@ -170,7 +187,8 @@ function SingleHeroLayer({
 }) {
   const url = imageUrl(slide, fallback);
   if (!url) return null;
-  const { imageFit, imagePosition, imagePositionMobile, backgroundBlurScale } = slideDisplay(slide);
+  const { imageFit, imagePosition, imagePositionMobile, backgroundBlurScale, heroBrightness } =
+    slideDisplay(slide);
 
   return (
     <HeroImageLayer
@@ -180,6 +198,7 @@ function SingleHeroLayer({
       desktop={imagePosition}
       mobile={imagePositionMobile}
       blurScale={backgroundBlurScale}
+      brightness={heroBrightness}
       priority={priority}
     />
   );
@@ -189,28 +208,29 @@ function HeroOverlays({ strength }: { strength: number }) {
   return (
     <>
       <div
-        className="absolute inset-0 z-[1] hidden lg:block"
+        className="absolute inset-0 z-[4] hidden lg:block"
         style={{ backgroundImage: heroOverlayGradient(strength) }}
         aria-hidden
       />
       <div
-        className="absolute inset-0 z-[1] lg:hidden"
+        className="absolute inset-0 z-[4] lg:hidden"
         style={{
           backgroundImage: `${heroOverlayMobile(strength)}, ${heroOverlayGradient(strength)}`,
         }}
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-r from-[#121212] via-[#121212]/80 to-transparent lg:max-w-[42%]"
+        className="pointer-events-none absolute inset-0 z-[5] bg-[radial-gradient(ellipse_80%_70%_at_50%_50%,transparent_42%,rgba(8,10,14,0.55)_100%)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 z-[5] bg-gradient-to-t from-[#0a0c10] via-transparent to-[#0a0c10]/40 lg:hidden"
         aria-hidden
       />
     </>
   );
 }
 
-/**
- * Hero görsel katmanı + gradient. İki slayt için opaklık crossfade.
- */
 export function HomeHeroBackdrop({
   slides,
   index,
@@ -245,7 +265,7 @@ export function HomeHeroBackdrop({
     });
   }, [safeIndex, n]);
 
-  const durationMs = reduceMotion ? 0 : 1000;
+  const durationMs = reduceMotion ? 0 : 900;
   const ease = "cubic-bezier(0.22, 1, 0.36, 1)";
 
   const slideA = slides[slotA] ?? fallback;
@@ -253,13 +273,18 @@ export function HomeHeroBackdrop({
   const urlA = imageUrl(slideA, fallback);
   const urlB = imageUrl(slideB, fallback);
   const activeSlide = slides[safeIndex] ?? fallback;
-  const overlayStrength = slideDisplay(activeSlide).overlayStrength ?? 72;
+  const overlayStrength = slideDisplay(activeSlide).overlayStrength ?? 58;
+
+  const bgBase = (
+    <div className="absolute inset-0 bg-gradient-to-br from-[#141820] via-[#10141c] to-[#0a0c10]" aria-hidden />
+  );
 
   if (n <= 1) {
     return (
-      <div className="pointer-events-none absolute inset-0 z-0 bg-[#121212]" aria-hidden>
+      <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+        {bgBase}
         {urlA ? (
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 z-[1]">
             <SingleHeroLayer slide={slideA} fallback={fallback} priority />
           </div>
         ) : null}
@@ -269,8 +294,9 @@ export function HomeHeroBackdrop({
   }
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-0 bg-[#121212]" aria-hidden>
-      <div className="absolute inset-0">
+    <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+      {bgBase}
+      <div className="absolute inset-0 z-[1]">
         {urlA ? (
           <div
             className="absolute inset-0 will-change-[opacity]"
