@@ -12,6 +12,7 @@ import {
   CUSTOMER_TOKEN_KEY,
   clearCustomerSession,
 } from "@/lib/platform-session";
+import { resetSiteOverlaysOnNavigation } from "@/lib/reset-site-overlays";
 
 export function CustomerLoginForm({
   siteName,
@@ -56,8 +57,10 @@ export function CustomerLoginForm({
       cache: "no-store",
     }).then((res) => {
       if (cancelled) return;
-      if (res.ok) router.replace(safeReturn);
-      else clearCustomerSession();
+      if (res.ok) {
+        resetSiteOverlaysOnNavigation();
+        router.replace(safeReturn);
+      } else clearCustomerSession();
     });
     return () => {
       cancelled = true;
@@ -91,6 +94,7 @@ export function CustomerLoginForm({
         const me = (await res.json()) as { email: string };
         sessionStorage.setItem(CUSTOMER_EMAIL_KEY, me.email);
         await mergeGuestCartIntoServerCart();
+        resetSiteOverlaysOnNavigation();
         router.replace(safeReturn);
       } catch (e) {
         if (!cancelled) {
@@ -121,6 +125,7 @@ export function CustomerLoginForm({
       sessionStorage.setItem(CUSTOMER_TOKEN_KEY, data.accessToken);
       sessionStorage.setItem(CUSTOMER_EMAIL_KEY, data.user.email);
       await mergeGuestCartIntoServerCart();
+      resetSiteOverlaysOnNavigation();
       router.replace(safeReturn);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Giriş başarısız");

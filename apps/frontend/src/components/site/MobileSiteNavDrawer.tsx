@@ -28,7 +28,7 @@ type Props = {
   children: ReactNode;
 };
 
-/** Header içinde `fixed` kırpılmasın diye body'ye portal — backdrop-filter containing block sorunu */
+/** Header içinde `fixed` kırpılmasın diye body'ye portal — kapalıyken DOM'da kalmaz. */
 export function MobileSiteNavDrawer({ open, onClose, children }: Props) {
   const [mounted, setMounted] = useState(false);
 
@@ -36,31 +36,31 @@ export function MobileSiteNavDrawer({ open, onClose, children }: Props) {
     setMounted(true);
   }, []);
 
-  if (!mounted || typeof document === "undefined") return null;
+  useEffect(() => {
+    if (!open || typeof document === "undefined") return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  if (!mounted || typeof document === "undefined" || !open) return null;
 
   return createPortal(
     <>
       <button
         type="button"
-        className={cn(
-          "fixed inset-0 z-[200] bg-black/70 backdrop-blur-[2px] transition-opacity duration-300 md:hidden",
-          open ? "opacity-100" : "pointer-events-none opacity-0",
-        )}
+        className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-[2px] md:hidden"
         aria-label="Menüyü kapat"
-        aria-hidden={!open}
-        tabIndex={open ? 0 : -1}
         onClick={onClose}
       />
       <aside
         id="mobile-nav-drawer"
         role="dialog"
-        aria-modal={open}
-        aria-hidden={!open}
+        aria-modal
         aria-label="Site menüsü"
-        className={cn(
-          "si-mobile-drawer fixed inset-y-0 left-0 z-[201] flex w-[min(88vw,20rem)] flex-col border-r border-white/10 bg-[#0f141c] shadow-2xl transition-transform duration-300 ease-out md:hidden",
-          open ? "translate-x-0" : "pointer-events-none -translate-x-full",
-        )}
+        className="si-mobile-drawer fixed inset-y-0 right-0 z-[201] flex w-[min(88vw,20rem)] flex-col border-l border-white/10 bg-[#0f141c] shadow-2xl md:hidden"
       >
         <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
           <p className="font-[family-name:var(--font-playfair)] text-lg font-semibold text-white">Menü</p>

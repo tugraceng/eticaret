@@ -322,13 +322,15 @@ export function SiteHeader({
   }, [open]);
 
   useEffect(() => {
-    if (!open || typeof document === "undefined") return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 768px)");
+    const closeOnDesktop = () => {
+      if (mq.matches) setOpen(false);
     };
-  }, [open]);
+    closeOnDesktop();
+    mq.addEventListener("change", closeOnDesktop);
+    return () => mq.removeEventListener("change", closeOnDesktop);
+  }, []);
 
   useEffect(() => {
     return () => clearMegaCloseTimer();
@@ -432,20 +434,11 @@ export function SiteHeader({
           headerCompact ? "py-2.5 md:py-2.5" : "py-3.5 md:py-4",
         )}
       >
-        {/* Mobil: hamburger — logo ortada — sepet + hesap */}
-        <div className="relative z-[62] flex min-h-[3rem] w-full items-center justify-between md:hidden">
-          <button
-            type="button"
-            onClick={() => setOpen((o) => !o)}
-            className="si-mobile-menu-btn relative z-[62] grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/12 bg-white/[0.06] text-slate-200"
-            aria-label="Menü"
-            aria-expanded={open}
-          >
-            <MenuIcon open={open} className="h-5 w-5" />
-          </button>
+        {/* Mobil: logo sol — sepet + hesap — hamburger sağ */}
+        <div className="relative z-[62] flex min-h-[3rem] w-full items-center gap-2 md:hidden">
           <Link
             href="/"
-            className="absolute left-1/2 z-20 flex max-w-[42%] -translate-x-1/2 items-center justify-center"
+            className="flex min-w-0 shrink-0 items-center justify-start"
             onClick={() => setOpen(false)}
             aria-label={settings.siteName}
           >
@@ -453,26 +446,10 @@ export function SiteHeader({
             <img
               src={logoSrc}
               alt=""
-              className="h-9 w-auto max-w-full object-contain"
+              className="h-9 w-auto max-w-[min(42vw,180px)] object-contain object-left"
             />
           </Link>
-          <div className="relative z-20 flex shrink-0 items-center gap-0.5">
-            <Link
-              href="/favoriler"
-              className="relative flex flex-col items-center gap-0.5 rounded-lg px-1.5 py-1 text-slate-300 hover:bg-white/8 hover:text-rose-400"
-              aria-label="Favoriler"
-            >
-              <HeartIcon className="h-5 w-5" />
-              <span className="text-[9px] font-semibold uppercase tracking-wide">Favori</span>
-              {wishCount > 0 ? (
-                <span
-                  className="absolute right-0 top-0 inline-flex min-h-[0.875rem] min-w-[0.875rem] translate-x-0.5 -translate-y-0.5 items-center justify-center rounded-full px-0.5 text-[8px] font-bold text-white"
-                  style={{ background: accent }}
-                >
-                  {wishCount > 99 ? "99+" : wishCount}
-                </span>
-              ) : null}
-            </Link>
+          <div className="ml-auto flex shrink-0 items-center gap-0.5">
             <button
               type="button"
               onClick={() => openMiniCart()}
@@ -497,6 +474,15 @@ export function SiteHeader({
             >
               <UserIcon className="h-5 w-5" />
             </Link>
+            <button
+              type="button"
+              onClick={() => setOpen((o) => !o)}
+              className="si-mobile-menu-btn grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/12 bg-white/[0.06] text-slate-200"
+              aria-label="Menü"
+              aria-expanded={open}
+            >
+              <MenuIcon open={open} className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
@@ -705,33 +691,43 @@ export function SiteHeader({
 
       <MobileSiteNavDrawer open={open} onClose={() => setOpen(false)}>
             <Link
-              href="/shop"
-              className="rounded-lg px-3 py-3 font-[family-name:var(--font-playfair)] text-lg text-slate-100 hover:bg-white/6"
+              href="/favoriler"
+              className="relative flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-slate-100 hover:bg-white/6"
               onClick={() => setOpen(false)}
             >
-              Ürünler
-            </Link>
-            <Link
-              href="/services"
-              className="rounded-lg px-3 py-3 font-[family-name:var(--font-playfair)] text-lg text-slate-100 hover:bg-white/6"
-              onClick={() => setOpen(false)}
-            >
-              Hizmetler
+              <HeartIcon className="h-5 w-5 shrink-0 text-rose-400" />
+              Favorilerim
+              {wishCount > 0 ? (
+                <span
+                  className="ml-auto inline-flex min-h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white"
+                  style={{ background: accent }}
+                >
+                  {wishCount > 99 ? "99+" : wishCount}
+                </span>
+              ) : null}
             </Link>
             {headerNav.beforeCategories.map((item) => (
               <Link
                 key={`mob-before-${item.href}-${item.label}`}
                 href={item.href}
-                className="rounded-lg px-3 py-3 font-[family-name:var(--font-playfair)] text-lg text-slate-100 hover:bg-white/6"
+                className="rounded-lg px-3 py-3 text-sm font-semibold text-slate-100 hover:bg-white/6"
                 onClick={() => setOpen(false)}
               >
                 {item.label}
               </Link>
             ))}
-            {categoryNav.length === 0 ? null : (
+            {categoryNav.length > 0 ? (
               <p className="mt-4 px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Kategoriler
               </p>
+            ) : (
+              <Link
+                href="/shop"
+                className="mt-2 rounded-lg px-3 py-3 text-sm font-semibold text-slate-100 hover:bg-white/6"
+                onClick={() => setOpen(false)}
+              >
+                Mağaza
+              </Link>
             )}
             {categoryNav.map((cat) => {
               const hasSubs = cat.children.length > 0;
@@ -813,10 +809,19 @@ export function SiteHeader({
                 </div>
               );
             })}
+            <Link
+              href="/services"
+              className="mt-3 rounded-lg px-3 py-3 text-sm font-semibold text-slate-100 hover:bg-white/6"
+              onClick={() => setOpen(false)}
+            >
+              Hizmetler
+            </Link>
             {[...headerNav.afterCategories, contactNavItem]
               .filter(
                 (item, idx, arr) =>
-                  arr.findIndex((x) => x.href === item.href) === idx && item.href !== "/services",
+                  arr.findIndex((x) => x.href === item.href) === idx &&
+                  item.href !== "/services" &&
+                  !item.href.startsWith("/services/"),
               )
               .map((item) => (
               <Link

@@ -256,9 +256,6 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
 
               ) : null}
 
-              <p className="si-footer-tagline mt-6">Engineered for Precision</p>
-              <p className="si-footer-motto">Crafted Layer by Layer</p>
-
               <Link
 
                 href={contactHref}

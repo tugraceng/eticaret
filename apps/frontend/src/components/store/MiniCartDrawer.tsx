@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { SITE_OVERLAY_RESET_EVENT } from "@/lib/reset-site-overlays";
 import { apiUrl } from "@/lib/api";
 import type { ProductCardData } from "@/components/site/ProductCard";
 import { Button, Modal } from "@/components/ui/atoms";
@@ -14,6 +16,7 @@ import { selectCartSubtotalCents, useCartStore } from "@/stores/cart-store";
 import { FreeShippingBar } from "./FreeShippingBar";
 
 export function MiniCartDrawer() {
+  const pathname = usePathname();
   const open = useCartStore((s) => s.miniCartOpen);
   const close = useCartStore((s) => s.closeMiniCart);
   const lines = useCartStore((s) => s.lines);
@@ -42,6 +45,16 @@ export function MiniCartDrawer() {
   });
 
   const filteredRecs = recs.filter((p) => !cartIds.has(p.id)).slice(0, 4);
+
+  useEffect(() => {
+    close();
+  }, [pathname, close]);
+
+  useEffect(() => {
+    const onReset = () => close();
+    window.addEventListener(SITE_OVERLAY_RESET_EVENT, onReset);
+    return () => window.removeEventListener(SITE_OVERLAY_RESET_EVENT, onReset);
+  }, [close]);
 
   useEffect(() => {
     if (!open) return;

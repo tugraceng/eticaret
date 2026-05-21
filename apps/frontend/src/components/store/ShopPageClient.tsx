@@ -185,14 +185,14 @@ export function ShopPageClient({
         </div>
       ) : null}
 
-      <div
-        className={cn(
-          "fixed inset-0 z-[55] bg-[var(--ds-text)]/35 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden",
-          filtersOpen ? "opacity-100" : "pointer-events-none opacity-0",
-        )}
-        aria-hidden={!filtersOpen}
-        onClick={() => setFiltersOpen(false)}
-      />
+      {filtersOpen ? (
+        <div
+          className="fixed inset-0 z-[55] bg-[var(--ds-text)]/35 backdrop-blur-[2px] lg:hidden"
+          aria-hidden={false}
+          onClick={() => setFiltersOpen(false)}
+          role="presentation"
+        />
+      ) : null}
 
       <div className="lg:grid lg:grid-cols-[minmax(0,280px)_1fr] lg:items-start lg:gap-8 xl:gap-10">
         <aside

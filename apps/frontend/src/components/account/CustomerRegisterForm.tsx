@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AuthSplitShell, type AuthPagePanel } from "@/components/account/AuthSplitShell";
 import { GoogleAuthButton } from "@/components/account/GoogleAuthButton";
 import { mergeGuestCartIntoServerCart } from "@/lib/cart-sync";
+import { resetSiteOverlaysOnNavigation } from "@/lib/reset-site-overlays";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import {
   CUSTOMER_EMAIL_KEY,
@@ -60,8 +61,10 @@ export function CustomerRegisterForm({
       cache: "no-store",
     }).then((res) => {
       if (cancelled) return;
-      if (res.ok) router.replace(safeReturn);
-      else clearCustomerSession();
+      if (res.ok) {
+        resetSiteOverlaysOnNavigation();
+        router.replace(safeReturn);
+      } else clearCustomerSession();
     });
     return () => {
       cancelled = true;
@@ -112,6 +115,7 @@ export function CustomerRegisterForm({
       sessionStorage.setItem(CUSTOMER_TOKEN_KEY, data.accessToken);
       sessionStorage.setItem(CUSTOMER_EMAIL_KEY, data.user.email);
       await mergeGuestCartIntoServerCart();
+      resetSiteOverlaysOnNavigation();
       router.replace(safeReturn);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Kayıt başarısız");

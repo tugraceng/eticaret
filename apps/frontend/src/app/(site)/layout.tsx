@@ -23,7 +23,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
     <div className="site-theme-stoneiron flex min-h-screen flex-col overflow-x-hidden">
       <AnalyticsBeacon />
       <SiteHeader settings={settings} categoryNav={categoryNav} />
-      <div className="flex-1 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-0">{children}</div>
+      <div className="min-h-0 flex-1 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-0">{children}</div>
       <SiteFooter settings={settings} />
       <SiteMobileDock categoryNav={categoryNav} className="hidden" />
       <SiteUiChrome />

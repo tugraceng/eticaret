@@ -1,7 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { SITE_OVERLAY_RESET_EVENT } from "@/lib/reset-site-overlays";
 
 const STORAGE_PREFIX = "platform_site_popup_dismissed_";
 
@@ -71,33 +73,42 @@ export function SitePromoPopup({
   storageKey,
 }: SitePromoPopupProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const titleId = useId();
   const descId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
-  const [entered, setEntered] = useState(false);
 
   const sk = (storageKey ?? "1").trim() || "1";
   const widthClass = SIZE_CLASS[size ?? "md"] ?? SIZE_CLASS.md;
   const show = enabled && Boolean(title?.trim());
 
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    setDismissed(settingsId, sk, sessionOnly);
+  }, [settingsId, sk, sessionOnly]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!show) return;
     if (isDismissed(settingsId, sk, sessionOnly)) return;
-    const t = window.setTimeout(() => {
-      setOpen(true);
-      window.requestAnimationFrame(() => setEntered(true));
-    }, 450);
+    const t = window.setTimeout(() => setOpen(true), 450);
     return () => window.clearTimeout(t);
   }, [show, settingsId, sk, sessionOnly]);
 
-  const handleClose = useCallback(() => {
-    setEntered(false);
-    window.setTimeout(() => {
-      setOpen(false);
-      setDismissed(settingsId, sk, sessionOnly);
-    }, 200);
-  }, [settingsId, sk, sessionOnly]);
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const onReset = () => setOpen(false);
+    window.addEventListener(SITE_OVERLAY_RESET_EVENT, onReset);
+    return () => window.removeEventListener(SITE_OVERLAY_RESET_EVENT, onReset);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -106,17 +117,18 @@ export function SitePromoPopup({
     };
     window.addEventListener("keydown", onKey);
     closeRef.current?.focus();
-    return () => window.removeEventListener("keydown", onKey);
+    const prevBody = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevBody;
+    };
   }, [open, handleClose]);
 
   const goCta = useCallback(() => {
     const href = (ctaHref ?? "").trim();
-    if (!href) {
-      handleClose();
-      return;
-    }
-    setDismissed(settingsId, sk, sessionOnly);
-    setOpen(false);
+    handleClose();
+    if (!href) return;
     if (href.startsWith("/") && !href.startsWith("//")) {
       router.push(href);
     } else if (/^https?:\/\//i.test(href)) {
@@ -124,23 +136,20 @@ export function SitePromoPopup({
     } else {
       window.location.assign(href);
     }
-  }, [ctaHref, handleClose, router, settingsId, sk, sessionOnly]);
+  }, [ctaHref, handleClose, router]);
 
-  if (!show || !open) return null;
+  if (!mounted || !show || !open || typeof document === "undefined") return null;
 
   const cta = (ctaLabel ?? "").trim();
   const href = (ctaHref ?? "").trim();
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[110] flex items-end justify-center p-3 sm:items-center sm:p-6">
-      <button
-        type="button"
-        aria-label={dismissBackdrop ? "Kapat" : undefined}
-        disabled={!dismissBackdrop}
-        onClick={() => dismissBackdrop && handleClose()}
-        className={`absolute inset-0 bg-slate-950/55 transition-opacity duration-200 ${
-          entered ? "opacity-100" : "opacity-0"
-        } ${dismissBackdrop ? "cursor-pointer" : "cursor-default"}`}
+      <div
+        role="presentation"
+        className={`absolute inset-0 bg-slate-950/55 backdrop-blur-[2px] ${dismissBackdrop ? "cursor-pointer" : ""}`}
+        onClick={dismissBackdrop ? handleClose : undefined}
+        aria-hidden={!dismissBackdrop}
       />
 
       <div
@@ -148,9 +157,7 @@ export function SitePromoPopup({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={body?.trim() ? descId : undefined}
-        className={`si-promo-panel surface-soft relative flex max-h-[min(90vh,720px)] w-full flex-col overflow-hidden rounded-2xl shadow-2xl transition-all duration-200 ease-out ${widthClass} ${
-          entered ? "translate-y-0 scale-100 opacity-100" : "translate-y-6 scale-[0.98] opacity-0"
-        }`}
+        className={`si-promo-panel surface-soft relative z-10 flex max-h-[min(90vh,720px)] w-full flex-col overflow-hidden rounded-2xl shadow-2xl ${widthClass}`}
       >
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-5">
           <h2 id={titleId} className="pr-2 text-lg font-semibold leading-snug text-slate-900">
@@ -186,24 +193,17 @@ export function SitePromoPopup({
         ) : null}
 
         <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/80 px-4 py-3 sm:px-5">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="btn-ghost !rounded-xl !px-4 !py-2.5"
-          >
+          <button type="button" onClick={handleClose} className="btn-ghost !rounded-xl !px-4 !py-2.5">
             Kapat
           </button>
           {cta && href ? (
-            <button
-              type="button"
-              onClick={goCta}
-              className="btn-primary !rounded-xl !px-4 !py-2.5"
-            >
+            <button type="button" onClick={goCta} className="btn-primary !rounded-xl !px-4 !py-2.5">
               {cta}
             </button>
           ) : null}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

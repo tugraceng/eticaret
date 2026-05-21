@@ -202,12 +202,12 @@ function HeroOverlays({ strength }: { strength: number }) {
   return (
     <>
       <div
-        className="absolute inset-0 z-[4] hidden lg:block"
+        className="pointer-events-none absolute inset-0 z-[4] hidden lg:block"
         style={{ backgroundImage: heroOverlayGradient(strength) }}
         aria-hidden
       />
       <div
-        className="absolute inset-0 z-[4] lg:hidden"
+        className="pointer-events-none absolute inset-0 z-[4] lg:hidden"
         style={{
           backgroundImage: `${heroOverlayMobile(strength)}, ${heroOverlayGradient(strength)}`,
         }}

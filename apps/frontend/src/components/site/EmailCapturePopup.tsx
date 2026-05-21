@@ -1,13 +1,26 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
+import { SITE_OVERLAY_RESET_EVENT } from "@/lib/reset-site-overlays";
 import { showSiteToast } from "@/lib/site-toast";
 
 const LS_DISMISS = "platform_email_popup_dismissed";
 
 export function EmailCapturePopup() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const onReset = () => setOpen(false);
+    window.addEventListener(SITE_OVERLAY_RESET_EVENT, onReset);
+    return () => window.removeEventListener(SITE_OVERLAY_RESET_EVENT, onReset);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

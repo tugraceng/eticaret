@@ -1,7 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { resetSiteOverlaysOnNavigation } from "@/lib/reset-site-overlays";
 import { CART_STORAGE_KEY, syncCartFromStorage } from "@/lib/cart-sync";
 import { CART_UPDATE_EVENT } from "@/lib/platform-storage-events";
 import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
@@ -17,6 +19,21 @@ const MiniCartDrawer = dynamic(
 );
 
 export function SiteUiChrome() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    resetSiteOverlaysOnNavigation();
+  }, [pathname]);
+
+  useEffect(() => {
+    resetSiteOverlaysOnNavigation();
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) resetSiteOverlaysOnNavigation();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   useEffect(() => {
     useCartStore.getState().hydrate();
     const syncFromStorage = () => {

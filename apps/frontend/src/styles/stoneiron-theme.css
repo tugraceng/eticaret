@@ -416,6 +416,26 @@
   background-color: var(--si-bg-elevated);
 }
 
+.site-theme-stoneiron .auth-shell-form .si-kicker,
+.site-theme-stoneiron .auth-shell-form .si-body {
+  color: #94a3b8;
+}
+
+.site-theme-stoneiron .auth-consent-box a {
+  color: #7dd3fc;
+}
+
+@media (max-width: 1023px) {
+  .site-theme-stoneiron .auth-page-root {
+    overflow: visible;
+  }
+  .site-theme-stoneiron .auth-shell,
+  .site-theme-stoneiron .auth-shell-form-inner,
+  .site-theme-stoneiron .auth-shell-form-scroll {
+    overflow: visible;
+  }
+}
+
 .site-theme-stoneiron .auth-field-label {
   color: #94a3b8;
 }

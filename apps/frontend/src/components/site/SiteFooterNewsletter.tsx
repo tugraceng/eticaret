@@ -20,8 +20,8 @@ export function SiteFooterNewsletter() {
       </form>
       <div className="si-newsletter-benefits" aria-hidden>
         <span>Yeni koleksiyonlardan ilk siz haberdar olun</span>
-        <span>Precision-crafted releases</span>
-        <span>Limited drops</span>
+        <span>Özenle üretilen yeni parçalar</span>
+        <span>Sınırlı üretim duyuruları</span>
       </div>
     </div>
   );

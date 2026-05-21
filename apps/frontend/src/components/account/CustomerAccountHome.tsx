@@ -89,6 +89,7 @@ export function CustomerAccountHome() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [phase, setPhase] = useState<"loading" | "ok">("loading");
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [tab, setTab] = useState<AccountTabId>("overview");
   const [ordersFilter, setOrdersFilter] = useState<"all" | "active">("all");
@@ -98,12 +99,14 @@ export function CustomerAccountHome() {
 
   useEffect(() => {
     const tok = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+    setSessionChecked(true);
     if (!tok) {
       router.replace("/hesap/giris");
       return;
     }
     setToken(tok);
     let cancel = false;
+    let sessionEnded = false;
     void (async () => {
       try {
         const [meData, orderData] = await Promise.all([
@@ -114,10 +117,13 @@ export function CustomerAccountHome() {
         setMe(meData);
         setOrders(Array.isArray(orderData) ? orderData : []);
       } catch (e) {
-        if (e instanceof CustomerSessionTerminated) return;
+        if (e instanceof CustomerSessionTerminated) {
+          sessionEnded = true;
+          return;
+        }
         if (!cancel) setLoadErr(e instanceof Error ? e.message : String(e));
       } finally {
-        if (!cancel) setPhase("ok");
+        if (!cancel && !sessionEnded) setPhase("ok");
       }
     })();
     return () => {
@@ -153,14 +159,25 @@ export function CustomerAccountHome() {
     router.replace("/hesap/giris");
   }, [router]);
 
-  if (phase !== "ok") {
+  if (sessionChecked && !token) {
     return (
-      <div className="bg-slate-50/80">
+      <div className="si-account-page min-h-[40vh]">
+        <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6">
+          <p className="text-sm text-slate-400">Giriş sayfasına yönlendiriliyor…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!sessionChecked || phase !== "ok") {
+    return (
+      <div className="si-account-page min-h-[40vh]">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-          <div className="h-6 w-40 animate-pulse rounded bg-slate-200" />
+          <p className="mb-6 text-center text-sm text-slate-400">Hesabınız yükleniyor…</p>
+          <div className="h-6 w-40 animate-pulse rounded bg-white/10" />
           <div className="mt-4 flex flex-col gap-4 lg:flex-row">
-            <div className="h-64 w-52 animate-pulse rounded-2xl bg-slate-200" />
-            <div className="h-80 flex-1 animate-pulse rounded-2xl bg-slate-200" />
+            <div className="h-64 w-52 animate-pulse rounded-2xl bg-white/10" />
+            <div className="h-80 flex-1 animate-pulse rounded-2xl bg-white/10" />
           </div>
         </div>
       </div>

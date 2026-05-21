@@ -109,8 +109,8 @@ export function AuthSplitShell({
           </div>
         </aside>
 
-        <div className="auth-shell-form border-t border-white/10 lg:border-l lg:border-t-0">
-          <div className="auth-shell-form-inner">
+        <div className="auth-shell-form min-h-0 border-t border-white/10 lg:border-l lg:border-t-0">
+          <div className="auth-shell-form-inner min-h-0">
             <header className="shrink-0">
               <p className="si-kicker lg:hidden">{siteName}</p>
               <h1 className="si-heading mt-2 text-2xl sm:text-[1.75rem]">{title}</h1>
