@@ -206,6 +206,7 @@ export function ShopPageClient({
           aria-modal={filtersOpen ? true : undefined}
           role={filtersOpen ? "dialog" : undefined}
           aria-labelledby="shop-filters-sheet-title"
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="flex shrink-0 flex-col items-stretch border-b border-white/10 lg:hidden">
             <div className="flex justify-center pt-2 pb-1" aria-hidden>
@@ -226,8 +227,14 @@ export function ShopPageClient({
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain lg:overflow-visible">
-            <ShopFiltersForm onApplied={() => setFiltersOpen(false)}>
+          <div
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain lg:overflow-visible"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ShopFiltersForm
+              key={catalogQs}
+              onApplied={() => setFiltersOpen(false)}
+            >
             <div className="space-y-3 p-4 pb-6 max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom))]">
               <p className="hidden text-h3 lg:block">Filtreler</p>
             <select

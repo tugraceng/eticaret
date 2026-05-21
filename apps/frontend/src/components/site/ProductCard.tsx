@@ -209,7 +209,7 @@ function ProductCardInner({ product, showCategory = false, showDescription = fal
           </div>
 
           <div className="si-product-card-footer mt-auto shrink-0 border-t border-white/[0.06] pt-3">
-            <div className="min-h-[2.5rem] min-w-0">
+            <div className="min-w-0">
               <p className="si-price leading-tight">{priceFmt(product.priceCents)}</p>
               <p
                 className={cn(
@@ -220,14 +220,13 @@ function ProductCardInner({ product, showCategory = false, showDescription = fal
                 {onSale ? priceFmt(product.compareAtCents!) : "—"}
               </p>
             </div>
-            <div className="si-product-card-atc pointer-events-auto relative z-[6] shrink-0">
+            <div className="si-product-card-atc pointer-events-auto relative z-[6] w-full">
               <ProductCardAddToCart
                 productId={product.id}
                 slug={product.slug}
                 title={product.name}
                 priceCents={product.priceCents}
                 imageUrl={cover}
-                variant="icon"
               />
             </div>
           </div>

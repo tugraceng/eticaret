@@ -180,7 +180,7 @@ export default async function ShopPage({
     q ? `"${q}"` : null,
     categoryId ? categories.find((c) => c.id === categoryId)?.name ?? "Kategori" : null,
   ].filter(Boolean);
-  const title = titleBits.length ? `${titleBits.join(" · ")} sonuçları` : "Mağaza";
+  const title = titleBits.length ? titleBits.join(" · ") : "Mağaza";
 
   const hasActiveCatalogFilters = Boolean(
     q ||

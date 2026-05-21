@@ -35,13 +35,6 @@ export function ShopFiltersForm({ children, onApplied }: Props) {
         e.preventDefault();
         apply(e.currentTarget);
       }}
-      onChange={(e) => {
-        const t = e.target;
-        if (!(t instanceof HTMLInputElement) && !(t instanceof HTMLSelectElement)) return;
-        if (t instanceof HTMLInputElement && t.type === "number") return;
-        const form = t.form;
-        if (form) apply(form);
-      }}
     >
       {children}
     </form>
