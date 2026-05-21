@@ -445,19 +445,42 @@ export function SiteHeader({
           </button>
           <Link
             href="/"
-            className="absolute left-1/2 z-20 -translate-x-1/2 text-sm font-semibold uppercase tracking-[0.14em] text-white"
+            className="absolute left-1/2 z-20 flex max-w-[42%] -translate-x-1/2 items-center justify-center"
             onClick={() => setOpen(false)}
+            aria-label={settings.siteName}
           >
-            {settings.siteName}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logoSrc}
+              alt=""
+              className="h-9 w-auto max-w-full object-contain"
+            />
           </Link>
-          <div className="relative z-20 flex shrink-0 items-center gap-1">
+          <div className="relative z-20 flex shrink-0 items-center gap-0.5">
+            <Link
+              href="/favoriler"
+              className="relative flex flex-col items-center gap-0.5 rounded-lg px-1.5 py-1 text-slate-300 hover:bg-white/8 hover:text-rose-400"
+              aria-label="Favoriler"
+            >
+              <HeartIcon className="h-5 w-5" />
+              <span className="text-[9px] font-semibold uppercase tracking-wide">Favori</span>
+              {wishCount > 0 ? (
+                <span
+                  className="absolute right-0 top-0 inline-flex min-h-[0.875rem] min-w-[0.875rem] translate-x-0.5 -translate-y-0.5 items-center justify-center rounded-full px-0.5 text-[8px] font-bold text-white"
+                  style={{ background: accent }}
+                >
+                  {wishCount > 99 ? "99+" : wishCount}
+                </span>
+              ) : null}
+            </Link>
             <button
               type="button"
               onClick={() => openMiniCart()}
-              className="relative grid h-11 w-11 place-items-center rounded-xl text-slate-300 hover:bg-white/8 hover:text-white"
+              className="relative flex flex-col items-center gap-0.5 rounded-lg px-1.5 py-1 text-slate-300 hover:bg-white/8 hover:text-white"
               aria-label="Sepeti aç"
             >
               <CartIcon className="h-5 w-5" />
+              <span className="text-[9px] font-semibold uppercase tracking-wide">Sepet</span>
               {cartCount > 0 ? (
                 <span
                   className="absolute right-1 top-1 inline-flex min-h-[1rem] min-w-[1rem] items-center justify-center rounded-full px-0.5 text-[9px] font-bold text-white"
@@ -513,35 +536,37 @@ export function SiteHeader({
           </div>
 
           <div className="relative z-20 ml-auto flex shrink-0 items-center gap-2 sm:gap-3 md:ml-0">
-            <div className="si-header-actions hidden items-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1 md:flex">
+            <div className="si-header-actions hidden items-center gap-0.5 rounded-xl border border-white/10 bg-white/[0.04] px-1 py-0.5 md:flex">
               <Link
                 href="/favoriler"
-                className="relative grid h-10 w-10 place-items-center rounded-lg text-slate-300 transition-colors hover:bg-white/8 hover:text-rose-400"
-                aria-label="Favoriler"
+                className="si-header-action-labeled relative rounded-lg text-slate-300 transition-colors hover:bg-white/8 hover:text-rose-400"
+                aria-label="Favorilerim"
               >
                 <HeartIcon className="h-5 w-5" />
+                <span className="si-header-action-label">Favoriler</span>
                 {wishCount > 0 && (
                   <span
-                    className="absolute right-0 top-0 inline-flex min-h-[1.125rem] min-w-[1.125rem] translate-x-0.5 -translate-y-0.5 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white"
+                    className="absolute right-1 top-0 inline-flex min-h-[1.125rem] min-w-[1.125rem] translate-x-0.5 -translate-y-0.5 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white"
                     style={{ background: accent }}
                   >
                     {wishCount > 99 ? "99+" : wishCount}
                   </span>
                 )}
               </Link>
-              <span className="w-px self-stretch bg-white/10" aria-hidden />
+              <span className="mx-0.5 w-px self-stretch bg-white/10" aria-hidden />
               <button
                 type="button"
                 onClick={() => openMiniCart()}
-                className="relative grid h-10 w-10 place-items-center rounded-lg text-slate-300 transition-colors hover:bg-white/8 hover:text-white"
-                aria-label="Sepeti aç"
+                className="si-header-action-labeled relative rounded-lg text-slate-300 transition-colors hover:bg-white/8 hover:text-white"
+                aria-label="Sepetim"
                 aria-haspopup="dialog"
                 aria-controls="mini-cart-panel"
               >
                 <CartIcon className="h-5 w-5" />
+                <span className="si-header-action-label">Sepet</span>
                 {cartCount > 0 && (
                   <span
-                    className="absolute right-0 top-0 inline-flex min-h-[1.125rem] min-w-[1.125rem] translate-x-0.5 -translate-y-0.5 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white"
+                    className="absolute right-1 top-0 inline-flex min-h-[1.125rem] min-w-[1.125rem] translate-x-0.5 -translate-y-0.5 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white shadow ring-2 ring-white"
                     style={{ background: accent }}
                   >
                     {cartCount > 99 ? "99+" : cartCount}
@@ -788,11 +813,16 @@ export function SiteHeader({
                 </div>
               );
             })}
-            {[...headerNav.afterCategories, contactNavItem].map((item) => (
+            {[...headerNav.afterCategories, contactNavItem]
+              .filter(
+                (item, idx, arr) =>
+                  arr.findIndex((x) => x.href === item.href) === idx && item.href !== "/services",
+              )
+              .map((item) => (
               <Link
                 key={`mob-tail-${item.href}-${item.label}`}
                 href={item.href}
-                className="rounded-lg px-3 py-3 font-[family-name:var(--font-playfair)] text-lg text-slate-100 hover:bg-white/6"
+                className="rounded-lg px-3 py-3 text-sm font-semibold text-slate-100 hover:bg-white/6"
                 onClick={() => setOpen(false)}
               >
                 {item.label}

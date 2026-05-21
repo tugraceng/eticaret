@@ -58,8 +58,8 @@ export function MobileSiteNavDrawer({ open, onClose, children }: Props) {
         aria-hidden={!open}
         aria-label="Site menüsü"
         className={cn(
-          "si-mobile-drawer fixed inset-y-0 right-0 z-[201] flex w-[min(88vw,20rem)] flex-col border-l border-white/10 bg-[#0f141c] shadow-2xl transition-transform duration-300 ease-out md:hidden",
-          open ? "translate-x-0" : "pointer-events-none translate-x-full",
+          "si-mobile-drawer fixed inset-y-0 left-0 z-[201] flex w-[min(88vw,20rem)] flex-col border-r border-white/10 bg-[#0f141c] shadow-2xl transition-transform duration-300 ease-out md:hidden",
+          open ? "translate-x-0" : "pointer-events-none -translate-x-full",
         )}
       >
         <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">

@@ -91,6 +91,7 @@ export function CustomerAccountHome() {
   const [phase, setPhase] = useState<"loading" | "ok">("loading");
   const [token, setToken] = useState<string | null>(null);
   const [tab, setTab] = useState<AccountTabId>("overview");
+  const [ordersFilter, setOrdersFilter] = useState<"all" | "active">("all");
   const [me, setMe] = useState<MeData | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loadErr, setLoadErr] = useState<string | null>(null);
@@ -131,8 +132,10 @@ export function CustomerAccountHome() {
   }, [searchParams]);
 
   const selectTab = useCallback(
-    (id: AccountTabId) => {
+    (id: AccountTabId, opts?: { ordersFilter?: "all" | "active" }) => {
       setTab(id);
+      if (opts?.ordersFilter) setOrdersFilter(opts.ordersFilter);
+      else if (id !== "orders") setOrdersFilter("all");
       router.replace(`/hesap?tab=${encodeURIComponent(id)}`, { scroll: false });
     },
     [router],
@@ -169,8 +172,8 @@ export function CustomerAccountHome() {
   const greetName = (me?.name || me?.surname || fullName).split(" ")[0] ?? fullName;
 
   return (
-    <div className="bg-slate-50/80">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+    <div className="si-account-page">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         {loadErr && (
           <pre className="mb-6 overflow-auto rounded-xl bg-rose-50 p-3 text-xs text-rose-700">
             {loadErr}
@@ -195,9 +198,16 @@ export function CustomerAccountHome() {
               </Link>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-7">
+            <div className="si-account-panel p-4 sm:p-6 lg:p-7">
               {tab === "overview" && <OverviewTab orders={orders} me={me} onGoto={selectTab} />}
-              {tab === "orders" && <OrdersTab token={token!} orders={orders} onChange={setOrders} />}
+              {tab === "orders" && (
+                <OrdersTab
+                  token={token!}
+                  orders={orders}
+                  onChange={setOrders}
+                  filter={ordersFilter}
+                />
+              )}
               {tab === "returns" && (
                 <div>
                   <CustomerReturns variant="embedded" authToken={token!} />
@@ -251,7 +261,7 @@ function OverviewTab({
 }: {
   orders: OrderRow[];
   me: MeData | null;
-  onGoto: (tab: AccountTabId) => void;
+  onGoto: (tab: AccountTabId, opts?: { ordersFilter?: "all" | "active" }) => void;
 }) {
   const activeShipments = orders.filter((o) =>
     ["SHIPPED", "PROCESSING", "PAID"].includes(o.status),
@@ -268,27 +278,23 @@ function OverviewTab({
         title="Hesap özeti"
         body="Sipariş durumunuzu, teslimat ayarlarınızı ve hızlı işlemleri tek yerden yönetin."
       />
-      <div className="grid gap-4 sm:grid-cols-3">
-        <button
-          type="button"
-          onClick={() => onGoto("orders")}
-          className="flex flex-col items-center rounded-2xl border border-slate-200/80 bg-slate-50/60 px-4 py-6 text-center transition hover:border-slate-300 hover:shadow-sm"
-        >
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-sky-100 text-sky-600">
+      <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+        <button type="button" onClick={() => onGoto("orders", { ordersFilter: "all" })} className="si-account-stat-card">
+          <span className="grid h-10 w-10 place-items-center rounded-full bg-sky-500/15 text-sky-400">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
               <rect x="3" y="6" width="8" height="12" rx="1" />
               <rect x="13" y="4" width="8" height="16" rx="1" />
             </svg>
           </span>
-          <p className="mt-3 text-2xl font-semibold text-slate-900">{orders.length}</p>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">Toplam sipariş</p>
+          <p className="si-stat-value">{orders.length}</p>
+          <p className="si-stat-label">Toplam sipariş</p>
         </button>
         <button
           type="button"
-          onClick={() => onGoto("orders")}
-          className="flex flex-col items-center rounded-2xl border border-slate-200/80 bg-slate-50/60 px-4 py-6 text-center transition hover:border-slate-300 hover:shadow-sm"
+          onClick={() => onGoto("orders", { ordersFilter: "active" })}
+          className="si-account-stat-card"
         >
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-sky-100 text-sky-600">
+          <span className="grid h-10 w-10 place-items-center rounded-full bg-violet-500/15 text-violet-300">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
               <path d="M1 3h15v13H1V3z" />
               <path d="M16 8h4l3 3v5h-7V8z" />
@@ -296,22 +302,18 @@ function OverviewTab({
               <circle cx="18.5" cy="18.5" r="1.5" />
             </svg>
           </span>
-          <p className="mt-3 text-2xl font-semibold text-slate-900">{activeShipments}</p>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">Aktif gönderi</p>
+          <p className="si-stat-value">{activeShipments}</p>
+          <p className="si-stat-label">Aktif gönderi</p>
         </button>
-        <button
-          type="button"
-          onClick={() => onGoto("addresses")}
-          className="flex flex-col items-center rounded-2xl border border-slate-200/80 bg-slate-50/60 px-4 py-6 text-center transition hover:border-slate-300 hover:shadow-sm"
-        >
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-sky-100 text-sky-600">
+        <button type="button" onClick={() => onGoto("addresses")} className="si-account-stat-card">
+          <span className="grid h-10 w-10 place-items-center rounded-full bg-emerald-500/15 text-emerald-300">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
               <path d="M12 21s7-4.5 7-10a7 7 0 0 0-14 0c0 5.5 7 10 7 10z" />
               <circle cx="12" cy="11" r="2" />
             </svg>
           </span>
-          <p className="mt-3 text-2xl font-semibold text-slate-900">{addresses.length}</p>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">Kayıtlı adres</p>
+          <p className="si-stat-value">{addresses.length}</p>
+          <p className="si-stat-label">Kayıtlı adres</p>
         </button>
       </div>
 
@@ -457,11 +459,17 @@ function OrdersTab({
   token,
   orders,
   onChange,
+  filter = "all",
 }: {
   token: string;
   orders: OrderRow[];
   onChange: (list: OrderRow[]) => void;
+  filter?: "all" | "active";
 }) {
+  const visible =
+    filter === "active"
+      ? orders.filter((o) => ["SHIPPED", "PROCESSING", "PAID"].includes(o.status))
+      : orders;
   const [busyId, setBusyId] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [cancelId, setCancelId] = useState<string | null>(null);
@@ -492,7 +500,7 @@ function OrdersTab({
         />
         <div className="surface-soft p-10 text-center text-sm text-slate-500">
           Henüz siparişiniz yok.{" "}
-          <Link href="/#urunler" className="link-underline font-semibold text-slate-900">
+          <Link href="/shop" className="link-underline font-semibold">
             Alışverişe başlayın
           </Link>
         </div>
@@ -504,16 +512,25 @@ function OrdersTab({
     <div>
       <SectionIntro
         eyebrow="Siparişler"
-        title="Sipariş geçmişi"
-        body="Sipariş durumunuzu takip edin, bekleyen siparişlerde iptal işlemini buradan yönetin."
+        title={filter === "active" ? "Aktif gönderiler" : "Sipariş geçmişi"}
+        body={
+          filter === "active"
+            ? "Kargoda veya hazırlanan siparişleriniz."
+            : "Sipariş durumunuzu takip edin, bekleyen siparişlerde iptal işlemini buradan yönetin."
+        }
       />
       {err && (
         <pre className="mb-3 overflow-auto rounded-xl bg-rose-50 p-3 text-xs text-rose-700">
           {err}
         </pre>
       )}
+      {visible.length === 0 ? (
+        <div className="surface-soft p-8 text-center text-sm text-slate-500">
+          Aktif gönderi bulunmuyor.
+        </div>
+      ) : null}
       <ul className="space-y-3">
-        {orders.map((o) => (
+        {visible.map((o) => (
           <li
             key={o.id}
             className="surface-soft flex flex-wrap items-center justify-between gap-4 p-5"

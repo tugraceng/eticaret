@@ -64,7 +64,7 @@ export default async function ServicesPage() {
               style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}
             >
               {cover ? (
-                <div className="si-cms-media relative aspect-[2/1] max-h-[min(52vw,380px)] w-full sm:aspect-[21/9]">
+                <div className="si-cms-media si-cms-media-compact relative aspect-[16/9] max-h-[220px] w-full sm:max-h-[260px]">
                   <Image
                     src={cover}
                     alt=""
@@ -77,7 +77,7 @@ export default async function ServicesPage() {
                 </div>
               ) : (
                 <div
-                  className="flex aspect-[2/1] max-h-[min(40vw,280px)] w-full items-center justify-center rounded-3xl text-4xl font-semibold text-white shadow-inner sm:aspect-[21/9]"
+                  className="si-cms-media si-cms-media-compact flex aspect-[16/9] max-h-[200px] w-full items-center justify-center text-3xl font-semibold text-white"
                   style={{
                     backgroundImage: "linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))",
                   }}

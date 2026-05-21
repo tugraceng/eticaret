@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, memo, useState, useEffect, useRef } from "react";
 import { ShopToolbar } from "@/app/(site)/shop/ShopToolbar";
 import { ShopCatalogGrid, type CatalogPayload } from "@/app/(site)/shop/ShopCatalogGrid";
+import { ShopFiltersForm } from "@/components/store/ShopFiltersForm";
 import type { CategoryApiRow } from "@/lib/category-nav";
 import { cn } from "@/lib/cn";
 import { isPersonalizedCategory, PERSONALIZED_ORDER_NOTICE } from "@/lib/personalized-category";
@@ -166,9 +167,6 @@ export function ShopPageClient({
         </div>
 
         <div className="mt-3 flex w-full flex-wrap items-stretch gap-2 lg:hidden">
-          <div className="min-w-0 min-h-11 flex-1 basis-[min(100%,11rem)]">
-            <ViewToggle view={view} />
-          </div>
           <button
             type="button"
             onClick={() => setFiltersOpen(true)}
@@ -199,7 +197,7 @@ export function ShopPageClient({
       <div className="lg:grid lg:grid-cols-[minmax(0,280px)_1fr] lg:items-start lg:gap-8 xl:gap-10">
         <aside
           className={cn(
-            "flex max-h-[min(90dvh,640px)] flex-col overflow-hidden rounded-ds-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-card transition-transform duration-300 ease-out",
+            "si-shop-filters flex max-h-[min(90dvh,640px)] flex-col overflow-hidden rounded-ds-xl transition-transform duration-300 ease-out",
             "lg:z-10 lg:mb-0 lg:max-h-none lg:translate-y-0 lg:overflow-visible",
             "lg:sticky lg:top-24",
             "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-[60] max-lg:rounded-b-none max-lg:rounded-t-3xl",
@@ -229,13 +227,8 @@ export function ShopPageClient({
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain lg:overflow-visible">
-            <form
-              key={`${catalogQs}|${page}`}
-              method="GET"
-              action="/shop"
-              className="si-shop-filters-form space-y-3 p-4 pb-6 max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom))]"
-              onSubmit={() => setFiltersOpen(false)}
-            >
+            <ShopFiltersForm onApplied={() => setFiltersOpen(false)}>
+            <div className="space-y-3 p-4 pb-6 max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom))]">
               <p className="hidden text-h3 lg:block">Filtreler</p>
             <select
               key={categoryId ?? "all"}
@@ -283,18 +276,21 @@ export function ShopPageClient({
                 </optgroup>
               ) : null}
             </select>
-            <select
-              name="sort"
-              defaultValue={sort}
-              className="input-soft min-h-11 w-full !rounded-ds-lg"
-              aria-label="Sıralama"
-            >
-              {sorts.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+            <label className="block">
+              <span className="si-filter-label mb-1.5 block">Sırala</span>
+              <select
+                name="sort"
+                defaultValue={sort}
+                className="input-soft min-h-11 w-full !rounded-ds-lg"
+                aria-label="Sıralama"
+              >
+                {sorts.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </label>
             <select
               name="minAvgRating"
               defaultValue={minAvgRating ?? ""}
@@ -352,7 +348,8 @@ export function ShopPageClient({
                 Sıfırla
               </Link>
             </div>
-          </form>
+            </div>
+          </ShopFiltersForm>
           </div>
         </aside>
 

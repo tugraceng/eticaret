@@ -18,7 +18,7 @@ import { ProvinceDistrictSelect } from "@/components/forms/ProvinceDistrictSelec
 import { isTrProvinceDistrictValid } from "@/lib/tr-province-district";
 import { CheckoutJumpNav } from "./_components/CheckoutJumpNav";
 import { CheckoutPaymentTrustPanel } from "./_components/CheckoutPaymentTrustPanel";
-import { PageContainer } from "@/components/site/PageContainer";
+import { PageContainer, PageHeader } from "@/components/site/PageContainer";
 import { ThumbImage } from "@/components/site/ThumbImage";
 
 const PHONE_TR = /^(\+?90)?[\s-]?0?5\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}$/;
@@ -1194,7 +1194,7 @@ function CheckoutInner() {
 
       <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
         <div className="surface-soft p-6">
-          <section className="rounded-xl border border-slate-100 bg-slate-50/90 p-4" aria-labelledby="checkout-about-heading">
+          <section className="si-checkout-about" aria-labelledby="checkout-about-heading">
             <h3 id="checkout-about-heading" className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
               Hakkımda
             </h3>
@@ -1349,20 +1349,11 @@ function CheckoutInner() {
 export default function CheckoutPage() {
   return (
     <PageContainer as="main" className="py-10 sm:py-12">
-      <div className="section-shell">
-        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-indigo-50/70 to-transparent" aria-hidden />
-        <div className="relative">
-          <h1 className="text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-            Ödeme
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600">
-            Teslimat, sepet özeti ve ödeme tek sayfada; aşağı kaydırarak tümünü doldurun.
-          </p>
-          <p className="mt-2 max-w-2xl text-xs leading-relaxed text-slate-500">
-            Ödeme adımında kart bilgileriniz yalnızca lisanslı ödeme kuruluşunun güvenli sayfasında işlenir;
-            PCI-DSS kapsamındaki altyapıda tutulur ve mağaza sunucularında saklanmaz.
-          </p>
-        </div>
+      <div className="section-shell si-page-hero-compact">
+        <PageHeader
+          title="Ödeme"
+          description="Teslimat, sepet özeti ve ödeme tek sayfada. Kart bilgileri yalnızca ödeme kuruluşunun güvenli sayfasında işlenir."
+        />
       </div>
       <div className="mt-8">
         <Suspense fallback={<p className="text-sm text-slate-600">Yükleniyor…</p>}>

@@ -80,7 +80,7 @@ export function AccountDashboardSidebar({
   onLogout: () => void;
 }) {
   return (
-    <aside className="flex w-full flex-col gap-1 lg:max-w-[220px] lg:shrink-0">
+    <aside className="si-account-sidebar flex w-full flex-col gap-1 lg:max-w-[220px] lg:shrink-0">
       <p className="mb-2 hidden text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 lg:block">Hesap</p>
       <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {nav.map((item) => {

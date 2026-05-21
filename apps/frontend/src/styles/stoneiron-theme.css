@@ -214,6 +214,24 @@
 }
 .site-theme-stoneiron .header-auth-solid:hover {
   background: #fff;
+  color: #0c0e12;
+}
+
+.site-theme-stoneiron .si-header-action-labeled {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.25rem 0.5rem;
+  min-width: 3rem;
+}
+.site-theme-stoneiron .si-header-action-label {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  line-height: 1;
 }
 
 .site-theme-stoneiron #site-footer {
@@ -754,10 +772,197 @@
 
 .site-theme-stoneiron .si-personalized-notice {
   border-radius: 0.875rem;
-  border: 1px solid rgba(125, 211, 252, 0.25);
-  background: linear-gradient(135deg, rgba(30, 58, 90, 0.45) 0%, rgba(15, 20, 28, 0.9) 100%);
-  padding: 1rem 1.25rem;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.35) 0%, rgba(30, 41, 59, 0.95) 55%, rgba(15, 20, 28, 0.98) 100%);
+  padding: 1rem 1.25rem 1rem 3rem;
+  color: #fde68a;
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.12), 0 12px 32px -16px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+.site-theme-stoneiron .si-personalized-notice::before {
+  content: "!";
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  height: 1.5rem;
+  width: 1.5rem;
+  place-items: center;
+  border-radius: 9999px;
+  background: rgba(251, 191, 36, 0.2);
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #fbbf24;
+}
+.site-theme-stoneiron .si-personalized-notice p {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: #fef3c7;
+}
+
+.site-theme-stoneiron .si-filter-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.site-theme-stoneiron .si-cms-media-compact {
+  max-height: 260px;
+}
+
+.site-theme-stoneiron .si-page-hero-compact h1,
+.site-theme-stoneiron .si-page-hero-compact .si-heading {
+  font-size: 1.75rem !important;
+}
+@media (min-width: 640px) {
+  .site-theme-stoneiron .si-page-hero-compact h1,
+  .site-theme-stoneiron .si-page-hero-compact .si-heading {
+    font-size: 2rem !important;
+  }
+}
+
+.site-theme-stoneiron .si-checkout-about {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+}
+.site-theme-stoneiron .si-checkout-about h3 {
+  color: #94a3b8;
+}
+.site-theme-stoneiron .si-checkout-about p,
+.site-theme-stoneiron .si-checkout-about a {
+  color: #e2e8f0;
+}
+.site-theme-stoneiron .si-checkout-about a {
+  color: #7dd3fc;
+}
+
+.site-theme-stoneiron .si-account-page {
+  background: var(--si-bg-deep);
+  color: var(--si-text);
+}
+.site-theme-stoneiron .si-account-panel {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--si-bg-card);
+  color: var(--si-text);
+  overflow: hidden;
+}
+.site-theme-stoneiron .si-account-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1.25rem 1rem;
+  text-align: center;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.site-theme-stoneiron .si-account-stat-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.07);
+}
+.site-theme-stoneiron .si-account-stat-card .si-stat-value {
+  margin-top: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+.site-theme-stoneiron .si-account-stat-card .si-stat-label {
+  margin-top: 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.site-theme-stoneiron .si-shop-filter-chip input[type="checkbox"] {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
+  border: 2px solid rgba(148, 163, 184, 0.5);
+  background: #0a0f18;
+  flex-shrink: 0;
+}
+.site-theme-stoneiron .si-shop-filter-chip input[type="checkbox"]:checked {
+  border-color: #38bdf8;
+  background: #38bdf8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%230c0e12' d='M4.2 9.2 1.4 6.4l1-1 1.8 1.8 4.4-4.4 1 1z'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+}
+
+.site-theme-stoneiron .si-product-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+@media (max-width: 639px) {
+  .site-theme-stoneiron .si-product-card-footer .si-product-card-atc button {
+    height: 2rem;
+    width: 2rem;
+  }
+  .site-theme-stoneiron .si-product-card-footer .si-product-card-atc svg {
+    height: 0.875rem;
+    width: 0.875rem;
+  }
+}
+
+.site-theme-stoneiron .si-fav-quick-cart {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #e8edf5;
+  color: #0c0e12;
+}
+
+.site-theme-stoneiron > .flex-1 .section-shell {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--si-bg-card);
+  padding: 1.5rem 1.25rem;
+}
+.site-theme-stoneiron > .flex-1 .section-shell .absolute {
+  display: none;
+}
+
+.site-theme-stoneiron .si-account-sidebar .lg\\:hidden button,
+.site-theme-stoneiron .si-account-sidebar .lg\\:hidden a {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
   color: #cbd5e1;
+}
+.site-theme-stoneiron .si-account-sidebar .lg\\:hidden button[class*="bg-slate-900"],
+.site-theme-stoneiron .si-account-sidebar .lg\\:hidden .bg-slate-900 {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.site-theme-stoneiron .si-account-sidebar nav.lg\\:block button {
+  color: #94a3b8;
+}
+.site-theme-stoneiron .si-account-sidebar nav.lg\\:block button[class*="bg-slate-900"] {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+}
+
+.site-theme-stoneiron .si-account-page .input-soft {
+  background-color: #0a0f18;
+  color: #e8edf5;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.site-theme-stoneiron .si-account-page .input-soft::placeholder {
+  color: #64748b;
+}
+.site-theme-stoneiron .si-account-page label span {
+  color: #94a3b8;
 }
 
 .site-theme-stoneiron .si-product-excerpt {
