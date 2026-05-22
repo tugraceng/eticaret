@@ -13,6 +13,7 @@ import {
   type CSSProperties,
 } from "react";
 import { SiteHeaderSearch } from "@/components/site/SiteHeaderSearch";
+import { SiteMobileSearchOverlay } from "@/components/site/SiteMobileSearchOverlay";
 import { CategoryMegaMenu } from "@/components/site/CategoryMegaMenu";
 import { MobileSiteNavDrawer } from "@/components/site/MobileSiteNavDrawer";
 import { SiteNavTab } from "@/components/site/SiteNavTab";
@@ -37,6 +38,23 @@ function HeartIcon({ className = "" }: { className?: string }) {
       aria-hidden
     >
       <path d="M20.8 5.4a5.5 5.5 0 0 0-7.8 0L12 6.4l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 22l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z" />
+    </svg>
+  );
+}
+
+function SearchIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      className={className}
+      aria-hidden
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
     </svg>
   );
 }
@@ -251,6 +269,7 @@ export function SiteHeader({
   const activeShopCategoryId = pathname.startsWith("/shop") ? searchParams.get("categoryId") : null;
   const isHome = pathname === "/";
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   /** Mobil menüde alt kategori satırları hangi kök kategoriler için açık */
   const [mobileSubcatsOpen, setMobileSubcatsOpen] = useState<Set<string>>(new Set());
   const cartCount = useCartStore(selectCartTotalQty);
@@ -314,6 +333,7 @@ export function SiteHeader({
 
   useEffect(() => {
     setOpen(false);
+    setSearchOpen(false);
     collapseMega();
   }, [pathname, collapseMega]);
 
@@ -452,15 +472,25 @@ export function SiteHeader({
           <div className="ml-auto flex shrink-0 items-center gap-0.5">
             <button
               type="button"
+              onClick={() => {
+                setOpen(false);
+                setSearchOpen(true);
+              }}
+              className="grid h-11 w-11 place-items-center rounded-xl text-slate-300 hover:bg-white/8 hover:text-white"
+              aria-label="Ürün ara"
+            >
+              <SearchIcon />
+            </button>
+            <button
+              type="button"
               onClick={() => openMiniCart()}
-              className="relative flex flex-col items-center gap-0.5 rounded-lg px-1.5 py-1 text-slate-300 hover:bg-white/8 hover:text-white"
+              className="relative grid h-11 w-11 place-items-center rounded-xl text-slate-300 hover:bg-white/8 hover:text-white"
               aria-label="Sepeti aç"
             >
               <CartIcon className="h-5 w-5" />
-              <span className="text-[9px] font-semibold uppercase tracking-wide">Sepet</span>
               {cartCount > 0 ? (
                 <span
-                  className="absolute right-1 top-1 inline-flex min-h-[1rem] min-w-[1rem] items-center justify-center rounded-full px-0.5 text-[9px] font-bold text-white"
+                  className="absolute right-1.5 top-1.5 inline-flex min-h-[1rem] min-w-[1rem] items-center justify-center rounded-full px-0.5 text-[9px] font-bold text-white"
                   style={{ background: accent }}
                 >
                   {cartCount > 99 ? "99+" : cartCount}
@@ -834,6 +864,7 @@ export function SiteHeader({
               </Link>
             ))}
       </MobileSiteNavDrawer>
+      <SiteMobileSearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 }

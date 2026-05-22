@@ -66,8 +66,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     ...(settings.accentColor ? { "--brand-accent": settings.accentColor } : {}),
   } as React.CSSProperties;
   return (
-    <html lang="tr" className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable}`}>
-      <body className="min-h-screen font-sans antialiased" style={cssVars}>
+    <html
+      lang="tr"
+      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} bg-[#121212]`}
+    >
+      <body className="min-h-screen bg-[#121212] font-sans antialiased" style={cssVars}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

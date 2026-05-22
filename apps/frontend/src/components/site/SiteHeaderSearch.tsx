@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl } from "@/lib/api";
+import { cn } from "@/lib/cn";
 
 type SuggestRow = { id: string; slug: string; name: string };
 
@@ -120,14 +121,14 @@ export function SiteHeaderSearch({
                 ? "flex min-h-[2.5rem] items-center gap-2 rounded-full border border-white/30 bg-black/20 px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md"
                 : "si-header-search flex min-h-[2.875rem] items-center gap-2.5 px-4 py-2"
               : isSheet
-                ? "flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"
+                ? "flex items-center gap-2 rounded-xl border border-white/12 bg-[#0a0f18] px-3 py-2.5"
                 : "flex items-center gap-2"
           }
         >
           {isDesktop || isSheet ? (
             <svg
               viewBox="0 0 24 24"
-              className={`h-4 w-4 shrink-0 ${heroOverlay ? "text-white/70" : "text-slate-500"}`}
+              className={`h-4 w-4 shrink-0 ${heroOverlay ? "text-white/70" : isSheet ? "text-slate-400" : "text-slate-500"}`}
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -152,16 +153,19 @@ export function SiteHeaderSearch({
               isDesktop || isSheet
                 ? heroOverlay
                   ? "w-full border-0 bg-transparent text-sm text-white outline-none placeholder:text-white/45"
-                  : "w-full border-0 bg-transparent text-sm text-slate-900 outline-none"
+                  : isSheet
+                    ? "w-full border-0 bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+                    : "w-full border-0 bg-transparent text-sm text-slate-900 outline-none"
                 : "w-full border-0 bg-transparent text-sm outline-none"
             }
           />
         </div>
         {showPanel && (
           <div
-            className={`absolute z-50 mt-1 max-h-[min(70vh,320px)] w-full overflow-auto rounded-xl border border-white/10 bg-[#121a28] shadow-xl ${
-              isDesktop ? "left-0 right-0" : ""
-            }`}
+            className={cn(
+              "z-50 max-h-[min(50vh,280px)] w-full overflow-auto rounded-xl border border-white/10 bg-[#121a28] shadow-xl",
+              isDesktop || (!isSheet && !isDesktop) ? "absolute left-0 right-0 mt-1" : "mt-2",
+            )}
           >
             {busy ? <p className="px-3 py-2 text-xs text-slate-400">Aranıyor…</p> : null}
             {!busy && suggest.length === 0 ? (
@@ -193,7 +197,7 @@ export function SiteHeaderSearch({
               ? "grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/50 bg-white text-neutral-900 shadow-md transition hover:bg-neutral-50"
               : "grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sky-600 text-white shadow-md transition hover:bg-sky-500"
             : isSheet
-              ? "w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-950"
+              ? "w-full rounded-xl bg-[#e8edf5] py-2.5 text-sm font-semibold text-[#0c0e12] shadow-md transition hover:bg-white"
               : "shrink-0 self-center text-xs font-semibold text-slate-700"
         }
         aria-label={isSheet ? "Mağazada ara" : "Ara"}

@@ -9,6 +9,7 @@ import { siteContainerClass } from "@/components/site/PageContainer";
 import { cn } from "@/lib/cn";
 
 import { SiteFooterNewsletter } from "./SiteFooterNewsletter";
+import { SiteFooterPaymentBand } from "./SiteFooterPaymentBand";
 
 import { SocialNetworkIcon } from "./SocialNetworkIcon";
 
@@ -128,9 +129,9 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
 
     >
 
-      <div className={cn(siteContainerClass, "py-12 sm:py-14")}>
+      <div className={cn(siteContainerClass, "py-8 sm:py-12 md:py-14")}>
 
-        <div className="flex flex-col gap-8 border-b border-white/[0.08] pb-10 md:flex-row md:items-start md:justify-between md:gap-10 md:pb-12">
+        <div className="flex flex-col gap-6 border-b border-white/[0.08] pb-8 sm:gap-8 md:flex-row md:items-start md:justify-between md:gap-10 md:pb-12">
 
           <div className="max-w-md">
 
@@ -162,7 +163,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
 
 
 
-        <div className="mt-12 grid gap-10 sm:gap-12 md:grid-cols-12">
+        <div className="mt-8 grid gap-8 sm:gap-10 md:mt-12 md:grid-cols-12 md:gap-12">
 
           <div id="footer-brand" className="scroll-mt-28 md:col-span-5">
 
@@ -360,31 +361,12 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
 
 
 
-        <div className="mt-10 flex flex-col gap-4 border-t border-white/[0.08] pt-8 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <SiteFooterPaymentBand />
 
+        <div className="mt-8 flex flex-col gap-4 border-t border-white/[0.08] pt-6 text-xs text-slate-500 sm:mt-10 sm:flex-row sm:items-center sm:justify-between sm:pt-8">
           <p>
-
             © {year} {settings.siteName}. Tüm hakları saklıdır.
-
           </p>
-
-          <div className="flex flex-wrap items-center gap-2 sm:justify-center">
-
-            <span className="text-slate-600">İyzico</span>
-
-            <span className="text-slate-700">·</span>
-
-            <span>VISA</span>
-
-            <span className="text-slate-700">·</span>
-
-            <span>MASTERCARD</span>
-
-            <span className="text-slate-700">·</span>
-
-            <span>TROY</span>
-
-          </div>
 
           <a
 

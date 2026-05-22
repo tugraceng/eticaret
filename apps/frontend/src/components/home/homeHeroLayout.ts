@@ -5,7 +5,7 @@
 
 /** Görsel + metin toplam yükseklik (header hariç alan dahil) */
 export const heroSectionMinHeightClass =
-  "min-h-[max(34rem,calc(var(--si-site-header-h,9.5rem)+26rem))] sm:min-h-[max(38rem,calc(var(--si-site-header-h,10rem)+28rem))] lg:min-h-[max(42rem,calc(var(--si-site-header-h,11rem)+30rem))] xl:min-h-[max(46rem,calc(var(--si-site-header-h,11rem)+32rem))]";
+  "min-h-[max(26rem,calc(var(--si-site-header-h,9.5rem)+18rem))] sm:min-h-[max(32rem,calc(var(--si-site-header-h,10rem)+22rem))] lg:min-h-[max(38rem,calc(var(--si-site-header-h,11rem)+26rem))] xl:min-h-[max(42rem,calc(var(--si-site-header-h,11rem)+28rem))]";
 
 /** Görsel header çizgisinin altından footer’a kadar */
 export const heroVisualPanelClass = "si-hero-visual pointer-events-none absolute inset-x-0 bottom-0 z-[1]";

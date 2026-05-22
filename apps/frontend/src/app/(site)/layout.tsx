@@ -20,7 +20,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const categoryNav = categoryRows ? buildHeaderCategoryNav(categoryRows) : [];
 
   return (
-    <div className="site-theme-stoneiron flex min-h-screen flex-col overflow-x-hidden">
+    <div className="site-theme-stoneiron flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden bg-[#121212]">
       <AnalyticsBeacon />
       <SiteHeader settings={settings} categoryNav={categoryNav} />
       <div className="min-h-0 flex-1 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-0">{children}</div>
