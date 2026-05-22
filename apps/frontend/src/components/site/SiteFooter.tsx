@@ -9,7 +9,6 @@ import { siteContainerClass } from "@/components/site/PageContainer";
 import { cn } from "@/lib/cn";
 
 import { SiteFooterNewsletter } from "./SiteFooterNewsletter";
-import { SiteFooterPaymentBand } from "./SiteFooterPaymentBand";
 
 import { SocialNetworkIcon } from "./SocialNetworkIcon";
 
@@ -361,29 +360,40 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
 
 
 
-        <SiteFooterPaymentBand />
-
-        <div className="mt-8 flex flex-col gap-4 border-t border-white/[0.08] pt-6 text-xs text-slate-500 sm:mt-10 sm:flex-row sm:items-center sm:justify-between sm:pt-8">
-          <p>
-            © {year} {settings.siteName}. Tüm hakları saklıdır.
-          </p>
-
+        <div className="si-footer-bottom-bar mt-8 grid grid-cols-1 items-center gap-4 border-t border-white/[0.08] pt-5 text-xs text-slate-500 sm:mt-10 sm:grid-cols-[1fr_auto_1fr] sm:gap-6 sm:pt-6">
           <a
-
             href="https://tgrsoft.com"
-
             target="_blank"
-
             rel="noopener noreferrer"
-
-            className="text-[11px] font-medium tracking-wide text-slate-600 transition hover:text-slate-400 max-sm:self-end sm:text-right"
-
+            className="hidden text-[11px] font-medium tracking-wide text-slate-600 transition hover:text-slate-400 sm:block sm:justify-self-start"
           >
-
             tgrsoft
-
           </a>
 
+          <p className="order-2 text-center sm:order-none">
+            © {year} {settings.siteName} | Tüm hakları saklıdır.
+          </p>
+
+          <div className="order-1 flex justify-center sm:order-none sm:justify-end">
+            <Image
+              src="/images/logo_band_white.png"
+              alt="iyzico ile öde, Mastercard, Visa, American Express, Troy"
+              width={960}
+              height={120}
+              className="h-7 w-auto max-w-full object-contain sm:h-8 md:h-9"
+              sizes="(max-width: 640px) 90vw, 420px"
+              loading="lazy"
+            />
+          </div>
+
+          <a
+            href="https://tgrsoft.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="order-3 text-center text-[11px] font-medium tracking-wide text-slate-600 transition hover:text-slate-400 sm:hidden"
+          >
+            tgrsoft
+          </a>
         </div>
 
       </div>
