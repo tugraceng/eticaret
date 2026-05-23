@@ -49,10 +49,64 @@ export class PaymentsService {
 
   // ---------- Provider configuration ----------
 
+  private trimKey(value: string | null | undefined): string | null {
+    if (value == null) return null;
+    const t = value.trim();
+    return t.length > 0 ? t : null;
+  }
+
+  /** Sandbox/canlı anahtar öneki ile mod uyumsuzluğunu tespit eder. */
+  private iyzicoKeyModeHint(apiKey: string, sandbox: boolean): string | null {
+    const k = apiKey.toLowerCase();
+    const looksSandbox = k.startsWith("sandbox-");
+    if (sandbox && !looksSandbox && !k.startsWith("sandbox")) {
+      return "Sandbox açık ama API key sandbox anahtarı gibi görünmüyor (sandbox-api-key-... olmalı).";
+    }
+    if (!sandbox && looksSandbox) {
+      return "Sandbox kapalı ama sandbox API key kullanılıyor; canlı anahtar (api-key-...) gerekir.";
+    }
+    return null;
+  }
+
+  private iyzicoErrorHint(errorCode: string | undefined, sandbox: boolean): string {
+    if (errorCode === "1001") {
+      return (
+        " Sandbox modu açıkken iyzico panelinden sandbox-api-key / sandbox-secret kullanın; " +
+        "'API base URL' alanını boş bırakın. Ayarları kaydettikten sonra tekrar deneyin."
+      );
+    }
+    if (errorCode === "1000") {
+      return sandbox
+        ? " API anahtarlarını iyzico Sandbox panelinden kopyaladığınızdan emin olun."
+        : " Canlı API anahtarlarını kullandığınızdan emin olun.";
+    }
+    return "";
+  }
+
   private baseUrlFor(provider: PaymentProvider, sandbox: boolean, extra: IyzicoExtra): string {
-    if (extra.baseUrl?.trim()) return extra.baseUrl.trim();
+    const sandboxUri = "https://sandbox-api.iyzipay.com";
+    const liveUri = "https://api.iyzipay.com";
+    const custom = extra.baseUrl?.trim();
+    if (custom) {
+      const lower = custom.toLowerCase().replace(/\/+$/, "");
+      const isSandboxHost = lower.includes("sandbox-api.iyzipay.com");
+      const isLiveHost = lower.includes("api.iyzipay.com") && !isSandboxHost;
+      if (sandbox && isLiveHost) {
+        this.logger.warn(
+          "iyzico extra.baseUrl canlı adres içeriyor; sandbox modunda sandbox-api URL kullanılıyor.",
+        );
+        return sandboxUri;
+      }
+      if (!sandbox && isSandboxHost) {
+        this.logger.warn(
+          "iyzico extra.baseUrl sandbox adres içeriyor; canlı modda api.iyzipay.com kullanılıyor.",
+        );
+        return liveUri;
+      }
+      return custom.replace(/\/+$/, "");
+    }
     if (provider === "IYZICO") {
-      return sandbox ? "https://sandbox-api.iyzipay.com" : "https://api.iyzipay.com";
+      return sandbox ? sandboxUri : liveUri;
     }
     return "";
   }
@@ -117,13 +171,13 @@ export class PaymentsService {
             ? existing.apiKey
             : input.apiKey === ""
               ? null
-              : input.apiKey,
+              : this.trimKey(input.apiKey),
         secretKey:
           input.secretKey === undefined
             ? existing.secretKey
             : input.secretKey === ""
               ? null
-              : input.secretKey,
+              : this.trimKey(input.secretKey),
         extra: nextExtra as Prisma.InputJsonValue,
       },
     });
@@ -154,20 +208,30 @@ export class PaymentsService {
 
   // ---------- iyzico ----------
 
-  private async iyzicoClient(): Promise<{ client: IyzipayClient; extra: IyzicoExtra }> {
+  private async iyzicoClient(): Promise<{
+    client: IyzipayClient;
+    extra: IyzicoExtra;
+    sandbox: boolean;
+  }> {
     const cfg = await this.prisma.paymentProviderConfig.findUnique({
       where: { provider: "IYZICO" },
     });
     if (!cfg || !cfg.apiKey || !cfg.secretKey) {
       throw new BadRequestException("iyzico yapılandırılmamış: API key/secret eksik.");
     }
+    const apiKey = cfg.apiKey.trim();
+    const secretKey = cfg.secretKey.trim();
     const extra = (cfg.extra ?? {}) as IyzicoExtra;
+    const uri = this.baseUrlFor("IYZICO", cfg.sandbox, extra);
+    const keyHint = this.iyzicoKeyModeHint(apiKey, cfg.sandbox);
+    if (keyHint) this.logger.warn(`iyzico: ${keyHint}`);
+    this.logger.debug(`iyzico client uri=${uri} sandbox=${cfg.sandbox}`);
     const client = new Iyzipay({
-      apiKey: cfg.apiKey,
-      secretKey: cfg.secretKey,
-      uri: this.baseUrlFor("IYZICO", cfg.sandbox, extra),
+      apiKey,
+      secretKey,
+      uri,
     });
-    return { client, extra: { ...extra, locale: extra.locale ?? "tr" } };
+    return { client, extra: { ...extra, locale: extra.locale ?? "tr" }, sandbox: cfg.sandbox };
   }
 
   /**
@@ -201,10 +265,17 @@ export class PaymentsService {
       return { ok: false, message: "API key ve secret gereklidir." };
     }
 
+    const trimmedKey = apiKey.trim();
+    const trimmedSecret = secretKey.trim();
+    const sandboxMode = sandbox ?? true;
+    const extraForUrl: IyzicoExtra = { baseUrl };
+    const uri = this.baseUrlFor("IYZICO", sandboxMode, extraForUrl);
+    const keyHint = this.iyzicoKeyModeHint(trimmedKey, sandboxMode);
+
     const client = new Iyzipay({
-      apiKey,
-      secretKey,
-      uri: baseUrl || (sandbox ? "https://sandbox-api.iyzipay.com" : "https://api.iyzipay.com"),
+      apiKey: trimmedKey,
+      secretKey: trimmedSecret,
+      uri,
     });
 
     try {
@@ -259,10 +330,11 @@ export class PaymentsService {
       if (res?.status === "success") {
         return { ok: true, message: "Bağlantı başarılı. Sandbox hazır." };
       }
+      const code = res?.errorCode != null ? String(res.errorCode) : undefined;
       return {
         ok: false,
-        message: res?.errorMessage ?? "Bilinmeyen hata",
-        errorCode: res?.errorCode,
+        message: `${res?.errorMessage ?? "Bilinmeyen hata"}${this.iyzicoErrorHint(code, sandboxMode)}${keyHint ? ` ${keyHint}` : ""}`,
+        errorCode: code,
       };
     } catch (e: any) {
       const msg = typeof e === "string" ? e : e?.message ?? JSON.stringify(e);
@@ -300,7 +372,7 @@ export class PaymentsService {
     if (order.status !== "PENDING") throw new BadRequestException("Sipariş ödenmiş durumda");
     if (!order.items.length) throw new BadRequestException("Sipariş kalemi yok");
 
-    const { client, extra } = await this.iyzicoClient();
+    const { client, extra, sandbox } = await this.iyzicoClient();
 
     const callbackUrl =
       extra.callbackUrl?.trim() ||
@@ -364,8 +436,9 @@ export class PaymentsService {
     );
 
     if (res?.status !== "success") {
+      const code = res?.errorCode != null ? String(res.errorCode) : undefined;
       throw new BadRequestException(
-        `iyzico reddetti: ${res?.errorMessage ?? "bilinmeyen hata"} (${res?.errorCode ?? "-"})`,
+        `iyzico reddetti: ${res?.errorMessage ?? "bilinmeyen hata"} (${code ?? "-"})${this.iyzicoErrorHint(code, sandbox)}`,
       );
     }
 

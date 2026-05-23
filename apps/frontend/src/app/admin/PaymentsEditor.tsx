@@ -172,10 +172,10 @@ export function PaymentsEditor({ token }: { token: string }) {
 
   const defaultCallback =
     typeof window !== "undefined"
-      ? `${window.location.protocol}//${window.location.hostname}:4000/api/payments/iyzico/callback`
-      : "http://localhost:4000/api/payments/iyzico/callback";
+      ? `${window.location.origin}/api/payments/iyzico/callback`
+      : "https://stoneiron3d.com/api/payments/iyzico/callback";
   const defaultFrontend =
-    typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+    typeof window !== "undefined" ? window.location.origin : "https://stoneiron3d.com";
 
   const statusTone: Record<string, string> = {
     emerald: "bg-emerald-50 text-emerald-800 ring-emerald-200",
@@ -422,6 +422,14 @@ export function PaymentsEditor({ token }: { token: string }) {
         <p className="mt-4 text-xs text-slate-500">
           iyzico sandbox&apos;ta 3D Secure şifresi istenirse{" "}
           <span className="font-mono">a</span> (küçük harf) yazabilirsiniz.
+        </p>
+        <p className="mt-2 text-xs text-amber-800">
+          Bağlantı testi formdaki anahtarlarla çalışır; checkout yalnızca{" "}
+          <strong>kaydedilmiş</strong> ayarları kullanır. Testten sonra mutlaka &quot;Ayarları
+          kaydet&quot; deyin. Sandbox için iyzico panelindeki{" "}
+          <span className="font-mono">sandbox-api-key</span> /{" "}
+          <span className="font-mono">sandbox-secret</span> değerlerini kullanın; API base URL
+          alanını boş bırakın.
         </p>
       </AdminCard>
     </div>
