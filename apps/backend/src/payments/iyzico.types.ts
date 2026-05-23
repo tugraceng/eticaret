@@ -23,14 +23,15 @@ export type IyzipayCtor = new (opts: {
   uri: string;
 }) => IyzipayClient;
 
+/** Wrap an iyzipay resource method (create/retrieve) — `this` must be the resource, not the root client. */
 export function promisify<T = any>(
-  client: IyzipayClient,
+  resource: object,
   fn: (req: Record<string, unknown>, cb: (err: any, result: any) => void) => void,
   request: Record<string, unknown>,
 ): Promise<T> {
   return new Promise((resolve, reject) => {
     try {
-      fn.call(client, request, (err: unknown, result: T) => {
+      fn.call(resource, request, (err: unknown, result: T) => {
         if (err) return reject(err);
         resolve(result);
       });

@@ -209,7 +209,7 @@ export class PaymentsService {
 
     try {
       const res = await promisify<any>(
-        client,
+        client.checkoutFormInitialize,
         client.checkoutFormInitialize.create,
         {
           locale: "tr",
@@ -358,7 +358,7 @@ export class PaymentsService {
     };
 
     const res = await promisify<any>(
-      client,
+      client.checkoutFormInitialize,
       client.checkoutFormInitialize.create,
       request,
     );
@@ -419,7 +419,7 @@ export class PaymentsService {
     const { client, extra } = await this.iyzicoClient();
     let res: any;
     try {
-      res = await promisify<any>(client, client.checkoutForm.retrieve, {
+      res = await promisify<any>(client.checkoutForm, client.checkoutForm.retrieve, {
         locale: extra.locale ?? "tr",
         conversationId: existing.orderId,
         token: input.token,
