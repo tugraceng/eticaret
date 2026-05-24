@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import {
+  clearCartCompletely,
   lineKeyFor,
   readLocalCartFromStorage,
   syncCartFromStorage,
@@ -12,10 +13,10 @@ import {
   type LocalCartLine,
 } from "@/lib/cart-sync";
 import { commerceBeginCheckout, commercePurchase } from "@/lib/commerce-analytics";
-import { notifyCartUpdated } from "@/lib/platform-storage-events";
 import { CUSTOMER_EMAIL_KEY, CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
 import { ProvinceDistrictSelect } from "@/components/forms/ProvinceDistrictSelect";
 import { isTrProvinceDistrictValid } from "@/lib/tr-province-district";
+import { useCartStore } from "@/stores/cart-store";
 import { CheckoutJumpNav } from "./_components/CheckoutJumpNav";
 import { CheckoutPaymentTrustPanel } from "./_components/CheckoutPaymentTrustPanel";
 import { PageContainer, PageHeader } from "@/components/site/PageContainer";
@@ -531,10 +532,6 @@ function CheckoutInner() {
         })),
       });
 
-      localStorage.removeItem("platform_cart");
-      window.dispatchEvent(new StorageEvent("storage", { key: "platform_cart" }));
-      notifyCartUpdated();
-
       if (paymentProvider === "IYZICO") {
         const payRes = await fetch(apiUrl("/payments/iyzico/start"), {
           method: "POST",
@@ -571,6 +568,8 @@ function CheckoutInner() {
         if (!mockRes.ok) throw new Error(await mockRes.text());
       }
 
+      await clearCartCompletely();
+      useCartStore.getState().replaceLines([]);
       router.push(`/orders/${order.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sipariş oluşturulamadı");

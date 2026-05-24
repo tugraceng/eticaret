@@ -26,6 +26,8 @@ type ProviderConfigView = {
   enabled: boolean;
   sandbox: boolean;
   apiKey: string | null;
+  /** Kayıtlı anahtarın ilk karakterleri (doğru panel kontrolü için). */
+  apiKeyPrefix: string | null;
   hasSecret: boolean;
   secretPreview: string | null;
   extra: IyzicoExtra;
@@ -60,10 +62,10 @@ export class PaymentsService {
     const k = apiKey.toLowerCase();
     const looksSandbox = k.startsWith("sandbox-");
     if (sandbox && !looksSandbox && !k.startsWith("sandbox")) {
-      return "Sandbox açık ama API key sandbox anahtarı gibi görünmüyor (sandbox-api-key-... olmalı).";
+      return "Sandbox açık ama API key sandbox anahtarı gibi görünmüyor (sandbox-... ile başlamalı). Canlı panel anahtarı kullanıyor olabilirsiniz.";
     }
     if (!sandbox && looksSandbox) {
-      return "Sandbox kapalı ama sandbox API key kullanılıyor; canlı anahtar (api-key-...) gerekir.";
+      return "Sandbox kapalı ama sandbox API key kullanılıyor; canlı anahtar gerekir (sandbox- ile başlamaz).";
     }
     return null;
   }
@@ -71,8 +73,8 @@ export class PaymentsService {
   private iyzicoErrorHint(errorCode: string | undefined, sandbox: boolean): string {
     if (errorCode === "1001") {
       return (
-        " Sandbox modu açıkken iyzico panelinden sandbox-api-key / sandbox-secret kullanın; " +
-        "'API base URL' alanını boş bırakın. Ayarları kaydettikten sonra tekrar deneyin."
+        " Sandbox modu açıkken sandbox-merchant.iyzipay.com panelindeki sandbox-... anahtarlarını kullanın; " +
+        "merchant.iyzipay.com (canlı) anahtarları çalışmaz. API base URL alanını boş bırakın."
       );
     }
     if (errorCode === "1000") {
@@ -81,6 +83,36 @@ export class PaymentsService {
         : " Canlı API anahtarlarını kullandığınızdan emin olun.";
     }
     return "";
+  }
+
+  /** Sandbox/canlı anahtar çiftini kaydetmeden önce doğrular. */
+  private assertIyzicoKeyPair(
+    apiKey: string | null,
+    secretKey: string | null,
+    sandbox: boolean,
+  ): void {
+    if (!apiKey || !secretKey) return;
+    const k = apiKey.toLowerCase();
+    const s = secretKey.toLowerCase();
+    if (sandbox) {
+      if (!k.startsWith("sandbox-")) {
+        throw new BadRequestException(
+          "Sandbox modu için API Key sandbox- ile başlamalıdır. " +
+            "Canlı panel (merchant.iyzipay.com) değil; sandbox-merchant.iyzipay.com → Ayarlar → Firma Ayarları → API Anahtarları bölümündeki değerleri kullanın.",
+        );
+      }
+      if (!s.startsWith("sandbox-")) {
+        throw new BadRequestException(
+          "Sandbox modu için Secret Key de sandbox- ile başlamalıdır.",
+        );
+      }
+      return;
+    }
+    if (k.startsWith("sandbox-") || s.startsWith("sandbox-")) {
+      throw new BadRequestException(
+        "Canlı modda sandbox- ile başlayan anahtarlar kullanılamaz. Sandbox modunu açın veya canlı anahtarları girin.",
+      );
+    }
   }
 
   private baseUrlFor(provider: PaymentProvider, sandbox: boolean, extra: IyzicoExtra): string {
@@ -127,6 +159,7 @@ export class PaymentsService {
       enabled: row.enabled,
       sandbox: row.sandbox,
       apiKey: row.apiKey ?? null,
+      apiKeyPrefix: row.apiKey ? `${row.apiKey.slice(0, 12)}…` : null,
       hasSecret,
       secretPreview: hasSecret ? `•••• ${row.secretKey!.slice(-4)}` : null,
       extra,
@@ -161,23 +194,31 @@ export class PaymentsService {
       ...(input.extra ?? {}),
     };
 
+    const nextApiKey =
+      input.apiKey === undefined
+        ? existing.apiKey
+        : input.apiKey === ""
+          ? null
+          : this.trimKey(input.apiKey);
+    const nextSecretKey =
+      input.secretKey === undefined
+        ? existing.secretKey
+        : input.secretKey === ""
+          ? null
+          : this.trimKey(input.secretKey);
+    const nextSandbox = input.sandbox ?? existing.sandbox;
+
+    if (provider === "IYZICO") {
+      this.assertIyzicoKeyPair(nextApiKey, nextSecretKey, nextSandbox);
+    }
+
     const row = await this.prisma.paymentProviderConfig.update({
       where: { provider },
       data: {
         enabled: input.enabled ?? existing.enabled,
-        sandbox: input.sandbox ?? existing.sandbox,
-        apiKey:
-          input.apiKey === undefined
-            ? existing.apiKey
-            : input.apiKey === ""
-              ? null
-              : this.trimKey(input.apiKey),
-        secretKey:
-          input.secretKey === undefined
-            ? existing.secretKey
-            : input.secretKey === ""
-              ? null
-              : this.trimKey(input.secretKey),
+        sandbox: nextSandbox,
+        apiKey: nextApiKey,
+        secretKey: nextSecretKey,
         extra: nextExtra as Prisma.InputJsonValue,
       },
     });
@@ -527,6 +568,16 @@ export class PaymentsService {
           where: { id: existing.orderId! },
           data: { status: "PAID" },
         });
+        const order = await tx.order.findUnique({
+          where: { id: existing.orderId! },
+          select: { buyerUserId: true },
+        });
+        if (order?.buyerUserId) {
+          const cart = await tx.cart.findUnique({ where: { userId: order.buyerUserId } });
+          if (cart) {
+            await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+          }
+        }
       }
     });
 

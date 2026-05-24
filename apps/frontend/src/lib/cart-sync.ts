@@ -156,6 +156,26 @@ export function writeLocalCartToStorage(lines: LocalCartLine[]) {
   notifyCartUpdated();
 }
 
+/** Yerel depo + (oturum açıksa) sunucu sepetini boşaltır — ödeme sonrası kullanın. */
+export async function clearCartCompletely(): Promise<void> {
+  writeLocalCartToStorage([]);
+  if (typeof window === "undefined") return;
+  const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+  if (!token) return;
+  try {
+    await fetch(apiUrl("/customers/me/cart"), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ lines: [] }),
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Sepete satır ekle veya aynı satırda (ürün + seçenek) adet artır */
 export function mergeLineIntoLocalCart(line: {
   productId: string;

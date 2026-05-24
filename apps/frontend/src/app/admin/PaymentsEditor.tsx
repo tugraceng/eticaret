@@ -17,6 +17,7 @@ type ProviderConfigView = {
   enabled: boolean;
   sandbox: boolean;
   apiKey: string | null;
+  apiKeyPrefix: string | null;
   hasSecret: boolean;
   secretPreview: string | null;
   extra: IyzicoExtra;
@@ -261,8 +262,46 @@ export function PaymentsEditor({ token }: { token: string }) {
           </label>
         </div>
 
+        {form.sandbox ? (
+          <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50/80 p-4 text-sm text-sky-950">
+            <p className="font-semibold">Sandbox test anahtarları ayrı bir hesaptan gelir</p>
+            <p className="mt-1 text-xs leading-relaxed text-sky-900/90">
+              <strong>merchant.iyzipay.com</strong> (canlı) anahtarları sandbox modunda çalışmaz.
+              Test için{" "}
+              <a
+                href="https://sandbox-merchant.iyzipay.com/auth/login"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold underline underline-offset-2"
+              >
+                sandbox-merchant.iyzipay.com
+              </a>{" "}
+              hesabınıza girin → Ayarlar → Firma Ayarları → API Anahtarları. API Key ve Secret Key{" "}
+              <span className="font-mono">sandbox-</span> ile başlamalıdır.
+            </p>
+            {cfg?.apiKeyPrefix ? (
+              <p className="mt-2 font-mono text-[11px] text-sky-800">
+                Kayıtlı API key: {cfg.apiKeyPrefix}
+                {!cfg.apiKeyPrefix.toLowerCase().startsWith("sandbox-") ? (
+                  <span className="ml-2 font-sans font-semibold text-amber-800">
+                    ← Bu canlı anahtar gibi görünüyor; sandbox anahtarıyla değiştirin.
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-xs text-amber-950">
+            Canlı mod: anahtarları <strong>merchant.iyzipay.com</strong> panelinden alın (
+            <span className="font-mono">sandbox-</span> ile başlamamalı).
+          </div>
+        )}
+
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <Field label="API Key" hint="sandbox-api-key-... veya api-key-...">
+          <Field
+            label="API Key"
+            hint={form.sandbox ? "sandbox-... (sandbox-merchant paneli)" : "Canlı panel API key"}
+          >
             <div className="relative">
               <input
                 type={showApiKey ? "text" : "password"}
@@ -287,7 +326,9 @@ export function PaymentsEditor({ token }: { token: string }) {
             hint={
               cfg?.hasSecret
                 ? `Kaydedilmiş: ${cfg.secretPreview}. Değiştirmek için yeni değer girin.`
-                : "sandbox-secret-... veya secret-..."
+                : form.sandbox
+                  ? "sandbox-... (Secret Key)"
+                  : "Canlı Secret Key"
             }
           >
             <div className="relative">
@@ -425,11 +466,8 @@ export function PaymentsEditor({ token }: { token: string }) {
         </p>
         <p className="mt-2 text-xs text-amber-800">
           Bağlantı testi formdaki anahtarlarla çalışır; checkout yalnızca{" "}
-          <strong>kaydedilmiş</strong> ayarları kullanır. Testten sonra mutlaka &quot;Ayarları
-          kaydet&quot; deyin. Sandbox için iyzico panelindeki{" "}
-          <span className="font-mono">sandbox-api-key</span> /{" "}
-          <span className="font-mono">sandbox-secret</span> değerlerini kullanın; API base URL
-          alanını boş bırakın.
+          <strong>kaydedilmiş</strong> ayarları kullanır. Secret Key alanını doldurup{" "}
+          &quot;Ayarları kaydet&quot; dedikten sonra test edin.
         </p>
       </AdminCard>
     </div>

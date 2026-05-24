@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { PageContainer } from "@/components/site/PageContainer";
+import { IyzicoReturnCartClear } from "./IyzicoReturnCartClear";
 
 type SearchParams = {
   orderId?: string;
@@ -17,6 +19,9 @@ export default async function IyzicoReturnPage({
 
   return (
     <PageContainer as="main" width="narrow" className="py-16 sm:py-20">
+      <Suspense fallback={null}>
+        <IyzicoReturnCartClear />
+      </Suspense>
       <div
         className={`card-soft p-8 text-center ${
           ok ? "ring-2 ring-emerald-300" : "ring-2 ring-rose-300"
