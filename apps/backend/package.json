@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "prebuild": "cd ../.. && npx prisma generate",
+    "db:generate": "cd ../.. && npm run db:generate",
+    "db:migrate:deploy": "cd ../.. && npm run db:migrate:deploy",
     "build": "nest build --tsc",
     "build:tsc": "tsc -p tsconfig.build.json",
     "dev": "nest start --watch",
