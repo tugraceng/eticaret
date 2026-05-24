@@ -48,6 +48,12 @@ export type SiteSettings = {
   popupDismissBackdrop?: boolean;
   popupSessionOnly?: boolean;
   popupStorageKey?: string | null;
+  newsletterKicker?: string;
+  newsletterHeading?: string;
+  newsletterSubtitle?: string | null;
+  newsletterBullets?: string | null;
+  newsletterDisclaimer?: string | null;
+  newsletterPlaceholder?: string;
   topPromoLine1?: string;
   topPromoLine2?: string;
   topPromoLine3?: string;
@@ -145,6 +151,14 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   popupDismissBackdrop: true,
   popupSessionOnly: false,
   popupStorageKey: "1",
+  newsletterKicker: "Bülten",
+  newsletterHeading: "Koleksiyonlardan ilk siz haberdar olun",
+  newsletterSubtitle: "Yeni parçalar ve sınırlı üretimler — doğrudan atölyeden, spam yok.",
+  newsletterBullets:
+    "Yeni koleksiyonlardan ilk siz haberdar olun\nÖzenle üretilen yeni parçalar\nSınırlı üretim duyuruları",
+  newsletterDisclaimer:
+    "Abone olarak gizlilik politikasını kabul etmiş olursunuz. İstediğiniz zaman ayrılabilirsiniz.",
+  newsletterPlaceholder: "E-posta adresiniz",
   topPromoLine1: "Atölyemizde bastığımız 3D ürünler — anahtarlık, figür, hediyelik",
   topPromoLine2: "2.500 TL üzeri standart kargo ücretsiz",
   topPromoLine3: "Kırılmaya karşı özenli paketleme",

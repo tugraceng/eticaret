@@ -1,6 +1,25 @@
 "use client";
 
-export function SiteFooterNewsletter() {
+import type { SiteSettings } from "@/lib/settings";
+
+const DEFAULT_BULLETS = [
+  "Yeni koleksiyonlardan ilk siz haberdar olun",
+  "Özenle üretilen yeni parçalar",
+  "Sınırlı üretim duyuruları",
+];
+
+function parseBullets(raw: string | null | undefined): string[] {
+  const lines = (raw ?? "")
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return lines.length ? lines : DEFAULT_BULLETS;
+}
+
+export function SiteFooterNewsletter({ settings }: { settings?: SiteSettings | null }) {
+  const placeholder = settings?.newsletterPlaceholder?.trim() || "E-posta adresiniz";
+  const bullets = parseBullets(settings?.newsletterBullets);
+
   return (
     <div className="si-newsletter-panel w-full max-w-lg">
       <form
@@ -10,7 +29,7 @@ export function SiteFooterNewsletter() {
         <input
           type="email"
           name="newsletter-email"
-          placeholder="E-posta adresiniz"
+          placeholder={placeholder}
           className="si-newsletter-input"
           autoComplete="email"
         />
@@ -19,9 +38,9 @@ export function SiteFooterNewsletter() {
         </button>
       </form>
       <div className="si-newsletter-benefits" aria-hidden>
-        <span>Yeni koleksiyonlardan ilk siz haberdar olun</span>
-        <span>Özenle üretilen yeni parçalar</span>
-        <span>Sınırlı üretim duyuruları</span>
+        {bullets.map((line) => (
+          <span key={line}>{line}</span>
+        ))}
       </div>
     </div>
   );

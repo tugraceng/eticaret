@@ -19,6 +19,25 @@ export type ExistingReturn = {
   items: { orderItemId: string; quantity: number }[];
 };
 
+function ExistingReturnsList({ existing }: { existing: ExistingReturn[] }) {
+  if (!existing.length) return null;
+  return (
+    <ul className="mt-3 divide-y divide-white/10 text-sm">
+      {existing.map((r) => (
+        <li key={r.id} className="flex items-center justify-between gap-3 py-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">{r.status}</p>
+            <p className="mt-0.5 text-slate-200">{r.reason}</p>
+          </div>
+          <p className="shrink-0 text-xs text-slate-500">
+            {new Date(r.createdAt).toLocaleDateString("tr-TR")}
+          </p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ReturnRequestForm({
   orderId,
   orderStatus,
@@ -34,7 +53,7 @@ export function ReturnRequestForm({
   const [authed, setAuthed] = useState(false);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
-  const [qty, setQty] = useState<Record<string, number>>({});
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,28 +84,18 @@ export function ReturnRequestForm({
   const hasAnyRemaining = returnable.some((i) => i.remaining > 0);
   const eligibleStatus = ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"].includes(orderStatus);
 
+  const toggleItem = (id: string, remaining: number) => {
+    if (remaining <= 0) return;
+    setSelected((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   if (!authed || !eligibleStatus || !hasAnyRemaining) {
     return (
-      <section className="card-soft mt-6 p-6">
-        <h2 className="text-sm font-semibold text-slate-800">İade talebi</h2>
-        {existing.length > 0 ? (
-          <ul className="mt-3 divide-y divide-slate-100 text-sm">
-            {existing.map((r) => (
-              <li key={r.id} className="flex items-center justify-between py-2">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                    {r.status}
-                  </p>
-                  <p className="mt-0.5 text-slate-800">{r.reason}</p>
-                </div>
-                <p className="text-xs text-slate-500">
-                  {new Date(r.createdAt).toLocaleDateString("tr-TR")}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-2 text-xs text-slate-500">
+      <section className="si-order-panel mt-6 p-6">
+        <h2 className="text-sm font-semibold text-slate-100">İade talebi</h2>
+        <ExistingReturnsList existing={existing} />
+        {!existing.length && (
+          <p className="mt-2 text-xs text-slate-400">
             {!authed
               ? "İade talebi oluşturmak için hesabınıza giriş yapın."
               : !eligibleStatus
@@ -100,11 +109,11 @@ export function ReturnRequestForm({
 
   const submit = async () => {
     setError(null);
-    const lines = Object.entries(qty)
-      .filter(([, v]) => v > 0)
-      .map(([orderItemId, quantity]) => ({ orderItemId, quantity }));
+    const lines = returnable
+      .filter((it) => selected[it.id] && it.remaining > 0)
+      .map((it) => ({ orderItemId: it.id, quantity: it.remaining }));
     if (!lines.length) {
-      setError("En az bir kalem için miktar girin.");
+      setError("İade etmek istediğiniz ürünleri işaretleyin.");
       return;
     }
     if (reason.trim().length < 4) {
@@ -123,10 +132,7 @@ export function ReturnRequestForm({
         body: JSON.stringify({ orderId, reason: reason.trim(), items: lines }),
       });
       if (!res.ok) throw new Error(await res.text());
-      setOpen(false);
-      setReason("");
-      setQty({});
-      router.refresh();
+      router.push("/hesap/iadeler");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -135,79 +141,57 @@ export function ReturnRequestForm({
   };
 
   return (
-    <section className="card-soft mt-6 p-6">
+    <section className="si-order-panel mt-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-slate-800">İade talebi</h2>
-          <p className="mt-1 text-xs text-slate-500">
-            Ürünleri iade etmek isterseniz aşağıdan talebinizi oluşturun. Admin onayı sonrası kargo
-            yönlendirmesi size iletilir.
+          <h2 className="text-sm font-semibold text-slate-100">İade talebi</h2>
+          <p className="mt-1 text-xs text-slate-400">
+            İade etmek istediğiniz ürünleri işaretleyin. Admin onayı sonrası kargo yönlendirmesi size
+            iletilir.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="btn-ghost"
-        >
+        <button type="button" onClick={() => setOpen((v) => !v)} className="btn-ghost">
           {open ? "Kapat" : "Talep oluştur"}
         </button>
       </div>
 
-      {existing.length > 0 && (
-        <ul className="mt-3 divide-y divide-slate-100 text-sm">
-          {existing.map((r) => (
-            <li key={r.id} className="flex items-center justify-between py-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                  {r.status}
-                </p>
-                <p className="mt-0.5 text-slate-800">{r.reason}</p>
-              </div>
-              <p className="text-xs text-slate-500">
-                {new Date(r.createdAt).toLocaleDateString("tr-TR")}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ExistingReturnsList existing={existing} />
 
       {open && (
-        <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
+        <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
           <ul className="space-y-2 text-sm">
-            {returnable.map((it) => (
-              <li
-                key={it.id}
-                className={`flex items-center justify-between gap-3 rounded-md border p-3 ${
-                  it.remaining === 0
-                    ? "border-slate-100 bg-slate-50 text-slate-400"
-                    : "border-slate-200"
-                }`}
-              >
-                <div>
-                  <p className="font-medium">{it.titleSnapshot}</p>
-                  <p className="text-xs text-slate-500">
-                    Sipariş miktarı: {it.quantity} · İade edilebilir: {it.remaining}
-                  </p>
-                </div>
-                <input
-                  type="number"
-                  min={0}
-                  max={it.remaining}
-                  disabled={it.remaining === 0}
-                  value={qty[it.id] ?? ""}
-                  onChange={(e) =>
-                    setQty((q) => ({
-                      ...q,
-                      [it.id]: Math.max(
-                        0,
-                        Math.min(it.remaining, Number(e.target.value) || 0),
-                      ),
-                    }))
-                  }
-                  className="w-20 rounded-md border border-slate-200 px-2 py-1 text-sm"
-                />
-              </li>
-            ))}
+            {returnable.map((it) => {
+              const disabled = it.remaining === 0;
+              const checked = Boolean(selected[it.id]);
+              return (
+                <li key={it.id}>
+                  <label
+                    className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition ${
+                      disabled
+                        ? "cursor-not-allowed border-white/5 bg-white/[0.02] text-slate-500"
+                        : checked
+                          ? "border-sky-500/40 bg-sky-500/10"
+                          : "border-white/10 hover:border-white/20"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 bg-[#0a0f18] text-sky-500 focus:ring-sky-500/40"
+                      checked={checked}
+                      disabled={disabled}
+                      onChange={() => toggleItem(it.id, it.remaining)}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-slate-100">{it.titleSnapshot}</p>
+                      <p className="mt-0.5 text-xs text-slate-400">
+                        Sipariş miktarı: {it.quantity}
+                        {it.remaining > 0 ? ` · İade edilebilir: ${it.remaining}` : " · İade edilemez"}
+                      </p>
+                    </div>
+                  </label>
+                </li>
+              );
+            })}
           </ul>
 
           <textarea
@@ -215,30 +199,20 @@ export function ReturnRequestForm({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
-            className="w-full rounded-md border border-slate-200 p-2 text-sm"
+            className="input-soft w-full resize-y"
           />
 
           {error ? (
-            <p className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+            <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
               {error}
             </p>
           ) : null}
 
-          <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={submit}
-              className="btn-primary disabled:opacity-50"
-            >
+          <div className="flex flex-wrap gap-2">
+            <button type="button" disabled={busy} onClick={submit} className="btn-primary disabled:opacity-50">
               {busy ? "Gönderiliyor…" : "Talebi gönder"}
             </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => setOpen(false)}
-              className="btn-ghost"
-            >
+            <button type="button" disabled={busy} onClick={() => setOpen(false)} className="btn-ghost">
               Vazgeç
             </button>
           </div>

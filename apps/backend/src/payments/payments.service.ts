@@ -240,7 +240,6 @@ export class PaymentsService {
       };
     };
     return [
-      read("MOCK", "Mock", false),
       read("IYZICO", "iyzico", true),
       read("PAYTR", "PayTR", true),
       read("STRIPE", "Stripe", true),

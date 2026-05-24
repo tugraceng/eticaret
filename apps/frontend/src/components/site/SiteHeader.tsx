@@ -763,7 +763,7 @@ export function SiteHeader({
               const hasSubs = cat.children.length > 0;
               const subsExpanded = mobileSubcatsOpen.has(cat.id);
               return (
-                <div key={cat.id} className="overflow-hidden rounded-2xl border border-white/10 bg-[#121a28] shadow-sm">
+                <div key={cat.id} className="rounded-2xl border border-white/10 bg-[#121a28] shadow-sm">
                   <div className="flex min-h-[2.75rem] items-stretch">
                     <Link
                       href={shopCategoryHref(cat.id)}
@@ -790,49 +790,44 @@ export function SiteHeader({
                       </button>
                     ) : null}
                   </div>
-                  {hasSubs ? (
+                  {hasSubs && subsExpanded ? (
                     <div
                       id={`mobile-subcats-${cat.id}`}
                       role="region"
                       aria-label={`${cat.name} alt koleksiyonları`}
-                      className={cn(
-                        "grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none",
-                        subsExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-                      )}
+                      className="border-t border-white/8 bg-[#0c111b]/90"
                     >
-                      <div className="min-h-0 overflow-hidden border-t border-white/8 bg-[#0c111b]/90">
-                        <div className="space-y-3 px-3 py-4">
-                          <div className="flex flex-wrap items-end justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                                Kategori
-                              </p>
-                              <p className="mt-0.5 truncate text-base font-semibold tracking-tight text-white">
-                                {cat.name}
-                              </p>
-                            </div>
-                            <Link
-                              href={shopCategoryHref(cat.id)}
-                              className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-sky-400 active:text-sky-300"
-                              onClick={() => setOpen(false)}
-                            >
-                              Tümünü gör →
-                            </Link>
+                      <div className="space-y-3 px-3 py-3 pb-4">
+                        <div className="flex flex-wrap items-end justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                              Kategori
+                            </p>
+                            <p className="mt-0.5 truncate text-sm font-semibold tracking-tight text-white">
+                              {cat.name}
+                            </p>
                           </div>
-                          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            {cat.children.map((sub) => (
-                              <li key={sub.id}>
-                                <Link
-                                  href={shopCategoryHref(sub.id)}
-                                  className="flex min-h-[3rem] items-center rounded-xl border border-white/8 bg-white/[0.04] px-3 py-2.5 text-sm font-semibold text-slate-200 active:bg-white/8"
-                                  onClick={() => setOpen(false)}
-                                >
-                                  {sub.name}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
+                          <Link
+                            href={shopCategoryHref(cat.id)}
+                            className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-sky-400 active:text-sky-300"
+                            onClick={() => setOpen(false)}
+                          >
+                            Tümünü gör →
+                          </Link>
                         </div>
+                        <ul className="grid grid-cols-1 gap-2">
+                          {cat.children.map((sub) => (
+                            <li key={sub.id}>
+                              <Link
+                                href={shopCategoryHref(sub.id)}
+                                className="flex min-h-[2.75rem] items-center rounded-xl border border-white/8 bg-white/[0.04] px-3 py-2.5 text-sm font-semibold text-slate-200 active:bg-white/8"
+                                onClick={() => setOpen(false)}
+                              >
+                                {sub.name}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
                   ) : null}

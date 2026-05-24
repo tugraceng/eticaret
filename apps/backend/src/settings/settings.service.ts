@@ -135,6 +135,12 @@ export class SettingsService {
       popupDismissBackdrop: boolean;
       popupSessionOnly: boolean;
       popupStorageKey: string;
+      newsletterKicker: string;
+      newsletterHeading: string;
+      newsletterSubtitle: string;
+      newsletterBullets: string;
+      newsletterDisclaimer: string;
+      newsletterPlaceholder: string;
       topPromoLine1: string;
       topPromoLine2: string;
       topPromoLine3: string;

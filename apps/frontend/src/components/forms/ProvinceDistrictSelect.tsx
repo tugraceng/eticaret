@@ -48,7 +48,7 @@ export function ProvinceDistrictSelect({
             onProvinceChange(e.target.value);
             onDistrictChange("");
           }}
-          className="input-soft mt-2 w-full disabled:cursor-not-allowed disabled:bg-slate-50"
+          className="input-soft mt-2 w-full disabled:cursor-not-allowed disabled:opacity-60"
           autoComplete="address-level1"
         >
           <option value="">İl seçin</option>
@@ -66,7 +66,7 @@ export function ProvinceDistrictSelect({
           value={district}
           disabled={disabled || !province}
           onChange={(e) => onDistrictChange(e.target.value)}
-          className="input-soft mt-2 w-full disabled:cursor-not-allowed disabled:bg-slate-50"
+          className="input-soft mt-2 w-full disabled:cursor-not-allowed disabled:opacity-60"
           autoComplete="address-level2"
         >
           <option value="">{province ? "İlçe seçin" : "Önce il seçin"}</option>

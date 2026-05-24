@@ -2,7 +2,6 @@
 
 import { createPortal } from "react-dom";
 import { useEffect, useState, type ReactNode } from "react";
-import { cn } from "@/lib/cn";
 
 function MenuCloseIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
@@ -73,7 +72,7 @@ export function MobileSiteNavDrawer({ open, onClose, children }: Props) {
             <MenuCloseIcon />
           </button>
         </div>
-        <div className="flex flex-1 flex-col gap-1 overflow-y-auto overscroll-y-contain px-4 py-4 [-webkit-overflow-scrolling:touch]">
+        <div className="flex flex-1 flex-col gap-1 overflow-y-auto overscroll-y-contain px-4 py-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
           {children}
         </div>
       </aside>

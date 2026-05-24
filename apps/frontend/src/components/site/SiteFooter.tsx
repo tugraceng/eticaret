@@ -134,29 +134,33 @@ export function SiteFooter({ settings }: { settings: SiteSettings }) {
 
           <div className="max-w-md">
 
-            <p className="si-kicker">Bülten</p>
+            <p className="si-kicker">{settings.newsletterKicker?.trim() || "Bülten"}</p>
 
             <h2 className="si-heading mt-2 text-xl sm:text-2xl">
 
-              Koleksiyonlardan ilk siz haberdar olun
+              {settings.newsletterHeading?.trim() || "Koleksiyonlardan ilk siz haberdar olun"}
 
             </h2>
 
             <p className="si-body mt-2">
 
-              Yeni parçalar ve sınırlı üretimler — doğrudan atölyeden, spam yok.
+              {settings.newsletterSubtitle?.trim() ||
+
+                "Yeni parçalar ve sınırlı üretimler — doğrudan atölyeden, spam yok."}
 
             </p>
 
           </div>
 
-          <SiteFooterNewsletter />
+          <SiteFooterNewsletter settings={settings} />
 
         </div>
 
         <p className="mt-4 text-sm text-slate-500">
 
-          Abone olarak gizlilik politikasını kabul etmiş olursunuz. İstediğiniz zaman ayrılabilirsiniz.
+          {settings.newsletterDisclaimer?.trim() ||
+
+            "Abone olarak gizlilik politikasını kabul etmiş olursunuz. İstediğiniz zaman ayrılabilirsiniz."}
 
         </p>
 

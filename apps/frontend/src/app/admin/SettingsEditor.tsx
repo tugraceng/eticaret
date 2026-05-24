@@ -82,6 +82,12 @@ type Settings = {
   popupDismissBackdrop?: boolean;
   popupSessionOnly?: boolean;
   popupStorageKey?: string | null;
+  newsletterKicker?: string;
+  newsletterHeading?: string;
+  newsletterSubtitle?: string | null;
+  newsletterBullets?: string | null;
+  newsletterDisclaimer?: string | null;
+  newsletterPlaceholder?: string;
   topPromoLine1?: string;
   topPromoLine2?: string;
   topPromoLine3?: string;
@@ -345,6 +351,12 @@ export function SettingsEditor({ token }: { token: string }) {
   const [popupDismissBackdrop, setPopupDismissBackdrop] = useState(true);
   const [popupSessionOnly, setPopupSessionOnly] = useState(false);
   const [popupStorageKey, setPopupStorageKey] = useState("1");
+  const [newsletterKicker, setNewsletterKicker] = useState("Bülten");
+  const [newsletterHeading, setNewsletterHeading] = useState("");
+  const [newsletterSubtitle, setNewsletterSubtitle] = useState("");
+  const [newsletterBullets, setNewsletterBullets] = useState("");
+  const [newsletterDisclaimer, setNewsletterDisclaimer] = useState("");
+  const [newsletterPlaceholder, setNewsletterPlaceholder] = useState("E-posta adresiniz");
   const [topPromoLine1, setTopPromoLine1] = useState("");
   const [topPromoLine2, setTopPromoLine2] = useState("");
   const [topPromoLine3, setTopPromoLine3] = useState("");
@@ -509,6 +521,12 @@ export function SettingsEditor({ token }: { token: string }) {
       setPopupDismissBackdrop(s.popupDismissBackdrop !== false);
       setPopupSessionOnly(Boolean(s.popupSessionOnly));
       setPopupStorageKey(s.popupStorageKey ?? "1");
+      setNewsletterKicker(s.newsletterKicker ?? "Bülten");
+      setNewsletterHeading(s.newsletterHeading ?? "");
+      setNewsletterSubtitle(s.newsletterSubtitle ?? "");
+      setNewsletterBullets(s.newsletterBullets ?? "");
+      setNewsletterDisclaimer(s.newsletterDisclaimer ?? "");
+      setNewsletterPlaceholder(s.newsletterPlaceholder ?? "E-posta adresiniz");
       setTopPromoLine1(s.topPromoLine1 ?? "");
       setTopPromoLine2(s.topPromoLine2 ?? "");
       setTopPromoLine3(s.topPromoLine3 ?? "");
@@ -635,6 +653,18 @@ export function SettingsEditor({ token }: { token: string }) {
         popupDismissBackdrop: popupDismissBackdrop,
         popupSessionOnly: popupSessionOnly,
         popupStorageKey: popupStorageKey.trim() || "1",
+        newsletterKicker: newsletterKicker.trim() || "Bülten",
+        newsletterHeading: newsletterHeading.trim() || "Koleksiyonlardan ilk siz haberdar olun",
+        newsletterSubtitle:
+          newsletterSubtitle.trim() ||
+          "Yeni parçalar ve sınırlı üretimler — doğrudan atölyeden, spam yok.",
+        newsletterBullets:
+          newsletterBullets.trim() ||
+          "Yeni koleksiyonlardan ilk siz haberdar olun\nÖzenle üretilen yeni parçalar\nSınırlı üretim duyuruları",
+        newsletterDisclaimer:
+          newsletterDisclaimer.trim() ||
+          "Abone olarak gizlilik politikasını kabul etmiş olursunuz. İstediğiniz zaman ayrılabilirsiniz.",
+        newsletterPlaceholder: newsletterPlaceholder.trim() || "E-posta adresiniz",
         topPromoLine1: topPromoLine1.trim(),
         topPromoLine2: topPromoLine2.trim(),
         topPromoLine3: topPromoLine3.trim(),
@@ -738,6 +768,12 @@ export function SettingsEditor({ token }: { token: string }) {
     popupDismissBackdrop,
     popupSessionOnly,
     popupStorageKey,
+    newsletterKicker,
+    newsletterHeading,
+    newsletterSubtitle,
+    newsletterBullets,
+    newsletterDisclaimer,
+    newsletterPlaceholder,
     topPromoLine1,
     topPromoLine2,
     topPromoLine3,
@@ -1693,8 +1729,70 @@ export function SettingsEditor({ token }: { token: string }) {
       </AdminCard>
 
       <AdminCard
+        title="Footer bülten"
+        description="Sitenin altındaki bülten bölümünün başlık, açıklama ve madde metinleri. Her satır ayrı bir madde olarak gösterilir."
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="Etiket (kicker)">
+            <input
+              className="input-soft"
+              value={newsletterKicker}
+              onChange={(e) => setNewsletterKicker(e.target.value)}
+              placeholder="Bülten"
+            />
+          </Field>
+          <Field label="E-posta yer tutucusu">
+            <input
+              className="input-soft"
+              value={newsletterPlaceholder}
+              onChange={(e) => setNewsletterPlaceholder(e.target.value)}
+              placeholder="E-posta adresiniz"
+            />
+          </Field>
+        </div>
+        <Field label="Başlık" className="mt-3">
+          <input
+            className="input-soft"
+            value={newsletterHeading}
+            onChange={(e) => setNewsletterHeading(e.target.value)}
+            placeholder="Koleksiyonlardan ilk siz haberdar olun"
+          />
+        </Field>
+        <Field label="Alt açıklama" className="mt-3">
+          <textarea
+            rows={2}
+            className="input-soft resize-y"
+            value={newsletterSubtitle}
+            onChange={(e) => setNewsletterSubtitle(e.target.value)}
+            placeholder="Yeni parçalar ve sınırlı üretimler…"
+          />
+        </Field>
+        <Field
+          label="Madde metinleri"
+          className="mt-3"
+          hint="Her satır footer’daki bülten kutusunda ayrı bir madde olarak listelenir."
+        >
+          <textarea
+            rows={4}
+            className="input-soft resize-y font-mono text-sm"
+            value={newsletterBullets}
+            onChange={(e) => setNewsletterBullets(e.target.value)}
+            placeholder={"Yeni koleksiyonlardan ilk siz haberdar olun\nÖzenle üretilen yeni parçalar"}
+          />
+        </Field>
+        <Field label="Alt bilgi (gizlilik)" className="mt-3">
+          <textarea
+            rows={2}
+            className="input-soft resize-y"
+            value={newsletterDisclaimer}
+            onChange={(e) => setNewsletterDisclaimer(e.target.value)}
+          />
+        </Field>
+      </AdminCard>
+
+      <AdminCard
         title="Promosyon popup"
-        description="Ziyaretçilere kısa süre sonra açılan, boyutu ve buton linki ayarlanabilir bilgi penceresi. X, Escape veya arka plan (isteğe bağlı) ile kapanır."
+        description="Ziyaretçilere kısa süre sonra açılan bilgi penceresi. Başlık, metin, görsel ve buton linki buradan düzenlenir."
       >
         <label className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
           <input

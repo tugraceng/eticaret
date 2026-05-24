@@ -293,6 +293,30 @@ class UpdateSettingsDto {
 
   @IsOptional()
   @IsString()
+  newsletterKicker?: string;
+
+  @IsOptional()
+  @IsString()
+  newsletterHeading?: string;
+
+  @IsOptional()
+  @IsString()
+  newsletterSubtitle?: string;
+
+  @IsOptional()
+  @IsString()
+  newsletterBullets?: string;
+
+  @IsOptional()
+  @IsString()
+  newsletterDisclaimer?: string;
+
+  @IsOptional()
+  @IsString()
+  newsletterPlaceholder?: string;
+
+  @IsOptional()
+  @IsString()
   topPromoLine1?: string;
 
   @IsOptional()

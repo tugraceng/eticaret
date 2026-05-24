@@ -102,7 +102,7 @@ export function SiteHeaderSearch({
       ? "hidden min-h-[2.5rem] w-full min-w-0 items-center gap-2 md:flex"
       : isSheet
         ? "flex w-full flex-col gap-3"
-        : "mb-3 flex w-full items-stretch gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2";
+        : "mb-3 flex w-full items-stretch gap-2 rounded-xl border border-white/12 bg-[#0a0f18] px-3 py-2";
 
   return (
     <form
@@ -155,8 +155,8 @@ export function SiteHeaderSearch({
                   ? "w-full border-0 bg-transparent text-sm text-white outline-none placeholder:text-white/45"
                   : isSheet
                     ? "w-full border-0 bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-                    : "w-full border-0 bg-transparent text-sm text-slate-900 outline-none"
-                : "w-full border-0 bg-transparent text-sm outline-none"
+                    : "w-full border-0 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
+                : "w-full border-0 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
             }
           />
         </div>
@@ -198,7 +198,7 @@ export function SiteHeaderSearch({
               : "grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sky-600 text-white shadow-md transition hover:bg-sky-500"
             : isSheet
               ? "w-full rounded-xl bg-[#e8edf5] py-2.5 text-sm font-semibold text-[#0c0e12] shadow-md transition hover:bg-white"
-              : "shrink-0 self-center text-xs font-semibold text-slate-700"
+              : "shrink-0 self-center text-xs font-semibold text-slate-300"
         }
         aria-label={isSheet ? "Mağazada ara" : "Ara"}
       >

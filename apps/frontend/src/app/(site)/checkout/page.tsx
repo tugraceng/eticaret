@@ -128,7 +128,7 @@ function CheckoutInner() {
 
   // payment
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [paymentProvider, setPaymentProvider] = useState<Provider["id"]>("MOCK");
+  const [paymentProvider, setPaymentProvider] = useState<Provider["id"]>("IYZICO");
 
   // shipping & discount
   const [shippingSettings, setShippingSettings] = useState<ShippingSettings | null>(null);
@@ -259,7 +259,7 @@ function CheckoutInner() {
       try {
         const res = await fetch(apiUrl("/payments/providers"));
         if (!res.ok) return;
-        const list = (await res.json()) as Provider[];
+        const list = ((await res.json()) as Provider[]).filter((p) => p.id !== "MOCK");
         if (cancelled) return;
         setProviders(list);
         const firstReady =
@@ -554,18 +554,6 @@ function CheckoutInner() {
         const { paymentPageUrl } = (await payRes.json()) as { paymentPageUrl: string };
         window.location.href = paymentPageUrl;
         return;
-      }
-
-      if (paymentProvider === "MOCK") {
-        const mockRes = await fetch(apiUrl("/payments/mock-checkout"), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ orderId: order.id }),
-        });
-        if (!mockRes.ok) throw new Error(await mockRes.text());
       }
 
       await clearCartCompletely();
@@ -1126,9 +1114,7 @@ function CheckoutInner() {
                         <p className={`mt-1 text-xs ${selected ? "text-white/80" : "text-slate-500"}`}>
                           {p.id === "IYZICO"
                             ? "Kredi kartı / banka kartı ile güvenli ödeme (İyzico)"
-                            : p.id === "MOCK"
-                              ? "Ödeme simülasyonu (geliştirme amaçlı)"
-                              : p.name}
+                            : p.name}
                         </p>
                       </div>
                     </label>

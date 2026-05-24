@@ -194,6 +194,12 @@
   background: rgba(255, 255, 255, 0.06);
   box-shadow: none;
 }
+.site-theme-stoneiron .si-header-search input {
+  color: #f1f5f9;
+}
+.site-theme-stoneiron .si-header-search input::placeholder {
+  color: #64748b;
+}
 
 .site-theme-stoneiron .header-auth-outline {
   border-color: rgba(255, 255, 255, 0.2);
@@ -893,27 +899,112 @@
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
-  padding: 1.25rem 1rem;
+  padding: 0.875rem 0.5rem;
   text-align: center;
   transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+@media (min-width: 640px) {
+  .site-theme-stoneiron .si-account-stat-card {
+    padding: 1.25rem 1rem;
+  }
 }
 .site-theme-stoneiron .si-account-stat-card:hover {
   border-color: rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.07);
 }
 .site-theme-stoneiron .si-account-stat-card .si-stat-value {
-  margin-top: 0.75rem;
-  font-size: 1.5rem;
+  margin-top: 0.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: #f1f5f9;
 }
+@media (min-width: 640px) {
+  .site-theme-stoneiron .si-account-stat-card .si-stat-value {
+    margin-top: 0.75rem;
+    font-size: 1.5rem;
+  }
+}
 .site-theme-stoneiron .si-account-stat-card .si-stat-label {
-  margin-top: 0.35rem;
-  font-size: 0.6875rem;
+  margin-top: 0.25rem;
+  font-size: 0.5625rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #94a3b8;
+  line-height: 1.3;
+}
+@media (min-width: 640px) {
+  .site-theme-stoneiron .si-account-stat-card .si-stat-label {
+    margin-top: 0.35rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+  }
+}
+
+.site-theme-stoneiron .si-account-inner-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1.25rem;
+}
+
+.site-theme-stoneiron .si-account-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 1rem;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 2rem 1.25rem;
+  text-align: center;
+}
+
+.site-theme-stoneiron .si-account-empty-icon {
+  display: grid;
+  height: 3.5rem;
+  width: 3.5rem;
+  place-items: center;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 1.5rem;
+}
+
+.site-theme-stoneiron .si-account-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #e8edf5;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0c0e12;
+  transition: background-color 0.2s ease;
+}
+.site-theme-stoneiron .si-account-btn-primary:hover {
+  background: #fff;
+}
+
+.site-theme-stoneiron .si-account-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.site-theme-stoneiron .si-account-btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.site-theme-stoneiron .si-account-sidebar .lg\\:hidden {
+  flex-wrap: wrap;
 }
 
 .site-theme-stoneiron .si-shop-filter-chip input[type="checkbox"] {
@@ -1401,10 +1492,136 @@
 .site-theme-stoneiron .si-order-summary-card {
   flex: 0 0 min(85vw, 18rem);
   scroll-snap-align: start;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
 }
 @media (min-width: 768px) {
   .site-theme-stoneiron .si-order-summary-card {
     flex: unset;
   }
+}
+
+/* Sipariş detay sayfası */
+.site-theme-stoneiron .si-order-detail-page {
+  color: #cbd5e1;
+}
+.site-theme-stoneiron .si-order-panel {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+.site-theme-stoneiron .si-order-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+.site-theme-stoneiron .si-order-badge-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+}
+.site-theme-stoneiron .si-order-badge-paid {
+  background: rgba(14, 165, 233, 0.15);
+  color: #7dd3fc;
+}
+.site-theme-stoneiron .si-order-badge-processing {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+}
+.site-theme-stoneiron .si-order-badge-shipped {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+}
+.site-theme-stoneiron .si-order-badge-delivered {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+.site-theme-stoneiron .si-order-badge-cancelled {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fda4af;
+}
+.site-theme-stoneiron .si-order-stepper {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.site-theme-stoneiron .si-order-stepper::-webkit-scrollbar {
+  display: none;
+}
+.site-theme-stoneiron .si-order-step {
+  flex: 1 0 min(5.5rem, 22%);
+  min-width: 4.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  scroll-snap-align: start;
+}
+.site-theme-stoneiron .si-order-step-dot {
+  display: grid;
+  height: 2.25rem;
+  width: 2.25rem;
+  place-items: center;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.06);
+  color: #64748b;
+}
+.site-theme-stoneiron .si-order-step-dot-done {
+  background: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+.site-theme-stoneiron .si-order-step-dot-active {
+  background: #38bdf8;
+  color: #0c0e12;
+}
+.site-theme-stoneiron .si-order-step-label {
+  margin-top: 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  color: #64748b;
+  text-wrap: balance;
+}
+.site-theme-stoneiron .si-order-step-label-done {
+  color: #cbd5e1;
+}
+@media (min-width: 640px) {
+  .site-theme-stoneiron .si-order-step {
+    flex: 1;
+    min-width: 0;
+  }
+  .site-theme-stoneiron .si-order-step-label {
+    font-size: 0.6875rem;
+  }
+}
+
+/* İl / ilçe seçimleri — koyu tema */
+.site-theme-stoneiron select.input-soft {
+  background-color: #0a0f18;
+  color: #e8edf5;
+}
+.site-theme-stoneiron select.input-soft:disabled {
+  background-color: rgba(255, 255, 255, 0.03);
+  color: #94a3b8;
+}
+.site-theme-stoneiron select.input-soft option {
+  background: #0a0f18;
+  color: #e8edf5;
+}
+.site-theme-stoneiron .si-order-detail-page .input-soft,
+.site-theme-stoneiron .si-order-detail-page textarea.input-soft {
+  background-color: #0a0f18;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e8edf5;
+}
+.site-theme-stoneiron .si-order-detail-page .input-soft::placeholder,
+.site-theme-stoneiron .si-order-detail-page textarea.input-soft::placeholder {
+  color: #64748b;
 }
 

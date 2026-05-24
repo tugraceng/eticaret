@@ -205,6 +205,13 @@ model SiteSettings {
   popupSessionOnly        Boolean  @default(false)
   /// Sürüm anahtarı — değiştirip kaydedince daha önce kapatanlara yeniden gösterilir
   popupStorageKey         String   @default("1")
+  // Footer bülten metinleri
+  newsletterKicker        String   @default("Bülten")
+  newsletterHeading       String   @default("Koleksiyonlardan ilk siz haberdar olun")
+  newsletterSubtitle      String   @default("Yeni parçalar ve sınırlı üretimler — doğrudan atölyeden, spam yok.") @db.Text
+  newsletterBullets       String   @default("Yeni koleksiyonlardan ilk siz haberdar olun\nÖzenle üretilen yeni parçalar\nSınırlı üretim duyuruları") @db.Text
+  newsletterDisclaimer    String   @default("Abone olarak gizlilik politikasını kabul etmiş olursunuz. İstediğiniz zaman ayrılabilirsiniz.") @db.Text
+  newsletterPlaceholder   String   @default("E-posta adresiniz")
   // Üst promosyon şeridi (masaüstü)
   topPromoLine1      String   @default("Tüm ürünlerde %3 havale/EFT indirimi")
   topPromoLine2      String   @default("2.000 TL üzeri kargo ücretsiz")

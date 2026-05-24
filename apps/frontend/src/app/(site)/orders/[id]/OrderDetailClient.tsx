@@ -40,12 +40,12 @@ type Order = {
 };
 
 const statusClass: Record<string, string> = {
-  PENDING: "bg-amber-100 text-amber-800",
-  PAID: "bg-sky-100 text-sky-800",
-  PROCESSING: "bg-indigo-100 text-indigo-800",
-  SHIPPED: "bg-violet-100 text-violet-800",
-  DELIVERED: "bg-emerald-100 text-emerald-800",
-  CANCELLED: "bg-rose-100 text-rose-800",
+  PENDING: "si-order-badge si-order-badge-pending",
+  PAID: "si-order-badge si-order-badge-paid",
+  PROCESSING: "si-order-badge si-order-badge-processing",
+  SHIPPED: "si-order-badge si-order-badge-shipped",
+  DELIVERED: "si-order-badge si-order-badge-delivered",
+  CANCELLED: "si-order-badge si-order-badge-cancelled",
 };
 
 const steps = ["PENDING", "PAID", "PROCESSING", "SHIPPED", "DELIVERED"] as const;
@@ -99,26 +99,35 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
-  const currentStep = order?.status === "CANCELLED" ? -1 : steps.indexOf(order?.status as (typeof steps)[number]);
+  const currentStep =
+    order?.status === "CANCELLED" ? -1 : steps.indexOf(order?.status as (typeof steps)[number]);
   const subtotal = useMemo(
     () => order?.subtotalCents ?? order?.items.reduce((s, i) => s + i.quantity * i.unitPriceCents, 0) ?? 0,
     [order],
   );
 
   if (phase === "loading") {
-    return <main className="mx-auto max-w-7xl px-4 py-12 text-sm text-slate-600 sm:px-6 lg:px-8">Sipariş doğrulanıyor...</main>;
+    return (
+      <main className="si-order-detail-page mx-auto max-w-7xl px-4 py-12 text-sm text-slate-400 sm:px-6 lg:px-8">
+        Sipariş doğrulanıyor…
+      </main>
+    );
   }
 
   if (phase === "login" || !order) {
     return (
-      <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="section-shell p-6 sm:p-8">
+      <main className="si-order-detail-page mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="si-order-panel p-6 sm:p-8">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Sipariş takibi</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Hesabınıza giriş yapın</h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Hesabınıza giriş yapın</h1>
+          <p className="mt-2 text-sm text-slate-400">
             Sipariş detayları yalnızca siparişi veren müşteri hesabında görüntülenebilir.
           </p>
-          {error && <p className="mt-4 rounded-xl bg-rose-50 p-3 text-xs text-rose-700">{error}</p>}
+          {error && (
+            <p className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
+              {error}
+            </p>
+          )}
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/hesap/giris" className="btn-primary">
               Giriş yap
@@ -133,32 +142,37 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <Link href="/" className="link-underline text-sm text-slate-600 hover:text-slate-900">Alışverişe dön</Link>
+    <div className="si-order-detail-page mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+      <Link href="/" className="link-underline text-sm text-slate-400 hover:text-slate-200">
+        Alışverişe dön
+      </Link>
 
-      <div className="fade-up section-shell mt-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
+      <div className="fade-up si-order-panel mt-6 flex flex-wrap items-start justify-between gap-4 p-6 sm:p-8">
+        <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Sipariş takibi</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-4xl">
             {orderStatusHeadlineTr(order.status)}
           </h1>
-          <p className="mt-2 font-mono text-xs text-slate-500">#{order.id}</p>
+          <p className="mt-2 break-all font-mono text-xs text-slate-500">#{order.id}</p>
         </div>
-        <span className={`rounded-full px-3 py-1 text-[11px] font-bold tracking-wide ${statusClass[order.status] ?? "bg-slate-100 text-slate-700"}`}>
+        <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-bold tracking-wide ${statusClass[order.status] ?? "si-order-badge"}`}>
           {orderStatusLabelTr(order.status)}
         </span>
       </div>
 
       {currentStep >= 0 && (
-        <ol className="fade-up mt-10 grid grid-cols-5 gap-2">
+        <ol className="si-order-stepper fade-up mt-8 sm:mt-10">
           {steps.map((s, i) => {
             const done = i <= currentStep;
+            const active = i === currentStep;
             return (
-              <li key={s} className="flex flex-col items-center text-center">
-                <span className={`grid h-9 w-9 place-items-center rounded-full text-[11px] font-bold ${done ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-400"}`}>
+              <li key={s} className="si-order-step">
+                <span
+                  className={`si-order-step-dot ${done ? "si-order-step-dot-done" : ""} ${active ? "si-order-step-dot-active" : ""}`}
+                >
                   {i + 1}
                 </span>
-                <span className={`mt-2 text-[10px] font-semibold leading-tight tracking-wide text-balance ${done ? "text-slate-800" : "text-slate-400"}`}>
+                <span className={`si-order-step-label ${done ? "si-order-step-label-done" : ""}`}>
                   {orderStatusLabelTr(s)}
                 </span>
               </li>
@@ -167,70 +181,124 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
         </ol>
       )}
 
-      <section className="surface-soft mt-10 p-6">
-        <h2 className="text-sm font-semibold text-slate-800">Kalemler</h2>
-        <ul className="mt-4 divide-y divide-slate-100">
+      <section className="si-order-panel mt-8 p-6 sm:mt-10">
+        <h2 className="text-sm font-semibold text-slate-100">Kalemler</h2>
+        <ul className="mt-4 divide-y divide-white/10">
           {order.items.map((i) => (
             <li key={i.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-              <div>
-                <p className="font-semibold text-slate-900">{i.titleSnapshot}</p>
-                <p className="text-xs text-slate-500">{priceFmt(i.unitPriceCents, order.currency)} x {i.quantity}</p>
+              <div className="min-w-0">
+                <p className="font-semibold text-slate-100">{i.titleSnapshot}</p>
+                <p className="text-xs text-slate-400">
+                  {priceFmt(i.unitPriceCents, order.currency)} × {i.quantity}
+                </p>
               </div>
-              <p className="text-sm font-semibold text-slate-900">{priceFmt(i.unitPriceCents * i.quantity, order.currency)}</p>
+              <p className="shrink-0 text-sm font-semibold text-slate-100">
+                {priceFmt(i.unitPriceCents * i.quantity, order.currency)}
+              </p>
             </li>
           ))}
         </ul>
 
-        <dl className="mt-6 space-y-1.5 border-t border-slate-100 pt-4 text-sm">
-          <div className="flex justify-between text-slate-600"><dt>Ara toplam</dt><dd>{priceFmt(subtotal, order.currency)}</dd></div>
+        <dl className="mt-6 space-y-1.5 border-t border-white/10 pt-4 text-sm">
+          <div className="flex justify-between text-slate-400">
+            <dt>Ara toplam</dt>
+            <dd>{priceFmt(subtotal, order.currency)}</dd>
+          </div>
           {!!order.discountCents && (
-            <div className="flex justify-between text-emerald-700"><dt>İndirim {order.discountCode ? `(${order.discountCode})` : ""}</dt><dd>- {priceFmt(order.discountCents, order.currency)}</dd></div>
+            <div className="flex justify-between text-emerald-400">
+              <dt>İndirim {order.discountCode ? `(${order.discountCode})` : ""}</dt>
+              <dd>- {priceFmt(order.discountCents, order.currency)}</dd>
+            </div>
           )}
           {typeof order.shippingCents === "number" && (
-            <div className="flex justify-between text-slate-600"><dt>Kargo</dt><dd>{order.shippingCents > 0 ? priceFmt(order.shippingCents, order.currency) : "Ücretsiz"}</dd></div>
+            <div className="flex justify-between text-slate-400">
+              <dt>Kargo</dt>
+              <dd>{order.shippingCents > 0 ? priceFmt(order.shippingCents, order.currency) : "Ücretsiz"}</dd>
+            </div>
           )}
           {!!order.taxCents && (
-            <div className="flex justify-between text-slate-600"><dt>Vergi</dt><dd>{priceFmt(order.taxCents, order.currency)}</dd></div>
+            <div className="flex justify-between text-slate-400">
+              <dt>Vergi</dt>
+              <dd>{priceFmt(order.taxCents, order.currency)}</dd>
+            </div>
           )}
-          <div className="mt-2 flex justify-between border-t border-slate-100 pt-2 text-base font-semibold text-slate-900">
-            <dt>Toplam</dt><dd>{priceFmt(order.totalCents, order.currency)}</dd>
+          <div className="mt-2 flex justify-between border-t border-white/10 pt-2 text-base font-semibold text-white">
+            <dt>Toplam</dt>
+            <dd>{priceFmt(order.totalCents, order.currency)}</dd>
           </div>
         </dl>
 
         {order.trackingNumber && (
-          <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm">
+          <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm">
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Kargo takip</p>
-            <p className="mt-1 font-mono text-slate-900">{order.trackingNumber}</p>
+            <p className="mt-1 break-all font-mono text-slate-100">{order.trackingNumber}</p>
           </div>
         )}
       </section>
 
       {(order.shippingLine1 || order.contactName) && (
-        <section className="surface-soft mt-6 p-6">
-          <h2 className="text-sm font-semibold text-slate-800">Teslimat bilgileri</h2>
+        <section className="si-order-panel mt-6 p-6">
+          <h2 className="text-sm font-semibold text-slate-100">Teslimat bilgileri</h2>
           <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
-            {order.contactName && <div><dt className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Alıcı</dt><dd className="mt-1 text-slate-800">{order.contactName}</dd></div>}
-            {order.contactPhone && <div><dt className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Telefon</dt><dd className="mt-1 text-slate-800">{order.contactPhone}</dd></div>}
+            {order.contactName && (
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Alıcı</dt>
+                <dd className="mt-1 text-slate-200">{order.contactName}</dd>
+              </div>
+            )}
+            {order.contactPhone && (
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Telefon</dt>
+                <dd className="mt-1 text-slate-200">{order.contactPhone}</dd>
+              </div>
+            )}
             {order.shippingLine1 && (
               <div className="sm:col-span-2">
                 <dt className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Adres</dt>
-                <dd className="mt-1 whitespace-pre-line text-slate-800">
-                  {[order.shippingLine1, order.shippingLine2, [order.shippingDistrict, order.shippingCity, order.shippingPostalCode].filter(Boolean).join(" / "), order.shippingCountry ?? undefined].filter(Boolean).join("\n")}
+                <dd className="mt-1 whitespace-pre-line text-slate-200">
+                  {[
+                    order.shippingLine1,
+                    order.shippingLine2,
+                    [order.shippingDistrict, order.shippingCity, order.shippingPostalCode]
+                      .filter(Boolean)
+                      .join(" / "),
+                    order.shippingCountry ?? undefined,
+                  ]
+                    .filter(Boolean)
+                    .join("\n")}
                 </dd>
               </div>
             )}
-            {order.notes && <div className="sm:col-span-2"><dt className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Not</dt><dd className="mt-1 whitespace-pre-wrap text-slate-700">{order.notes}</dd></div>}
+            {order.notes && (
+              <div className="sm:col-span-2">
+                <dt className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Not</dt>
+                <dd className="mt-1 whitespace-pre-wrap text-slate-300">{order.notes}</dd>
+              </div>
+            )}
           </dl>
         </section>
       )}
 
-      <ReturnRequestForm orderId={order.id} orderStatus={order.status} items={order.items} existing={order.returns ?? []} />
+      <ReturnRequestForm
+        orderId={order.id}
+        orderStatus={order.status}
+        items={order.items}
+        existing={order.returns ?? []}
+      />
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
-        <Link href="/" className="btn-primary">Alışverişe devam</Link>
-        <Link href={`/orders/${order.id}/fatura`} className="btn-ghost">Faturayı görüntüle</Link>
-        <Link href="/hesap" className="btn-ghost">Hesabım</Link>
-        <Link href="/hesap/iadeler" className="btn-ghost">İadelerim</Link>
+        <Link href="/" className="btn-primary">
+          Alışverişe devam
+        </Link>
+        <Link href={`/orders/${order.id}/fatura`} className="btn-ghost">
+          Faturayı görüntüle
+        </Link>
+        <Link href="/hesap" className="btn-ghost">
+          Hesabım
+        </Link>
+        <Link href="/hesap/iadeler" className="btn-ghost">
+          İadelerim
+        </Link>
         {order.status === "PENDING" && <CancelButton orderId={order.id} />}
       </div>
     </div>

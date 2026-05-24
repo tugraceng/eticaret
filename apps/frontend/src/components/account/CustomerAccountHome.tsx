@@ -204,10 +204,10 @@ export function CustomerAccountHome() {
             <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Hesabım</p>
-                <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-100 sm:text-3xl">
                   Merhaba, {greetName}
                 </h1>
-                <p className="mt-1 text-sm text-slate-600">Siparişlerinizi ve bilgilerinizi buradan yönetin.</p>
+                <p className="mt-1 text-sm text-slate-400">Siparişlerinizi ve bilgilerinizi buradan yönetin.</p>
                 <p className="mt-0.5 text-xs text-slate-500">{me?.email}</p>
               </div>
               <Link href="/shop" className="btn-ghost ring-1 ring-slate-200/80">
@@ -257,14 +257,14 @@ function SectionIntro({
   body: string;
 }) {
   return (
-    <div className="mb-6 border-b border-slate-100 pb-5">
+    <div className="si-account-section-intro mb-6 border-b border-white/10 pb-5">
       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
         {eyebrow}
       </p>
-      <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-900">
+      <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-100">
         {title}
       </h2>
-      <p className="mt-1 max-w-2xl text-sm text-slate-600">{body}</p>
+      <p className="mt-1 max-w-2xl text-sm text-slate-400">{body}</p>
     </div>
   );
 }
@@ -295,7 +295,7 @@ function OverviewTab({
         title="Hesap özeti"
         body="Sipariş durumunuzu, teslimat ayarlarınızı ve hızlı işlemleri tek yerden yönetin."
       />
-      <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <button type="button" onClick={() => onGoto("orders", { ordersFilter: "all" })} className="si-account-stat-card">
           <span className="grid h-10 w-10 place-items-center rounded-full bg-sky-500/15 text-sky-400">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
@@ -335,11 +335,11 @@ function OverviewTab({
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
+        <div className="si-account-inner-card">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Hesap durumu</p>
-              <h3 className="mt-1 text-base font-semibold text-slate-900">
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Hesap durumu</p>
+              <h3 className="mt-1 text-base font-semibold text-slate-100">
                 {hasProfileDetails ? "Profil bilgileriniz hazır" : "Profilinizi tamamlayın"}
               </h3>
             </div>
@@ -351,26 +351,26 @@ function OverviewTab({
               {hasProfileDetails ? "Tamam" : "Eksik"}
             </span>
           </div>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-slate-400">
             Ad, soyad ve telefon bilgileriniz teslimat sürecinin daha hızlı ilerlemesini sağlar.
           </p>
           <button
             type="button"
             onClick={() => onGoto("profile")}
-            className="mt-4 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="si-account-btn-secondary mt-4"
           >
             Profili düzenle
           </button>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Varsayılan teslimat</p>
+        <div className="si-account-inner-card">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Varsayılan teslimat</p>
           {defaultAddress ? (
             <>
-              <h3 className="mt-1 text-base font-semibold text-slate-900">
+              <h3 className="mt-1 text-base font-semibold text-slate-100">
                 {defaultAddress.label || defaultAddress.city}
               </h3>
-              <p className="mt-2 line-clamp-2 text-sm text-slate-600">
+              <p className="mt-2 line-clamp-2 text-sm text-slate-400">
                 {[defaultAddress.line1, defaultAddress.district, defaultAddress.city]
                   .filter(Boolean)
                   .join(" / ")}
@@ -378,8 +378,8 @@ function OverviewTab({
             </>
           ) : (
             <>
-              <h3 className="mt-1 text-base font-semibold text-slate-900">Adres ekleyin</h3>
-              <p className="mt-2 text-sm text-slate-600">
+              <h3 className="mt-1 text-base font-semibold text-slate-100">Adres ekleyin</h3>
+              <p className="mt-2 text-sm text-slate-400">
                 Checkout sırasında tek tıkla kullanmak için bir teslimat adresi kaydedin.
               </p>
             </>
@@ -387,83 +387,73 @@ function OverviewTab({
           <button
             type="button"
             onClick={() => onGoto("addresses")}
-            className="mt-4 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="si-account-btn-secondary mt-4"
           >
             Adresleri yönet
           </button>
         </div>
       </div>
 
-      <div className="mt-10">
+      <div className="mt-8">
         <div className="mb-4 flex items-end justify-between gap-3">
-          <h2 className="text-sm font-semibold text-slate-900">Son siparişler</h2>
+          <h2 className="text-sm font-semibold text-slate-100">Son siparişler</h2>
           {orders.length > 0 && (
             <button
               type="button"
               onClick={() => onGoto("orders")}
-              className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-800"
+              className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300"
             >
               Tümünü gör
             </button>
           )}
         </div>
         {recent.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 py-8 text-center text-sm text-slate-500">
-            Henüz sipariş yok.{" "}
-            <Link href="/shop" className="font-semibold text-slate-900 underline-offset-2 hover:underline">
-              Alışverişe başlayın
-            </Link>
-          </p>
+          <div className="si-account-empty py-8">
+            <p className="text-sm text-slate-400">
+              Henüz sipariş yok.{" "}
+              <Link href="/shop" className="font-semibold text-sky-400 underline-offset-2 hover:underline">
+                Alışverişe başlayın
+              </Link>
+            </p>
+          </div>
         ) : (
-          <ul className="space-y-3">
+          <div className="si-order-cards-rail">
             {recent.map((o) => {
               const title = o.items[0]?.titleSnapshot ?? "Sipariş";
-              const initial = title.slice(0, 1).toUpperCase();
               return (
-                <li
+                <article
                   key={o.id}
-                  className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 p-4"
+                  className="si-order-summary-card flex flex-col p-4"
                 >
-                  <div className="grid h-16 w-16 flex-shrink-0 place-items-center rounded-xl bg-slate-200/90 text-lg font-bold text-slate-600">
-                    {initial}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="line-clamp-1 font-semibold text-slate-900">{title}</p>
-                    <p className="mt-0.5 font-mono text-[11px] text-slate-400">#{o.id.slice(0, 8)}</p>
-                    <p className="text-xs text-slate-500">
-                      {new Date(o.createdAt).toLocaleDateString("tr-TR", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
-                        o.status === "DELIVERED"
-                          ? "bg-slate-200 text-slate-700"
-                          : o.status === "SHIPPED"
-                            ? "bg-sky-100 text-sky-800"
-                            : (statusClass[o.status] ?? "bg-slate-100 text-slate-700")
-                      }`}
-                    >
-                      {orderStatusLabelTr(o.status)}
-                    </span>
-                    <p className="text-sm font-semibold text-slate-900">{priceFmt(o.totalCents, o.currency)}</p>
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/orders/${o.id}`}
-                        className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
-                      >
-                        Detay
-                      </Link>
-                    </div>
-                  </div>
-                </li>
+                  <p className="font-mono text-[10px] text-slate-500">#{o.id.slice(0, 8).toUpperCase()}</p>
+                  <p className="mt-2 line-clamp-2 text-sm font-semibold text-slate-100">{title}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {new Date(o.createdAt).toLocaleDateString("tr-TR", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <p className="mt-auto pt-2 text-base font-semibold tabular-nums text-slate-100">
+                    {priceFmt(o.totalCents, o.currency)}
+                  </p>
+                  <span
+                    className={`mt-2 self-start rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                      statusClass[o.status] ?? "bg-slate-700 text-slate-200"
+                    }`}
+                  >
+                    {orderStatusLabelTr(o.status)}
+                  </span>
+                  <Link
+                    href={`/orders/${o.id}`}
+                    className="si-account-btn-secondary mt-3 w-full text-center"
+                  >
+                    Detay
+                  </Link>
+                </article>
               );
             })}
-          </ul>
+          </div>
         )}
       </div>
     </div>
@@ -487,10 +477,10 @@ function OrderSummaryCards({
         <article
           key={o.id}
           role="listitem"
-          className="si-order-summary-card flex flex-col rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
+          className="si-order-summary-card flex flex-col p-4"
         >
           <div className="flex items-start justify-between gap-2">
-            <p className="font-mono text-[11px] text-slate-400">#{o.id.slice(0, 8).toUpperCase()}</p>
+            <p className="font-mono text-[11px] text-slate-500">#{o.id.slice(0, 8).toUpperCase()}</p>
             <span
               className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
                 statusClass[o.status] ?? "bg-slate-100 text-slate-700"
@@ -506,17 +496,17 @@ function OrderSummaryCards({
               year: "numeric",
             })}
           </p>
-          <p className="mt-2 line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-slate-900">
+          <p className="mt-2 line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-slate-100">
             {o.items.slice(0, 2).map((i) => i.titleSnapshot).join(", ")}
             {o.items.length > 2 ? "…" : ""}
           </p>
-          <p className="mt-auto pt-3 text-lg font-semibold tabular-nums text-slate-900">
+          <p className="mt-auto pt-3 text-lg font-semibold tabular-nums text-slate-100">
             {priceFmt(o.totalCents, o.currency)}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Link
               href={`/orders/${o.id}`}
-              className="inline-flex flex-1 items-center justify-center rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+              className="si-account-btn-primary mt-3 inline-flex flex-1 items-center justify-center"
             >
               Detay
             </Link>
@@ -580,21 +570,15 @@ function OrdersTab({
           title="Sipariş geçmişi"
           body="Tamamlanan ve devam eden siparişleriniz burada listelenir."
         />
-        <div className="flex flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-12 text-center">
-          <div
-            className="grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-2xl"
-            aria-hidden
-          >
+        <div className="si-account-empty">
+          <div className="si-account-empty-icon" aria-hidden>
             📦
           </div>
-          <p className="mt-4 text-sm font-semibold text-slate-800">Henüz siparişiniz yok</p>
-          <p className="mt-1 max-w-xs text-sm text-slate-500">
+          <p className="mt-4 text-sm font-semibold text-slate-200">Henüz siparişiniz yok</p>
+          <p className="mt-1 max-w-xs text-sm text-slate-400">
             İlk siparişinizi verdiğinizde özet kartlar burada görünecek.
           </p>
-          <Link
-            href="/shop"
-            className="mt-5 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white hover:bg-slate-800"
-          >
+          <Link href="/shop" className="si-account-btn-primary mt-5">
             Alışverişe başlayın
           </Link>
         </div>
@@ -619,8 +603,8 @@ function OrdersTab({
         </pre>
       )}
       {visible.length === 0 ? (
-        <div className="surface-soft p-8 text-center text-sm text-slate-500">
-          Aktif gönderi bulunmuyor.
+        <div className="si-account-empty py-8">
+          <p className="text-sm text-slate-400">Aktif gönderi bulunmuyor.</p>
         </div>
       ) : (
         <OrderSummaryCards

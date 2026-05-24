@@ -82,7 +82,7 @@ export function AccountDashboardSidebar({
   return (
     <aside className="si-account-sidebar flex w-full flex-col gap-1 lg:max-w-[220px] lg:shrink-0">
       <p className="mb-2 hidden text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 lg:block">Hesap</p>
-      <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex flex-wrap gap-2 pb-1 lg:hidden">
         {nav.map((item) => {
           const isActive = active === item.id;
           return (
@@ -90,20 +90,20 @@ export function AccountDashboardSidebar({
               key={item.id}
               type="button"
               onClick={() => onSelect(item.id)}
-              className={`flex flex-shrink-0 items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition ${
+              className={`flex items-center gap-1.5 rounded-full px-2.5 py-2 text-xs font-medium transition sm:gap-2 sm:px-3 sm:text-sm ${
                 isActive
                   ? "bg-slate-900 text-white shadow-sm"
                   : "bg-white text-slate-600 ring-1 ring-slate-200/80"
               }`}
             >
-              <Icon name={item.icon} className="h-4 w-4" />
-              {item.label}
+              <Icon name={item.icon} className="h-4 w-4 shrink-0" />
+              <span className="whitespace-nowrap">{item.label}</span>
             </button>
           );
         })}
         <Link
           href="/favoriler"
-          className="flex flex-shrink-0 items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-600 ring-1 ring-slate-200/80 transition hover:bg-slate-50"
+          className="flex items-center gap-1.5 rounded-full bg-white px-2.5 py-2 text-xs font-medium text-slate-600 ring-1 ring-slate-200/80 transition hover:bg-slate-50 sm:gap-2 sm:px-3 sm:text-sm"
         >
           <svg className="h-4 w-4 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
             <path d="M20.8 5.4a5.5 5.5 0 0 0-7.8 0L12 6.4l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 22l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z" />
@@ -113,7 +113,7 @@ export function AccountDashboardSidebar({
         <button
           type="button"
           onClick={onLogout}
-          className="flex flex-shrink-0 items-center gap-2 rounded-full bg-rose-50/80 px-3 py-2 text-sm font-medium text-rose-700 ring-1 ring-rose-200/80"
+          className="flex items-center gap-1.5 rounded-full bg-rose-50/80 px-2.5 py-2 text-xs font-medium text-rose-700 ring-1 ring-rose-200/80 sm:gap-2 sm:px-3 sm:text-sm"
         >
           Çıkış
         </button>
