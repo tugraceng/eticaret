@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "@/components/site/ConfirmDialog";
 import { apiUrl } from "@/lib/api";
-import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { getCustomerToken } from "@/lib/platform-session";
 import { showSiteToast } from "@/lib/site-toast";
 
 export function CancelButton({ orderId }: { orderId: string }) {
@@ -15,7 +15,7 @@ export function CancelButton({ orderId }: { orderId: string }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
-    setCanShow(Boolean(sessionStorage.getItem(CUSTOMER_TOKEN_KEY)));
+    setCanShow(Boolean(getCustomerToken()));
   }, []);
 
   if (!canShow) return null;
@@ -24,7 +24,7 @@ export function CancelButton({ orderId }: { orderId: string }) {
     setBusy(true);
     setErr(null);
     try {
-      const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+      const token = getCustomerToken();
       const res = await fetch(apiUrl(`/orders/${orderId}/cancel`), {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },

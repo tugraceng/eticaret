@@ -1,6 +1,6 @@
 import { apiUrl } from "@/lib/api";
 import { notifyCartUpdated } from "@/lib/platform-storage-events";
-import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { getCustomerToken } from "@/lib/platform-session";
 
 export const CART_STORAGE_KEY = "platform_cart";
 
@@ -67,7 +67,7 @@ function linesToCartPayload(lines: CartPayloadLine[]) {
 /** Sunucu + yerel toplu birleştirme — yalnızca giriş/kayıt sonrası bir kez (tekrar çağrılırsa adetler katlanır). */
 export async function mergeGuestCartIntoServerCart(): Promise<LocalCartLine[] | null> {
   if (typeof window === "undefined") return null;
-  const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+  const token = getCustomerToken();
   if (!token) return null;
   const local = readLocalCartFromStorage();
   try {
@@ -92,7 +92,7 @@ export async function mergeGuestCartIntoServerCart(): Promise<LocalCartLine[] | 
 /** Oturum açıkken sunucu sepetini yerel depoya yazar (yerel boşken). */
 export async function pullServerCartToStorage(): Promise<LocalCartLine[] | null> {
   if (typeof window === "undefined") return null;
-  const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+  const token = getCustomerToken();
   if (!token) return null;
   try {
     const res = await fetch(apiUrl("/customers/me/cart"), {
@@ -112,7 +112,7 @@ export async function pullServerCartToStorage(): Promise<LocalCartLine[] | null>
 /** Oturum açıkken yerel sepeti sunucuya bire bir yazar (idempotent; tekrar çağrıda adet katlanmaz). */
 export async function pushLocalCartToServer(): Promise<LocalCartLine[] | null> {
   if (typeof window === "undefined") return null;
-  const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+  const token = getCustomerToken();
   if (!token) return null;
   const local = readLocalCartFromStorage();
   try {
@@ -160,7 +160,7 @@ export function writeLocalCartToStorage(lines: LocalCartLine[]) {
 export async function clearCartCompletely(): Promise<void> {
   writeLocalCartToStorage([]);
   if (typeof window === "undefined") return;
-  const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+  const token = getCustomerToken();
   if (!token) return;
   try {
     await fetch(apiUrl("/customers/me/cart"), {
@@ -219,7 +219,7 @@ export function mergeLineIntoLocalCart(line: {
  */
 export async function syncCartFromStorage(): Promise<LocalCartLine[] | null> {
   if (typeof window === "undefined") return null;
-  const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+  const token = getCustomerToken();
   if (!token) return null;
   const local = readLocalCartFromStorage();
   if (local.length === 0) {

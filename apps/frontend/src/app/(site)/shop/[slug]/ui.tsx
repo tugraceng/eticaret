@@ -16,12 +16,16 @@ export function AddToCart({
   basePriceCents,
   slug,
   imageUrl,
+  trackStock = false,
+  stock = 0,
 }: {
   productId: string;
   name: string;
   basePriceCents?: number;
   slug?: string;
   imageUrl?: string;
+  trackStock?: boolean;
+  stock?: number;
 }) {
   const router = useRouter();
   const [qty, setQty] = useState(1);
@@ -40,7 +44,13 @@ export function AddToCart({
         : basePriceCents
       : undefined;
 
-  const inc = () => setQty((q) => q + 1);
+  const inc = () => {
+    if (variants.length === 0 && trackStock && qty >= stock) {
+      showSiteToast({ message: "Stokta daha fazla ürün yok.", kind: "info" });
+      return;
+    }
+    setQty((q) => q + 1);
+  };
   const dec = () => setQty((q) => Math.max(1, q - 1));
 
   const add = useCallback(
@@ -52,6 +62,15 @@ export function AddToCart({
         }
         if (selected.trackStock && selected.stock < qty) {
           showSiteToast({ message: "Bu seçenek için yeterli stok yok.", kind: "info" });
+          return;
+        }
+      } else if (trackStock) {
+        if (stock <= 0) {
+          showSiteToast({ message: "Bu ürün stokta yok.", kind: "info" });
+          return;
+        }
+        if (stock < qty) {
+          showSiteToast({ message: "Stokta yeterli adet yok.", kind: "info" });
           return;
         }
       }
@@ -96,6 +115,8 @@ export function AddToCart({
       addLine,
       openMiniCart,
       lineImageUrl,
+      trackStock,
+      stock,
     ],
   );
 

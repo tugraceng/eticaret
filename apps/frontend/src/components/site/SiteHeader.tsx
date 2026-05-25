@@ -20,7 +20,7 @@ import { SiteNavTab } from "@/components/site/SiteNavTab";
 import { shopCategoryHref, type HeaderNavCategory } from "@/lib/category-nav";
 import { parseHeaderNav, type HeaderNavLink } from "@/lib/header-nav";
 import type { SiteSettings } from "@/lib/settings";
-import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { getCustomerToken } from "@/lib/platform-session";
 import { selectCartTotalQty, useCartStore } from "@/stores/cart-store";
 import { selectWishlistCount, useWishlistStore } from "@/stores/wishlist-store";
 import { cn } from "@/lib/cn";
@@ -366,7 +366,7 @@ export function SiteHeader({
   useEffect(() => {
     const readToken = () => {
       try {
-        setLoggedIn(Boolean(sessionStorage.getItem(CUSTOMER_TOKEN_KEY)));
+        setLoggedIn(Boolean(getCustomerToken()));
       } catch {
         setLoggedIn(false);
       }

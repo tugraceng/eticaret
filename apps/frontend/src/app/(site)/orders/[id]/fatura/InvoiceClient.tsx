@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
-import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { getCustomerToken } from "@/lib/platform-session";
 import { PrintButton } from "./PrintButton";
 
 type Settings = {
@@ -54,7 +54,7 @@ export function InvoiceClient({ orderId }: { orderId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   const loadOrder = async () => {
-    const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY)?.trim();
+    const token = getCustomerToken()?.trim();
     if (!token) throw new Error("Faturayı görüntülemek için müşteri hesabınızla giriş yapın.");
     const res = await fetch(apiUrl(`/orders/${orderId}`), {
       headers: { Authorization: `Bearer ${token}` },

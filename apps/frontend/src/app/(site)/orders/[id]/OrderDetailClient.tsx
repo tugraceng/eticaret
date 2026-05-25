@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import { orderStatusHeadlineTr, orderStatusLabelTr } from "@/lib/order-status-tr";
-import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { getCustomerToken } from "@/lib/platform-session";
 import { CancelButton } from "./CancelButton";
 import { ReturnRequestForm } from "./ReturnRequestForm";
 
@@ -75,7 +75,7 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY)?.trim();
+      const token = getCustomerToken()?.trim();
       if (!token) {
         setPhase("login");
         return;

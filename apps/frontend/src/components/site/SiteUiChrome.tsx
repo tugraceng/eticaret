@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { resetSiteOverlaysOnNavigation } from "@/lib/reset-site-overlays";
 import { CART_STORAGE_KEY, syncCartFromStorage } from "@/lib/cart-sync";
 import { CART_UPDATE_EVENT } from "@/lib/platform-storage-events";
-import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { getCustomerToken } from "@/lib/platform-session";
 import { useCartStore } from "@/stores/cart-store";
 import { BackToTop } from "./BackToTop";
 import { CartAbandonToast } from "./CartAbandonToast";
@@ -53,7 +53,7 @@ export function SiteUiChrome() {
   useEffect(() => {
     const run = () => {
       try {
-        if (sessionStorage.getItem(CUSTOMER_TOKEN_KEY)) {
+        if (getCustomerToken()) {
           void syncCartFromStorage().then((merged) => {
             if (merged !== null) useCartStore.getState().replaceLines(merged);
             else useCartStore.getState().hydrate();

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { PageContainer } from "@/components/site/PageContainer";
 import { apiUrl } from "@/lib/api";
 import { orderStatusLabelTr } from "@/lib/order-status-tr";
-import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { getCustomerToken } from "@/lib/platform-session";
 
 type OrderRow = {
   id: string;
@@ -32,7 +32,7 @@ export default function OrdersPage() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    const tok = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+    const tok = getCustomerToken();
     if (!tok) {
       setLoggedIn(false);
       setPhase("ok");

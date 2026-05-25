@@ -13,7 +13,7 @@ import {
   type LocalCartLine,
 } from "@/lib/cart-sync";
 import { commerceBeginCheckout, commercePurchase } from "@/lib/commerce-analytics";
-import { CUSTOMER_EMAIL_KEY, CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { getCustomerEmail, getCustomerToken } from "@/lib/platform-session";
 import { ProvinceDistrictSelect } from "@/components/forms/ProvinceDistrictSelect";
 import { isTrProvinceDistrictValid } from "@/lib/tr-province-district";
 import { useCartStore } from "@/stores/cart-store";
@@ -201,9 +201,9 @@ function CheckoutInner() {
   }, [loggedIn, email, marketingCheckoutOptIn, guestAbandonPayload, lines.length]);
 
   useEffect(() => {
-    const pre = sessionStorage.getItem(CUSTOMER_EMAIL_KEY);
+    const pre = getCustomerEmail();
     if (pre) setEmail((e) => e || pre);
-    const tok = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+    const tok = getCustomerToken();
     setLoggedIn(Boolean(tok));
 
     if (tok) {
@@ -459,7 +459,7 @@ function CheckoutInner() {
     return errs;
   }
 
-  const mergedFieldErrors = { ...step1Errors, ...step2Errors };
+  const mergedFieldErrors = { ...step1Errors };
 
   async function submit() {
     setError(null);
@@ -475,13 +475,13 @@ function CheckoutInner() {
     }
     if (Object.keys(v2).length) {
       requestAnimationFrame(() =>
-        document.getElementById("checkout-sepet")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+        document.getElementById("checkout-onaylar")?.scrollIntoView({ behavior: "smooth", block: "start" }),
       );
-      return setError(`[Onaylar] ${Object.values(v2)[0]}`);
+      return;
     }
 
     setBusy(true);
-    const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+    const token = getCustomerToken();
     try {
       const contactName = `${name.trim()} ${surname.trim()}`.trim();
       const res = await fetch(apiUrl("/orders"), {
@@ -582,7 +582,7 @@ function CheckoutInner() {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_390px]">
+    <div className="si-checkout-page grid gap-8 lg:grid-cols-[1fr_390px]">
       <div className="space-y-6">
         <div className="section-shell px-5 py-4">
           <CheckoutJumpNav />
@@ -773,7 +773,7 @@ function CheckoutInner() {
                     value={line1}
                     onChange={(e) => setLine1(e.target.value)}
                     disabled={!isNewAddress && loggedIn && addresses.length > 0}
-                    className="input-soft mt-2 disabled:cursor-not-allowed disabled:bg-slate-50"
+                    className="input-soft mt-2 disabled:cursor-not-allowed disabled:opacity-60"
                     autoComplete="address-line1"
                   />
                   {step1Errors.line1 && <p className="mt-1 text-xs text-rose-600">{step1Errors.line1}</p>}
@@ -789,7 +789,7 @@ function CheckoutInner() {
                     value={line2}
                     onChange={(e) => setLine2(e.target.value)}
                     disabled={!isNewAddress && loggedIn && addresses.length > 0}
-                    className="input-soft mt-2 disabled:cursor-not-allowed disabled:bg-slate-50"
+                    className="input-soft mt-2 disabled:cursor-not-allowed disabled:opacity-60"
                     autoComplete="address-line2"
                   />
                 </div>
@@ -814,7 +814,7 @@ function CheckoutInner() {
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, ""))}
                     disabled={!isNewAddress && loggedIn && addresses.length > 0}
-                    className="input-soft mt-2 disabled:cursor-not-allowed disabled:bg-slate-50"
+                    className="input-soft mt-2 disabled:cursor-not-allowed disabled:opacity-60"
                     autoComplete="postal-code"
                   />
                   {step1Errors.postalCode && (
@@ -873,9 +873,12 @@ function CheckoutInner() {
                       <button
                         type="button"
                         onClick={() => remove(l.lineKey)}
-                        className="mt-1 text-xs text-rose-600 hover:underline"
+                        className="si-checkout-remove-btn mt-2"
+                        aria-label={`${l.title} kaldır`}
                       >
-                        Kaldır
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                          <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
+                        </svg>
                       </button>
                     </div>
                     <div className="inline-flex items-center rounded-full border border-slate-200 bg-white">
@@ -992,7 +995,7 @@ function CheckoutInner() {
               )}
             </section>
 
-            <section className="card-soft p-6">
+            <section id="checkout-onaylar" className="card-soft scroll-mt-28 p-6">
               <h2 className="text-lg font-semibold text-slate-900">Not ve onaylar</h2>
               <div className="mt-4">
                 <label className="text-xs font-semibold uppercase tracking-widest text-slate-500">
@@ -1036,7 +1039,7 @@ function CheckoutInner() {
                     &apos;ni okudum, kabul ediyorum. *
                   </span>
                 </label>
-                {step2Errors.kvkk && <p className="text-xs text-rose-600">{step2Errors.kvkk}</p>}
+                {step2Errors.kvkk && <p className="text-xs text-rose-400">{step2Errors.kvkk}</p>}
                 <label className="flex items-start gap-3 text-sm text-slate-700">
                   <input
                     type="checkbox"
@@ -1055,7 +1058,7 @@ function CheckoutInner() {
                     &apos;ni okudum, kabul ediyorum. *
                   </span>
                 </label>
-                {step2Errors.mss && <p className="text-xs text-rose-600">{step2Errors.mss}</p>}
+                {step2Errors.mss && <p className="text-xs text-rose-400">{step2Errors.mss}</p>}
               </div>
             </section>
           </>

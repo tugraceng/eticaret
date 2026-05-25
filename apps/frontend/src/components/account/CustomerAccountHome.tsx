@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import {
-  CUSTOMER_EMAIL_KEY,
-  CUSTOMER_TOKEN_KEY,
+  clearCustomerSession,
   CustomerSessionTerminated,
+  getCustomerToken,
   redirectCustomerToLogin,
 } from "@/lib/platform-session";
 import { AccountDashboardSidebar } from "@/components/account/AccountDashboardSidebar";
@@ -98,7 +98,7 @@ export function CustomerAccountHome() {
   const [loadErr, setLoadErr] = useState<string | null>(null);
 
   useEffect(() => {
-    const tok = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+    const tok = getCustomerToken();
     setSessionChecked(true);
     if (!tok) {
       router.replace("/hesap/giris");
@@ -154,8 +154,7 @@ export function CustomerAccountHome() {
   }, [token]);
 
   const logout = useCallback(() => {
-    sessionStorage.removeItem(CUSTOMER_TOKEN_KEY);
-    sessionStorage.removeItem(CUSTOMER_EMAIL_KEY);
+    clearCustomerSession();
     router.replace("/hesap/giris");
   }, [router]);
 

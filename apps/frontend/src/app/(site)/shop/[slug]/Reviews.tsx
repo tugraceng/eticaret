@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiJson } from "@/lib/api";
 import { cn } from "@/lib/cn";
-import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { getCustomerToken } from "@/lib/platform-session";
 
 type ReviewItem = {
   id: string;
@@ -99,7 +99,7 @@ export function Reviews({
   useEffect(() => {
     void load();
     try {
-      setLoggedIn(Boolean(sessionStorage.getItem(CUSTOMER_TOKEN_KEY)));
+      setLoggedIn(Boolean(getCustomerToken()));
     } catch {
       setLoggedIn(false);
     }
@@ -118,7 +118,7 @@ export function Reviews({
     }
     setSubmitting(true);
     try {
-      const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+      const token = getCustomerToken();
       await apiJson(`/products/${slug}/reviews`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,

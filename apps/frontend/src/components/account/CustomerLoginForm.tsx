@@ -8,9 +8,9 @@ import { GoogleAuthButton } from "@/components/account/GoogleAuthButton";
 import { mergeGuestCartIntoServerCart } from "@/lib/cart-sync";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import {
-  CUSTOMER_EMAIL_KEY,
-  CUSTOMER_TOKEN_KEY,
   clearCustomerSession,
+  getCustomerToken,
+  setCustomerSession,
 } from "@/lib/platform-session";
 import { resetSiteOverlaysOnNavigation } from "@/lib/reset-site-overlays";
 
@@ -49,7 +49,7 @@ export function CustomerLoginForm({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const tok = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+    const tok = getCustomerToken();
     if (!tok) return;
     let cancelled = false;
     void fetch(apiUrl("/customers/me"), {
@@ -82,7 +82,7 @@ export function CustomerLoginForm({
     void (async () => {
       setBusy(true);
       setError(null);
-      sessionStorage.setItem(CUSTOMER_TOKEN_KEY, token);
+      setCustomerSession(token);
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
       try {
         const res = await fetch(apiUrl("/auth/me"), {
@@ -92,7 +92,7 @@ export function CustomerLoginForm({
         if (cancelled) return;
         if (!res.ok) throw new Error("Oturum doğrulanamadı");
         const me = (await res.json()) as { email: string };
-        sessionStorage.setItem(CUSTOMER_EMAIL_KEY, me.email);
+        setCustomerSession(token, me.email);
         await mergeGuestCartIntoServerCart();
         resetSiteOverlaysOnNavigation();
         router.replace(safeReturn);
@@ -122,8 +122,7 @@ export function CustomerLoginForm({
       const text = await res.text();
       if (!res.ok) throw new Error(formatApiErrorPayload(text, res.status) || res.statusText);
       const data = JSON.parse(text) as { accessToken: string; user: { email: string } };
-      sessionStorage.setItem(CUSTOMER_TOKEN_KEY, data.accessToken);
-      sessionStorage.setItem(CUSTOMER_EMAIL_KEY, data.user.email);
+      setCustomerSession(data.accessToken, data.user.email);
       await mergeGuestCartIntoServerCart();
       resetSiteOverlaysOnNavigation();
       router.replace(safeReturn);

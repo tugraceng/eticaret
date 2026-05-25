@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl } from "@/lib/api";
-import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { getCustomerToken } from "@/lib/platform-session";
 
 export type OrderItemLite = {
   id: string;
@@ -58,7 +58,7 @@ export function ReturnRequestForm({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setAuthed(Boolean(sessionStorage.getItem(CUSTOMER_TOKEN_KEY)));
+    setAuthed(Boolean(getCustomerToken()));
   }, []);
 
   const blockedAlready = useMemo(() => {
@@ -122,7 +122,7 @@ export function ReturnRequestForm({
     }
     setBusy(true);
     try {
-      const token = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+      const token = getCustomerToken();
       const res = await fetch(apiUrl("/returns"), {
         method: "POST",
         headers: {

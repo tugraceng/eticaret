@@ -1,4 +1,4 @@
-import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { getCustomerToken } from "@/lib/platform-session";
 
 /** Tarayıcı / sunucuda aynı taban adresi (.env trim, sondaki / kırpılır) */
 export function normalizedApiBase(): string {
@@ -16,7 +16,7 @@ const base = () => normalizedApiBase();
 export function browserCustomerAuthHeaders(): HeadersInit {
   if (typeof window === "undefined") return {};
   try {
-    const t = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+    const t = getCustomerToken();
     return t ? { Authorization: `Bearer ${t}` } : {};
   } catch {
     return {};

@@ -53,6 +53,9 @@ export const ProductListRow = memo(function ProductListRow({ product }: Props) {
               title={product.name}
               priceCents={product.priceCents}
               imageUrl={cover}
+              hasVariants={product.hasVariants}
+              trackStock={product.trackStock}
+              stock={product.stock}
             />
           </div>
         </div>

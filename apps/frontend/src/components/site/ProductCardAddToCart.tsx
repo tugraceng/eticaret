@@ -9,6 +9,9 @@ type Props = {
   title: string;
   priceCents: number;
   imageUrl?: string;
+  hasVariants?: boolean;
+  trackStock?: boolean;
+  stock?: number;
   variant?: "default" | "icon";
 };
 

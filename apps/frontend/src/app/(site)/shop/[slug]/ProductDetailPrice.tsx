@@ -29,12 +29,12 @@ export function ProductDetailPrice({
 
   return (
     <div className="mt-5 flex flex-wrap items-baseline gap-3">
-      <p className="text-3xl font-semibold text-slate-900">{priceFmt(price)}</p>
+      <p className="text-3xl font-semibold text-white">{priceFmt(price)}</p>
       {onSale && (
         <>
           <p className="text-lg text-slate-400 line-through">{priceFmt(compareAtCents!)}</p>
           {pct > 0 && (
-            <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-sky-800">
+            <span className="rounded-full bg-rose-500/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-rose-400 ring-1 ring-rose-500/30">
               %{pct} indirim
             </span>
           )}

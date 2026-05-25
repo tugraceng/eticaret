@@ -280,15 +280,80 @@ export class OrdersService {
         await tx.guestAbandonedCart.deleteMany({ where: { email: em } });
       }
 
-      if (discountId) {
-        await tx.discountCode.update({
-          where: { id: discountId },
-          data: { usageCount: { increment: 1 } },
+      if (input.saveAddress && customerId) {
+        const existingCount = await tx.address.count({ where: { customerId } });
+        await tx.address.create({
+          data: {
+            customerId,
+            label: input.addressLabel || null,
+            contactName: input.contactName,
+            phone: input.contactPhone,
+            line1: input.shippingLine1,
+            line2: input.shippingLine2 || null,
+            district: input.shippingDistrict.trim(),
+            city: input.shippingCity.trim(),
+            postalCode: input.shippingPostalCode || "",
+            isDefault: existingCount === 0,
+          },
         });
       }
 
-      const lowStockAlerts: { id: string; name: string; stock: number; threshold: number }[] = [];
-      for (const line of lines) {
+      return order;
+    });
+    return order;
+  }
+
+  /** Ödeme başarılı olduktan sonra stok düşür, kupon kullanımını artır, bildirimleri gönder. */
+  async fulfillPaidOrder(orderId: string) {
+    const existingMovement = await this.prisma.stockMovement.count({
+      where: { orderId, reason: "order_create" },
+    });
+    if (existingMovement > 0) return;
+
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true },
+    });
+    if (!order || order.status !== "PAID") return;
+
+    const lowStockAlerts: { id: string; name: string; stock: number; threshold: number }[] = [];
+
+    await this.prisma.$transaction(async (tx) => {
+      const products = await tx.product.findMany({
+        where: { id: { in: order.items.map((i) => i.productId) } },
+        include: { variants: { where: { isActive: true } } },
+      });
+      const settings = await tx.siteSettings.findFirst();
+
+      for (const item of order.items) {
+        const p = products.find((x) => x.id === item.productId)!;
+        const variant = item.productVariantId
+          ? p.variants.find((v) => v.id === item.productVariantId)
+          : undefined;
+        if (variant) {
+          if (variant.trackStock && variant.stock < item.quantity) {
+            throw new BadRequestException(
+              `"${p.name}" (${variant.label}) için ödeme sonrası yeterli stok kalmadı`,
+            );
+          }
+        } else if (p.trackStock && p.stock < item.quantity) {
+          throw new BadRequestException(`"${p.name}" için ödeme sonrası yeterli stok kalmadı`);
+        }
+      }
+
+      if (order.discountCode?.trim()) {
+        const d = await tx.discountCode.findFirst({
+          where: { code: order.discountCode.trim() },
+        });
+        if (d) {
+          await tx.discountCode.update({
+            where: { id: d.id },
+            data: { usageCount: { increment: 1 } },
+          });
+        }
+      }
+
+      for (const line of order.items) {
         const p = products.find((x) => x.id === line.productId)!;
         if (line.productVariantId) {
           const updated = await tx.productVariant.update({
@@ -339,61 +404,56 @@ export class OrdersService {
           }
         }
       }
+    });
 
-      if (input.saveAddress && customerId) {
-        const existingCount = await tx.address.count({ where: { customerId } });
-        await tx.address.create({
-          data: {
-            customerId,
-            label: input.addressLabel || null,
-            contactName: input.contactName,
-            phone: input.contactPhone,
-            line1: input.shippingLine1,
-            line2: input.shippingLine2 || null,
-            district: input.shippingDistrict.trim(),
-            city: input.shippingCity.trim(),
-            postalCode: input.shippingPostalCode || "",
-            isDefault: existingCount === 0,
-          },
-        });
-      }
-
-      // Email/Notify/E-invoice — JobQueue'e atılır (response bekletilmez).
-      this.jobs.enqueue(TOPIC_ORDER_EMAIL, {
+    this.jobs.enqueue(
+      TOPIC_ORDER_EMAIL,
+      {
         orderId: order.id,
-        guestEmail: input.guestEmail,
+        guestEmail: order.guestEmail ?? undefined,
         totalCents: order.totalCents,
         currency: order.currency,
-      }, { name: "email.orderCreated" });
-      this.jobs.enqueue(TOPIC_ORDER_NOTIFY, {
+      },
+      { name: "email.orderCreated" },
+    );
+    this.jobs.enqueue(
+      TOPIC_ORDER_NOTIFY,
+      {
         orderId: order.id,
         totalCents: order.totalCents,
         currency: order.currency,
-        guestEmail: input.guestEmail,
-      }, { name: "notify.newOrder" });
-      for (const alert of lowStockAlerts) {
-        this.jobs.enqueue(TOPIC_ORDER_NOTIFY_STOCK, {
+        guestEmail: order.guestEmail ?? undefined,
+      },
+      { name: "notify.newOrder" },
+    );
+    for (const alert of lowStockAlerts) {
+      this.jobs.enqueue(
+        TOPIC_ORDER_NOTIFY_STOCK,
+        {
           productId: alert.id,
           name: alert.name,
           stock: alert.stock,
           threshold: alert.threshold,
-        }, { name: "notify.stock" });
-        this.jobs.enqueue(TOPIC_STOCK_ALERT_EMAIL, {
+        },
+        { name: "notify.stock" },
+      );
+      this.jobs.enqueue(
+        TOPIC_STOCK_ALERT_EMAIL,
+        {
           productName: alert.name,
           stock: alert.stock,
           outOfStock: alert.stock <= 0,
-        }, { name: "email.stockAlert" });
-      }
-      return order;
-    });
+        },
+        { name: "email.stockAlert" },
+      );
+    }
     this.jobs.enqueue(TOPIC_ORDER_EINVOICE, { orderId: order.id }, { name: "einvoice" });
     this.invalidateProductAndBestsellerCaches();
-    return order;
   }
 
   listMine(buyerUserId: string) {
     return this.prisma.order.findMany({
-      where: { buyerUserId },
+      where: { buyerUserId, status: { not: "PENDING" } },
       orderBy: { createdAt: "desc" },
       take: 50,
       select: {
@@ -473,7 +533,13 @@ export class OrdersService {
         where: { id },
         data: { status: "CANCELLED" },
       });
-      // Stok iadesi
+      // Stok iadesi — yalnızca ödeme sonrası düşülmüşse
+      const hadDeduction = await tx.stockMovement.count({
+        where: { orderId: id, reason: "order_create" },
+      });
+      if (hadDeduction === 0) {
+        return updated;
+      }
       const items = await tx.orderItem.findMany({ where: { orderId: id } });
       for (const it of items) {
         if (it.productVariantId) {

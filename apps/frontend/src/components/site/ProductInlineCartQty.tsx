@@ -1,7 +1,9 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useRouter } from "next/navigation";
 import { lineKeyFor } from "@/lib/cart-sync";
+import { showSiteToast } from "@/lib/site-toast";
 import { useCartStore } from "@/stores/cart-store";
 import { Button } from "@/components/ui/atoms";
 import { cn } from "@/lib/cn";
@@ -14,6 +16,9 @@ type Props = {
   title: string;
   priceCents: number;
   imageUrl?: string;
+  hasVariants?: boolean;
+  trackStock?: boolean;
+  stock?: number;
   /** Sepete ekle satırı — kart altında tam genişlik */
   className?: string;
   /** @deprecated Yalnızca geri uyumluluk; ızgara için `default` kullanın */
@@ -26,15 +31,27 @@ export const ProductInlineCartQty = memo(function ProductInlineCartQty({
   title,
   priceCents,
   imageUrl,
+  hasVariants = false,
+  trackStock = false,
+  stock = 0,
   className,
   variant = "default",
 }: Props) {
+  const router = useRouter();
   const lineKey = useMemo(() => lineKeyFor(productId), [productId]);
   const qty = useCartStore((s) => s.lines.find((l) => l.lineKey === lineKey)?.quantity ?? 0);
   const addLine = useCartStore((s) => s.addLine);
   const setLineQuantity = useCartStore((s) => s.setLineQuantity);
   const [qtyPeek, setQtyPeek] = useState(false);
   const peekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const maxQty = useMemo(() => {
+    if (hasVariants) return 0;
+    if (!trackStock) return Number.POSITIVE_INFINITY;
+    return Math.max(0, stock);
+  }, [hasVariants, trackStock, stock]);
+
+  const outOfStock = !hasVariants && trackStock && maxQty <= 0;
 
   useEffect(() => {
     useCartStore.getState().hydrate();
@@ -65,20 +82,83 @@ export const ProductInlineCartQty = memo(function ProductInlineCartQty({
     return clearPeekTimer;
   }, [qty, clearPeekTimer]);
 
+  const goSelectVariant = useCallback(
+    (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      router.push(`/shop/${slug}`);
+    },
+    [router, slug],
+  );
+
   const addOne = useCallback(
     (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      if (hasVariants) {
+        goSelectVariant(e);
+        return;
+      }
+      if (outOfStock) {
+        showSiteToast({ message: "Bu ürün stokta yok.", kind: "info" });
+        return;
+      }
+      if (trackStock && qty >= maxQty) {
+        showSiteToast({ message: "Stokta daha fazla ürün yok.", kind: "info" });
+        return;
+      }
       addLine({ productId, quantity: 1, title, priceCents, slug, imageUrl });
       startQtyPeek();
     },
-    [addLine, productId, title, priceCents, slug, imageUrl, startQtyPeek],
+    [
+      addLine,
+      goSelectVariant,
+      hasVariants,
+      maxQty,
+      outOfStock,
+      productId,
+      qty,
+      title,
+      priceCents,
+      slug,
+      imageUrl,
+      startQtyPeek,
+      trackStock,
+    ],
   );
 
-  const showStepper = qty > 0 && qtyPeek;
+  const showStepper = qty > 0 && qtyPeek && !hasVariants;
 
   const btnBase =
     "flex h-10 w-10 shrink-0 items-center justify-center text-lg font-medium leading-none transition-colors hover:bg-white/10 active:bg-white/15 disabled:pointer-events-none disabled:opacity-40";
+
+  if (hasVariants) {
+    return (
+      <Button
+        type="button"
+        size="md"
+        variant="secondary"
+        className={cn("si-product-atc-btn min-h-10 w-full px-4 text-micro font-semibold uppercase", className)}
+        onClick={goSelectVariant}
+      >
+        Seçenek seç
+      </Button>
+    );
+  }
+
+  if (outOfStock) {
+    return (
+      <Button
+        type="button"
+        size="md"
+        variant="secondary"
+        disabled
+        className={cn("si-product-atc-btn min-h-10 w-full px-4 text-micro font-semibold uppercase opacity-50", className)}
+      >
+        Stokta yok
+      </Button>
+    );
+  }
 
   if (variant === "icon") {
     return (
@@ -136,9 +216,14 @@ export const ProductInlineCartQty = memo(function ProductInlineCartQty({
         type="button"
         className={cn(btnBase, "text-slate-200")}
         aria-label="Sepete bir ekle"
+        disabled={trackStock && qty >= maxQty}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          if (trackStock && qty >= maxQty) {
+            showSiteToast({ message: "Stokta daha fazla ürün yok.", kind: "info" });
+            return;
+          }
           setLineQuantity(lineKey, qty + 1);
           schedulePeekEnd();
         }}

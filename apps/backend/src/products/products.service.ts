@@ -92,6 +92,53 @@ export class ProductsService {
     });
   }
 
+  private toCatalogItem(
+    p: {
+      id: string;
+      slug: string;
+      name: string;
+      description: string | null;
+      priceCents: number;
+      compareAtCents: number | null;
+      images: unknown;
+      category: unknown;
+      isFeatured: boolean;
+      isNew: boolean;
+      trackStock: boolean;
+      stock: number;
+      avgRating: number;
+      reviewCount: number;
+      variants?: { id: string }[];
+    },
+  ) {
+    const hasVariants = (p.variants?.length ?? 0) > 0;
+    return {
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      description: p.description,
+      priceCents: p.priceCents,
+      compareAtCents: p.compareAtCents,
+      images: p.images,
+      category: p.category,
+      isFeatured: p.isFeatured,
+      isNew: p.isNew,
+      avgRating: p.avgRating,
+      reviewCount: p.reviewCount,
+      hasVariants,
+      trackStock: p.trackStock,
+      stock: p.stock,
+    };
+  }
+
+  private catalogInclude() {
+    return {
+      images: { orderBy: { sortOrder: "asc" as const } },
+      category: true,
+      variants: { where: { isActive: true }, select: { id: true } },
+    };
+  }
+
   async list(q?: string, categoryId?: string, opts?: { featuredOnly?: boolean }) {
     const featuredOnly = opts?.featuredOnly === true;
     const cacheable = !q; // arama yoksa cache'leyebiliriz
@@ -195,8 +242,15 @@ export class ProductsService {
       ...(input?.inStockOnly
         ? {
             OR: [
-              { trackStock: false },
-              { stock: { gt: 0 } },
+              {
+                variants: { none: { isActive: true } },
+                trackStock: false,
+              },
+              {
+                variants: { none: { isActive: true } },
+                trackStock: true,
+                stock: { gt: 0 },
+              },
               {
                 variants: {
                   some: {
@@ -208,7 +262,9 @@ export class ProductsService {
             ],
           }
         : {}),
-      ...(input?.onSaleOnly ? { compareAtCents: { not: null } } : {}),
+      ...(input?.onSaleOnly
+        ? { compareAtCents: { gt: this.prisma.product.fields.priceCents } }
+        : {}),
       ...(input?.featuredOnly ? { isFeatured: true } : {}),
       ...(input?.newOnly ? { isNew: true } : {}),
     };
@@ -263,11 +319,11 @@ export class ProductsService {
       }
       const products = await this.prisma.product.findMany({
         where: { id: { in: pageIds } },
-        include: { images: { orderBy: { sortOrder: "asc" } }, category: true },
+        include: this.catalogInclude(),
       });
       const order = new Map(pageIds.map((id, i) => [id, i]));
       products.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
-      const items = await this.withRatings(products);
+      const items = (await this.withRatings(products)).map((p) => this.toCatalogItem(p));
       return {
         items,
         page,
@@ -295,10 +351,10 @@ export class ProductsService {
         orderBy,
         skip,
         take: limit,
-        include: { images: { orderBy: { sortOrder: "asc" } }, category: true },
+        include: this.catalogInclude(),
       }),
     ]);
-    const items = await this.withRatings(products);
+    const items = (await this.withRatings(products)).map((p) => this.toCatalogItem(p));
     const totalPages = Math.max(1, Math.ceil(total / limit));
     return {
       items,

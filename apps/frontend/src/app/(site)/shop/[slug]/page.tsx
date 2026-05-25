@@ -44,6 +44,7 @@ type Product = {
   showPublicStockCount?: boolean;
   priceCents: number;
   compareAtCents?: number | null;
+  trackStock?: boolean;
   stock?: number;
   images?: ProductImage[];
   category?: { id: string; name: string; slug: string } | null;
@@ -296,6 +297,8 @@ export default async function ProductPage({
               basePriceCents={product.priceCents}
               slug={product.slug}
               imageUrl={heroImage}
+              trackStock={product.trackStock ?? false}
+              stock={product.stock ?? 0}
             />
           </div>
         </div>

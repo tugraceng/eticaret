@@ -701,6 +701,18 @@ model AbandonedCart {
   @@index([lastActivityAt])
 }
 
+/// İletişim formu mesajları (SMTP yoksa yedek kayıt)
+model ContactMessage {
+  id        String    @id @default(cuid())
+  name      String
+  email     String
+  message   String    @db.Text
+  emailedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([createdAt])
+}
+
 /// Checkout’ta e-posta veren misafir — terk edilmiş sepet (tarayıcı sepeti anlık görüntüsü)
 model GuestAbandonedCart {
   id               String   @id @default(cuid())

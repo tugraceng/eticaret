@@ -548,6 +548,78 @@
   border-color: rgba(56, 189, 248, 0.5);
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
 }
+.site-theme-stoneiron textarea.input-soft {
+  background-color: #0a0f18;
+  color: #e8edf5;
+  color-scheme: dark;
+}
+.site-theme-stoneiron textarea.input-soft::placeholder {
+  color: #64748b;
+}
+.site-theme-stoneiron .input-soft:disabled,
+.site-theme-stoneiron textarea.input-soft:disabled {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  color: #94a3b8;
+  opacity: 1;
+}
+
+.site-theme-stoneiron .si-checkout-remove-btn {
+  display: grid;
+  height: 2.25rem;
+  width: 2.25rem;
+  place-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  background: rgba(244, 63, 94, 0.08);
+  color: #fb7185;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.site-theme-stoneiron .si-checkout-remove-btn:hover {
+  border-color: rgba(244, 63, 94, 0.55);
+  background: rgba(244, 63, 94, 0.16);
+}
+
+.site-theme-stoneiron .si-checkout-page .card-soft,
+.site-theme-stoneiron .si-checkout-page .section-shell {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+}
+.site-theme-stoneiron .si-checkout-page h2,
+.site-theme-stoneiron .si-checkout-page .font-semibold.text-slate-900 {
+  color: #f1f5f9 !important;
+}
+.site-theme-stoneiron .si-checkout-page .text-slate-500,
+.site-theme-stoneiron .si-checkout-page .text-slate-600,
+.site-theme-stoneiron .si-checkout-page .text-slate-700 {
+  color: #94a3b8 !important;
+}
+.site-theme-stoneiron .si-checkout-page .text-slate-900 {
+  color: #f1f5f9 !important;
+}
+.site-theme-stoneiron .si-checkout-page .divide-slate-100 > * + * {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.site-theme-stoneiron .si-checkout-page .rounded-full.border-slate-200.bg-white {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+.site-theme-stoneiron .si-checkout-page .rounded-full.border-slate-200.bg-white button {
+  color: #cbd5e1;
+}
+.site-theme-stoneiron .si-checkout-page .rounded-2xl.bg-slate-50 {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.site-theme-stoneiron .si-checkout-page .rounded-2xl.bg-slate-50 label {
+  color: #cbd5e1;
+}
+.site-theme-stoneiron .si-checkout-page label.flex.items-start.gap-3.text-sm {
+  color: #cbd5e1;
+}
+.site-theme-stoneiron .si-checkout-page .link-underline.font-semibold.text-slate-900 {
+  color: #7dd3fc !important;
+}
 
 /* Vitrin içeriği (header/footer hariç) — açık Tailwind sınıflarını koyu temaya çeker */
 .site-theme-stoneiron > .flex-1 .section-shell,

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
-import { CUSTOMER_TOKEN_KEY } from "@/lib/platform-session";
+import { getCustomerToken } from "@/lib/platform-session";
 
 type ReturnRow = {
   id: string;
@@ -67,7 +67,7 @@ export function CustomerReturns({
 
   const load = useCallback(async () => {
     const token =
-      variant === "embedded" ? (authToken ?? null) : sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+      variant === "embedded" ? (authToken ?? null) : getCustomerToken();
     if (!token) {
       if (variant === "page") {
         router.push("/hesap/giris?redirect=/hesap/iadeler");

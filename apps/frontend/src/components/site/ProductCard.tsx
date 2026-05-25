@@ -23,6 +23,9 @@ export type ProductCardData = {
   reviewCount?: number;
   isFeatured?: boolean;
   isNew?: boolean;
+  hasVariants?: boolean;
+  trackStock?: boolean;
+  stock?: number;
 };
 
 type ProductCardProps = {
@@ -227,6 +230,9 @@ function ProductCardInner({ product, showCategory = false, showDescription = fal
                 title={product.name}
                 priceCents={product.priceCents}
                 imageUrl={cover}
+                hasVariants={product.hasVariants}
+                trackStock={product.trackStock}
+                stock={product.stock}
               />
             </div>
           </div>

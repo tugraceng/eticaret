@@ -8,11 +8,7 @@ import { GoogleAuthButton } from "@/components/account/GoogleAuthButton";
 import { mergeGuestCartIntoServerCart } from "@/lib/cart-sync";
 import { resetSiteOverlaysOnNavigation } from "@/lib/reset-site-overlays";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
-import {
-  CUSTOMER_EMAIL_KEY,
-  CUSTOMER_TOKEN_KEY,
-  clearCustomerSession,
-} from "@/lib/platform-session";
+import { clearCustomerSession, getCustomerToken, setCustomerSession } from "@/lib/platform-session";
 
 const PHONE_TR = /^(\+?90)?[\s-]?0?5\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}$/;
 
@@ -53,7 +49,7 @@ export function CustomerRegisterForm({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const tok = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+    const tok = getCustomerToken();
     if (!tok) return;
     let cancelled = false;
     void fetch(apiUrl("/customers/me"), {
@@ -112,8 +108,7 @@ export function CustomerRegisterForm({
       const text = await res.text();
       if (!res.ok) throw new Error(formatApiErrorPayload(text, res.status) || res.statusText);
       const data = JSON.parse(text) as { accessToken: string; user: { email: string } };
-      sessionStorage.setItem(CUSTOMER_TOKEN_KEY, data.accessToken);
-      sessionStorage.setItem(CUSTOMER_EMAIL_KEY, data.user.email);
+      setCustomerSession(data.accessToken, data.user.email);
       await mergeGuestCartIntoServerCart();
       resetSiteOverlaysOnNavigation();
       router.replace(safeReturn);

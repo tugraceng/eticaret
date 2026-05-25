@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import type { PaymentProvider, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { OrdersService } from "../orders/orders.service";
 import { promisify, type IyzipayClient, type IyzipayCtor } from "./iyzico.types";
 
 const Iyzipay: IyzipayCtor = require("iyzipay");
@@ -47,7 +48,10 @@ type PublicProvider = {
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly orders: OrdersService,
+  ) {}
 
   // ---------- Provider configuration ----------
 
@@ -580,6 +584,16 @@ export class PaymentsService {
       }
     });
 
+    if (success && existing.orderId) {
+      try {
+        await this.orders.fulfillPaidOrder(existing.orderId);
+      } catch (e) {
+        this.logger.error(
+          `fulfillPaidOrder failed for ${existing.orderId}: ${e instanceof Error ? e.message : e}`,
+        );
+      }
+    }
+
     const frontend = (extra.frontendUrl || input.origin || "http://localhost:3000").replace(
       /\/$/,
       "",
@@ -758,6 +772,7 @@ export class PaymentsService {
       await tx.order.update({ where: { id: orderId }, data: { status: "PAID" } });
       return p;
     });
+    await this.orders.fulfillPaidOrder(orderId);
     return { payment, message: "Order marked PAID (mock). Wire real provider here." };
   }
 
