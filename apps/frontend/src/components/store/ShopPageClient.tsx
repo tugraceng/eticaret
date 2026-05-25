@@ -73,7 +73,6 @@ export function ShopPageClient({
   catalogQs,
   baseParams,
   q,
-  categoryId,
   sort,
   sorts,
   minPriceCents,
@@ -94,7 +93,6 @@ export function ShopPageClient({
   catalogQs: string;
   baseParams: Record<string, string | undefined>;
   q?: string;
-  categoryId?: string;
   sort: ShopSortKey;
   sorts: Array<{ key: ShopSortKey; label: string }>;
   minPriceCents?: number;
@@ -149,6 +147,19 @@ export function ShopPageClient({
   const orphanCategories = categories.filter(
     (c) => c.parentId && !categories.some((p) => p.id === c.parentId),
   );
+  const filterFormKey = [
+    q ?? "",
+    activeCategory?.slug ?? "",
+    sort,
+    minPriceCents ?? "",
+    maxPriceCents ?? "",
+    minAvgRating ?? "",
+    inStockOnly ? "1" : "0",
+    onSaleOnly ? "1" : "0",
+    featuredOnly ? "1" : "0",
+    newOnly ? "1" : "0",
+    view,
+  ].join("|");
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
@@ -232,15 +243,15 @@ export function ShopPageClient({
             onClick={(e) => e.stopPropagation()}
           >
             <ShopFiltersForm
-              key={catalogQs}
+              key={filterFormKey}
               onApplied={() => setFiltersOpen(false)}
             >
             <div className="space-y-3 p-4 pb-6 max-lg:pb-[max(1.25rem,env(safe-area-inset-bottom))]">
               <p className="hidden text-h3 lg:block">Filtreler</p>
             <select
-              key={categoryId ?? "all"}
-              name="categoryId"
-              defaultValue={categoryId ?? ""}
+              key={activeCategory?.slug ?? "all"}
+              name="category"
+              defaultValue={activeCategory?.slug ?? ""}
               className="input-soft min-h-11 w-full !rounded-ds-lg"
               aria-label="Kategori seç"
             >
@@ -254,9 +265,9 @@ export function ShopPageClient({
                   const children = childCategories(r.id);
                   return (
                     <optgroup key={r.id} label={r.name}>
-                      <option value={r.id}>{r.name} — tümü</option>
+                      <option value={r.slug}>{r.name} — tümü</option>
                       {children.map((ch) => (
-                        <option key={ch.id} value={ch.id}>
+                        <option key={ch.id} value={ch.slug}>
                           {ch.name}
                         </option>
                       ))}
@@ -268,7 +279,7 @@ export function ShopPageClient({
                   .slice()
                   .sort(sortCategories)
                   .map((c) => (
-                    <option key={c.id} value={c.id}>
+                    <option key={c.id} value={c.slug}>
                       {c.name}
                     </option>
                   ))
@@ -276,7 +287,7 @@ export function ShopPageClient({
               {orphanCategories.length > 0 ? (
                 <optgroup label="Diğer">
                   {orphanCategories.map((c) => (
-                    <option key={c.id} value={c.id}>
+                    <option key={c.id} value={c.slug}>
                       {c.name}
                     </option>
                   ))}
@@ -310,19 +321,21 @@ export function ShopPageClient({
               <option value="2">2+ yıldız (ortalama)</option>
             </select>
             <input
-              name="minPriceCents"
+              name="minPrice"
               type="number"
               min={0}
-              defaultValue={minPriceCents ?? ""}
-              placeholder="Min fiyat"
+              step="0.01"
+              defaultValue={minPriceCents != null ? minPriceCents / 100 : ""}
+              placeholder="Min fiyat (₺)"
               className="input-soft min-h-11 w-full !rounded-ds-lg"
             />
             <input
-              name="maxPriceCents"
+              name="maxPrice"
               type="number"
               min={0}
-              defaultValue={maxPriceCents ?? ""}
-              placeholder="Max fiyat"
+              step="0.01"
+              defaultValue={maxPriceCents != null ? maxPriceCents / 100 : ""}
+              placeholder="Max fiyat (₺)"
               className="input-soft min-h-11 w-full !rounded-ds-lg"
             />
             <label className="si-shop-filter-chip">

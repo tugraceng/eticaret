@@ -85,6 +85,34 @@ function asMinAvgRating(v?: string): string | undefined {
   return undefined;
 }
 
+/** Eski ?categoryId= linklerini slug'a çevirirken filtre parametrelerini korur. */
+function appendShopFilterParams(
+  sp: {
+    sort?: string;
+    minPriceCents?: string;
+    maxPriceCents?: string;
+    minAvgRating?: string;
+    page?: string;
+    inStock?: string;
+    onSale?: string;
+    featured?: string;
+    newProduct?: string;
+    view?: string;
+  },
+  p: URLSearchParams,
+) {
+  if (sp.sort) p.set("sort", sp.sort);
+  if (sp.minPriceCents) p.set("minPriceCents", sp.minPriceCents);
+  if (sp.maxPriceCents) p.set("maxPriceCents", sp.maxPriceCents);
+  if (sp.minAvgRating) p.set("minAvgRating", sp.minAvgRating);
+  if (sp.inStock === "1") p.set("inStock", "1");
+  if (sp.onSale === "1") p.set("onSale", "1");
+  if (sp.featured === "1") p.set("featured", "1");
+  if (sp.newProduct === "1") p.set("newProduct", "1");
+  if (sp.view === "list") p.set("view", "list");
+  if (sp.page && sp.page !== "1") p.set("page", sp.page);
+}
+
 function buildCatalogQueryString(args: {
   q?: string;
   categoryId?: string;
@@ -145,7 +173,7 @@ export default async function ShopPage({
       const p = new URLSearchParams();
       if (q) p.set("q", q);
       p.set("category", byId.slug);
-      if (sp.sort) p.set("sort", sp.sort);
+      appendShopFilterParams(sp, p);
       redirect(`/shop?${p.toString()}`);
     }
   }
@@ -195,9 +223,11 @@ export default async function ShopPage({
       sort !== "newest",
   );
 
+  const activeCategory = categoryId ? categories.find((c) => c.id === categoryId) ?? null : null;
+
   const baseParams = {
     q,
-    categoryId,
+    category: activeCategory?.slug,
     sort,
     minPriceCents: minPriceCents ? String(minPriceCents) : undefined,
     maxPriceCents: maxPriceCents ? String(maxPriceCents) : undefined,
@@ -217,7 +247,6 @@ export default async function ShopPage({
       catalogQs={catalogQs}
       baseParams={baseParams}
       q={q}
-      categoryId={categoryId}
       sort={sort}
       sorts={SORTS}
       minPriceCents={minPriceCents}
@@ -230,7 +259,7 @@ export default async function ShopPage({
       page={page}
       view={view}
       hasActiveCatalogFilters={hasActiveCatalogFilters}
-      activeCategory={categoryId ? categories.find((c) => c.id === categoryId) ?? null : null}
+      activeCategory={activeCategory}
     />
   );
 }
