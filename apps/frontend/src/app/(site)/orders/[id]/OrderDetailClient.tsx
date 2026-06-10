@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import { orderStatusHeadlineTr, orderStatusLabelTr } from "@/lib/order-status-tr";
-import { carrierTrackingUrl, CARRIER_LABELS, type ShippingCarrier } from "@/lib/shipping-tracking";
+import { orderListStatusBadgeClass, orderListStatusLabel } from "@/lib/order-display-status";
+import { carrierTrackingLink, CARRIER_LABELS, type ShippingCarrier } from "@/lib/shipping-tracking";
 import { getCustomerToken } from "@/lib/platform-session";
 import { CancelButton } from "./CancelButton";
 import { ReturnRequestForm } from "./ReturnRequestForm";
@@ -40,15 +41,6 @@ type Order = {
     reason: string;
     items: { orderItemId: string; quantity: number }[];
   }[];
-};
-
-const statusClass: Record<string, string> = {
-  PENDING: "si-order-badge si-order-badge-pending",
-  PAID: "si-order-badge si-order-badge-paid",
-  PROCESSING: "si-order-badge si-order-badge-processing",
-  SHIPPED: "si-order-badge si-order-badge-shipped",
-  DELIVERED: "si-order-badge si-order-badge-delivered",
-  CANCELLED: "si-order-badge si-order-badge-cancelled",
 };
 
 const steps = ["PENDING", "PAID", "PROCESSING", "SHIPPED", "DELIVERED"] as const;
@@ -158,8 +150,10 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
           </h1>
           <p className="mt-2 break-all font-mono text-xs text-slate-500">#{order.id}</p>
         </div>
-        <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-bold tracking-wide ${statusClass[order.status] ?? "si-order-badge"}`}>
-          {orderStatusLabelTr(order.status)}
+        <span
+          className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-bold tracking-wide ${orderListStatusBadgeClass(order.status, order.returns)}`}
+        >
+          {orderListStatusLabel(order.status, order.returns)}
         </span>
       </div>
 
@@ -238,16 +232,20 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
               <p className="mt-1 text-slate-300">{CARRIER_LABELS[order.carrier] ?? order.carrier}</p>
             ) : null}
             <p className="mt-1 break-all font-mono text-slate-100">{order.trackingNumber}</p>
-            {carrierTrackingUrl(order.carrier, order.trackingNumber) ? (
-              <a
-                href={carrierTrackingUrl(order.carrier, order.trackingNumber)!}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary mt-3 inline-flex min-h-10 text-sm"
-              >
-                {(order.carrier ? CARRIER_LABELS[order.carrier] : "Kargo")} — Kargoyu Takip Et
-              </a>
-            ) : null}
+            {(() => {
+              const link = carrierTrackingLink(order.carrier, order.trackingNumber);
+              if (!link) return null;
+              return (
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary mt-3 inline-flex min-h-10 text-sm"
+                >
+                  {link.label} — Kargoyu Takip Et
+                </a>
+              );
+            })()}
           </div>
         )}
       </section>

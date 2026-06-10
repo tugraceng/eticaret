@@ -7,7 +7,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCartStockLimits } from "@/hooks/useCartStockLimits";
-import { canIncreaseCartQty, capCartQuantity } from "@/lib/cart-stock";
+import { CartLineQuantity } from "@/components/cart/CartLineQuantity";
+import { capCartQuantity } from "@/lib/cart-stock";
 import { SITE_OVERLAY_RESET_EVENT } from "@/lib/reset-site-overlays";
 import { apiUrl } from "@/lib/api";
 import type { ProductCardData } from "@/components/site/ProductCard";
@@ -188,31 +189,13 @@ export function MiniCartDrawer() {
                         )}
                         <p className="mt-1 text-micro text-[var(--ds-text-muted)]">{fmt(l.priceCents)}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <div className="inline-flex items-center rounded-full border border-[var(--ds-border)]">
-                            <button
-                              type="button"
-                              className="grid h-9 w-9 place-items-center text-[var(--ds-text)] hover:bg-[var(--ds-surface-muted)]"
-                              aria-label="Adet azalt"
-                              onClick={() => setQty(l.lineKey, l.quantity - 1)}
-                            >
-                              −
-                            </button>
-                            <span className="w-8 text-center text-small font-semibold">{l.quantity}</span>
-                            <button
-                              type="button"
-                              disabled={!canIncreaseCartQty(l.lineKey, l.quantity, stockLimits)}
-                              className="grid h-9 w-9 place-items-center text-[var(--ds-text)] hover:bg-[var(--ds-surface-muted)] disabled:cursor-not-allowed disabled:opacity-40"
-                              aria-label="Adet artır"
-                              onClick={() =>
-                                setQty(
-                                  l.lineKey,
-                                  capCartQuantity(l.lineKey, l.quantity + 1, stockLimits),
-                                )
-                              }
-                            >
-                              +
-                            </button>
-                          </div>
+                          <CartLineQuantity
+                            lineKey={l.lineKey}
+                            quantity={l.quantity}
+                            limits={stockLimits}
+                            size="sm"
+                            onChange={(key, q) => setQty(key, q)}
+                          />
                           {(() => {
                             const info = stockLimits.get(l.lineKey);
                             if (info?.trackStock && info.maxQty != null && info.maxQty <= l.quantity) {

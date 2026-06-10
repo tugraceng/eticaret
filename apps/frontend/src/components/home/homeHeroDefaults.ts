@@ -16,14 +16,10 @@ export type HomeHeroSlide = {
   secondaryHref: string;
   secondaryLabel: string;
   image: string;
-  /** Sosyal kanıt rozeti */
-  badge?: string;
 } & HeroImageDisplay;
 
 export type { HeroImageFit, HeroImagePosition };
 export { DEFAULT_HERO_IMAGE_DISPLAY };
-
-export const HERO_DEFAULT_BADGE = "1000+ Başarılı Baskı";
 
 export function defaultHeroSlides(
   _settings: Pick<SiteSettings, "defaultMetaDesc">,
@@ -37,7 +33,6 @@ export function defaultHeroSlides(
       ctaLabel: "Hemen Teklif Al",
       secondaryHref: "/shop",
       secondaryLabel: "Ürünleri İncele",
-      badge: HERO_DEFAULT_BADGE,
       image:
         "https://images.unsplash.com/photo-1631540577672-411958b86278?auto=format&fit=crop&w=1920&h=1080&q=80",
       ...DEFAULT_HERO_IMAGE_DISPLAY,
@@ -72,7 +67,6 @@ export function parseHeroSlides(raw: unknown): HomeHeroSlide[] | null {
         typeof o.secondaryLabel === "string" && o.secondaryLabel.length > 0
           ? o.secondaryLabel
           : "Ürünleri İncele",
-      badge: typeof o.badge === "string" ? o.badge : HERO_DEFAULT_BADGE,
       image,
       ...display,
       imageFit: "cover",

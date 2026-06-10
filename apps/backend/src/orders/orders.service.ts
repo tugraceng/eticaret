@@ -652,6 +652,7 @@ export class OrdersService {
         currency: true,
         createdAt: true,
         items: { select: { titleSnapshot: true, quantity: true }, take: 5 },
+        returns: { select: { status: true }, orderBy: { createdAt: "desc" }, take: 5 },
       },
     });
   }
@@ -670,6 +671,8 @@ export class OrdersService {
         totalCents: true,
         currency: true,
         trackingNumber: true,
+        carrier: true,
+        paymentMethod: true,
         createdAt: true,
         contactName: true,
         contactPhone: true,

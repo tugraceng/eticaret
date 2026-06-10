@@ -17,7 +17,7 @@ import { ProvinceDistrictSelect } from "@/components/forms/ProvinceDistrictSelec
 import { isTrProvinceDistrictValid } from "@/lib/tr-province-district";
 import { showSiteToast } from "@/lib/site-toast";
 import { isAccountTabId, type AccountTabId } from "@/components/account/account-tab-ids";
-import { orderStatusLabelTr } from "@/lib/order-status-tr";
+import { orderListStatusBadgeClass, orderListStatusLabel } from "@/lib/order-display-status";
 
 type OrderRow = {
   id: string;
@@ -26,6 +26,7 @@ type OrderRow = {
   currency: string;
   createdAt: string;
   items: { titleSnapshot: string; quantity: number }[];
+  returns?: { status: string }[];
 };
 
 type AddressRow = {
@@ -51,15 +52,6 @@ type MeData = {
   birthDate: string | null;
   marketingOptIn: boolean;
   customer?: { id: string; addresses: AddressRow[] } | null;
-};
-
-const statusClass: Record<string, string> = {
-  PENDING: "bg-amber-100 text-amber-800",
-  PAID: "bg-sky-100 text-sky-800",
-  PROCESSING: "bg-indigo-100 text-indigo-800",
-  SHIPPED: "bg-violet-100 text-violet-800",
-  DELIVERED: "bg-emerald-100 text-emerald-800",
-  CANCELLED: "bg-rose-100 text-rose-800",
 };
 
 function priceFmt(cents: number, currency = "TRY") {
@@ -437,11 +429,9 @@ function OverviewTab({
                     {priceFmt(o.totalCents, o.currency)}
                   </p>
                   <span
-                    className={`mt-2 self-start rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                      statusClass[o.status] ?? "bg-slate-700 text-slate-200"
-                    }`}
+                    className={`mt-2 self-start rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${orderListStatusBadgeClass(o.status, o.returns)}`}
                   >
-                    {orderStatusLabelTr(o.status)}
+                    {orderListStatusLabel(o.status, o.returns)}
                   </span>
                   <Link
                     href={`/orders/${o.id}`}
@@ -481,11 +471,9 @@ function OrderSummaryCards({
           <div className="flex items-start justify-between gap-2">
             <p className="font-mono text-[11px] text-slate-500">#{o.id.slice(0, 8).toUpperCase()}</p>
             <span
-              className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
-                statusClass[o.status] ?? "bg-slate-100 text-slate-700"
-              }`}
+              className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${orderListStatusBadgeClass(o.status, o.returns)}`}
             >
-              {orderStatusLabelTr(o.status)}
+              {orderListStatusLabel(o.status, o.returns)}
             </span>
           </div>
           <p className="mt-3 text-xs text-slate-500">

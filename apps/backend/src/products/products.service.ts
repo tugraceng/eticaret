@@ -915,9 +915,22 @@ export class ProductsService {
 
   async remove(id: string) {
     await this.ensure(id);
-    const removed = await this.prisma.product.delete({ where: { id } });
-    this.invalidate();
-    return removed;
+    const orderLines = await this.prisma.orderItem.count({ where: { productId: id } });
+    if (orderLines > 0) {
+      throw new BadRequestException(
+        "Bu ürün geçmiş siparişlerde yer aldığı için silinemez. Yayından kaldırmayı deneyin.",
+      );
+    }
+    await this.prisma.cartItem.deleteMany({ where: { productId: id } });
+    try {
+      const removed = await this.prisma.product.delete({ where: { id } });
+      this.invalidate();
+      return removed;
+    } catch {
+      throw new BadRequestException(
+        "Ürün silinemedi. Bağlı kayıtlar olabilir; yayından kaldırmayı deneyin.",
+      );
+    }
   }
 
   async addImage(productId: string, url: string, alt?: string) {

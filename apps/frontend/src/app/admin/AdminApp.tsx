@@ -1058,7 +1058,9 @@ export function AdminApp({ initialTab = "overview" }: { initialTab?: Tab }) {
         await loadProducts();
       } catch (e) {
         if (!(e instanceof AdminSessionTerminated)) {
-          setError(e instanceof Error ? e.message : String(e));
+          const msg = e instanceof Error ? e.message : String(e);
+          setError(msg);
+          if (typeof window !== "undefined") window.alert(msg);
         }
       } finally {
         setBusy(false);

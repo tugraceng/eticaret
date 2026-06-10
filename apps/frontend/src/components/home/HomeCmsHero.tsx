@@ -4,11 +4,7 @@ import { useMemo } from "react";
 import { HomeHeroCarouselView } from "@/components/home/HomeHeroCarouselView";
 import { apiAssetUrl } from "@/lib/api";
 import type { HomeSection, SiteSettings } from "@/lib/settings";
-import {
-  defaultHeroSlides,
-  HERO_DEFAULT_BADGE,
-  parseHeroSlides,
-} from "@/components/home/homeHeroDefaults";
+import { defaultHeroSlides, parseHeroSlides } from "@/components/home/homeHeroDefaults";
 import { DEFAULT_HERO_IMAGE_DISPLAY } from "@/components/home/homeHeroImage";
 
 type Props = {
@@ -38,7 +34,6 @@ export function HomeCmsHero({ section, settings }: Props) {
           ctaLabel: section.ctaLabel?.trim() || "Hemen Teklif Al",
           secondaryHref: "/shop",
           secondaryLabel: "Ürünleri İncele",
-          badge: HERO_DEFAULT_BADGE,
           image: apiAssetUrl(section.mediaUrl) ?? "",
           ...DEFAULT_HERO_IMAGE_DISPLAY,
           imageFit: "cover" as const,
