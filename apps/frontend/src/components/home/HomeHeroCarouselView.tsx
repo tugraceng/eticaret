@@ -1,24 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { HomeHeroArrows } from "@/components/home/HomeHeroArrows";
-import { HomeHeroBackdrop } from "@/components/home/HomeHeroBackdrop";
-import { HomeHeroTitle } from "@/components/home/HomeHeroTitle";
-import type { HomeHeroSlide } from "@/components/home/homeHeroDefaults";
+import { HomeHeroSlideImage } from "@/components/home/HomeHeroSlideImage";
+import { HomeHeroTrustBadges } from "@/components/home/HomeHeroTrustBadges";
+import { HERO_DEFAULT_BADGE, type HomeHeroSlide } from "@/components/home/homeHeroDefaults";
 import {
-  heroCarouselContentClass,
-  heroCarouselFrameClass,
-  heroCarouselOuterClass,
-  heroCarouselSectionClass,
+  heroV2ContentClass,
+  heroV2InnerClass,
+  heroV2SectionClass,
+  heroV2VisualClass,
 } from "@/components/home/homeHeroLayout";
 
 const AUTO_MS = 5000;
 
-export function HomeHeroCarouselView({ slides }: { slides: HomeHeroSlide[] }) {
+type Props = {
+  slides: HomeHeroSlide[];
+  primaryColor?: string;
+};
+
+export function HomeHeroCarouselView({ slides, primaryColor }: Props) {
   const [index, setIndex] = useState(0);
-  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (!slides.length) return;
@@ -38,47 +41,46 @@ export function HomeHeroCarouselView({ slides }: { slides: HomeHeroSlide[] }) {
 
   const goPrev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
   const goNext = () => setIndex((i) => (i + 1) % slides.length);
-  const eyebrow = active.eyebrow?.trim();
-  const tagline = active.body?.trim();
+
+  const brandBtnStyle =
+    primaryColor?.trim() ?
+      ({ backgroundColor: primaryColor.trim(), borderColor: primaryColor.trim() } as const)
+    : undefined;
+
+  const eyebrow = active.eyebrow?.trim() || "3D Baskı Hizmetleri";
+  const badge = active.badge?.trim() || HERO_DEFAULT_BADGE;
+  const tagline =
+    active.body?.trim() ||
+    "Prototipten seri üretime; hızlı teslimat, premium filament ve güvenli ödeme ile projelerinizi hayata geçirin.";
 
   return (
-    <section className={heroCarouselSectionClass} aria-label="Ana vitrin">
-      <div className={heroCarouselOuterClass}>
-        <div className={heroCarouselFrameClass}>
-          <HomeHeroBackdrop slides={slides} index={index} />
+    <section className={heroV2SectionClass} aria-label="Ana vitrin">
+      <div className={heroV2InnerClass}>
+        {/* Görsel — mobilde üstte */}
+        <div className={heroV2VisualClass}>
+          <div className="absolute inset-0 bg-[#0e1218]" aria-hidden />
+          <div className="absolute inset-0" key={`${index}-${active.image}`}>
+            <HomeHeroSlideImage
+              src={active.image}
+              alt=""
+              priority={index === 0}
+              className="lg:object-[center_30%]"
+            />
+          </div>
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a0c10] via-[#0a0c10]/20 to-transparent lg:bg-gradient-to-l lg:from-[#0a0c10] lg:via-[#0a0c10]/30 lg:to-transparent"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_70%_40%,transparent_20%,rgba(8,10,14,0.45)_100%)]"
+            aria-hidden
+          />
 
           <HomeHeroArrows visible={slides.length > 1} onPrev={goPrev} onNext={goNext} />
 
-          <div className={heroCarouselContentClass}>
-            <motion.div
-              key={index}
-              className="pointer-events-auto"
-              initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
-            >
-              {eyebrow ? <p className="si-kicker mb-3">{eyebrow}</p> : null}
-
-              <h1 className="si-display max-w-[14ch] text-balance lg:max-w-[12ch]">
-                <HomeHeroTitle title={active.title} />
-              </h1>
-
-              {tagline ? <p className="si-hero-tagline mt-4 max-w-md">{tagline}</p> : null}
-
-              <div className="si-hero-cta mt-6 flex w-full max-w-sm flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-                <Link href={active.cta} className="si-btn-primary w-full sm:w-auto">
-                  {active.ctaLabel}
-                </Link>
-                <Link href={active.secondaryHref} className="si-btn-ghost w-full sm:w-auto">
-                  {active.secondaryLabel}
-                </Link>
-              </div>
-            </motion.div>
-          </div>
-
           {slides.length > 1 ? (
             <div
-              className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 sm:bottom-5"
+              className="pointer-events-auto absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 lg:bottom-5"
               role="tablist"
               aria-label="Hero slaytları"
             >
@@ -90,13 +92,44 @@ export function HomeHeroCarouselView({ slides }: { slides: HomeHeroSlide[] }) {
                   onClick={() => setIndex(i)}
                   aria-label={`Slayt ${i + 1}`}
                   aria-selected={i === index}
-                  className={`rounded-full transition-all duration-500 ${
-                    i === index ? "h-2 w-2 bg-white" : "h-2 w-2 bg-white/35 hover:bg-white/55"
+                  className={`rounded-full transition-all duration-300 ${
+                    i === index ? "h-2 w-6 bg-white" : "h-2 w-2 bg-white/40 hover:bg-white/60"
                   }`}
                 />
               ))}
             </div>
           ) : null}
+        </div>
+
+        {/* Metin — mobilde altta */}
+        <div className={heroV2ContentClass}>
+          <div className="si-hero-v2__copy mx-auto w-full max-w-xl lg:mx-0 lg:max-w-lg xl:max-w-xl">
+            <p className="si-hero-v2-badge inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold text-slate-200 backdrop-blur-sm sm:text-xs">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" aria-hidden />
+              {badge}
+            </p>
+
+            <p className="si-hero-v2-kicker mt-4">{eyebrow}</p>
+
+            <h1 className="si-hero-v2-title mt-2 text-balance">{active.title}</h1>
+
+            <p className="si-hero-v2-lead mt-3 max-w-md text-pretty sm:mt-4">{tagline}</p>
+
+            <div className="si-hero-v2-cta mt-5 flex w-full flex-col gap-2.5 sm:mt-6 sm:flex-row sm:gap-3">
+              <Link
+                href={active.cta}
+                className="si-hero-v2-btn-primary w-full sm:w-auto sm:min-w-[11rem]"
+                style={brandBtnStyle}
+              >
+                {active.ctaLabel}
+              </Link>
+              <Link href={active.secondaryHref} className="si-hero-v2-btn-outline w-full sm:w-auto sm:min-w-[11rem]">
+                {active.secondaryLabel}
+              </Link>
+            </div>
+
+            <HomeHeroTrustBadges />
+          </div>
         </div>
       </div>
     </section>
