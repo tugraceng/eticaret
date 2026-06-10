@@ -8,6 +8,7 @@ import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { ProductVariantRow } from "./ProductVariantRow";
 import { SeoFieldsForm } from "@/components/admin/SeoFieldsForm";
 import { AdminCard, Field, Icon } from "../ui";
+import { ProductSortPanel } from "./ProductSortPanel";
 import type { CategoryRow, ProductRow } from "../types";
 
 export function ProductsPanel({
@@ -247,7 +248,7 @@ export function ProductsPanel({
   const [catFilter, setCatFilter] = useState("");
   const [stockFilter, setStockFilter] = useState<"all" | "in" | "low" | "out">("all");
   const [pubFilter, setPubFilter] = useState<"all" | "published" | "draft">("all");
-  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+  const [viewMode, setViewMode] = useState<"table" | "cards" | "sort">("table");
   const [lowTh, setLowTh] = useState(5);
   const [stockModal, setStockModal] = useState<{ id: string; name: string } | null>(null);
   const [stockDelta, setStockDelta] = useState("");
@@ -806,9 +807,20 @@ export function ProductsPanel({
             >
               Kart
             </button>
+            <button
+              type="button"
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${viewMode === "sort" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}
+              onClick={() => setViewMode("sort")}
+            >
+              Sıralama
+            </button>
           </div>
         }
       >
+        {viewMode === "sort" ? (
+          <ProductSortPanel token={token} products={products} onReload={onProductsReload} />
+        ) : (
+        <>
         <div className="mb-4 flex flex-wrap gap-3">
           <input
             placeholder="Ürün veya slug ara…"
@@ -1066,6 +1078,8 @@ export function ProductsPanel({
               </div>
             ))}
           </div>
+        )}
+        </>
         )}
       </AdminCard>
 

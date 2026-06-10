@@ -32,7 +32,7 @@ type CartState = {
 };
 
 function totalQty(lines: LocalCartLine[]) {
-  return lines.reduce((s, l) => s + l.quantity, 0);
+  return lines.reduce((s, l) => s + Math.max(0, Math.floor(Number(l.quantity) || 0)), 0);
 }
 
 function subtotalCents(lines: LocalCartLine[]) {
@@ -54,8 +54,11 @@ export const useCartStore = create<CartState>((set, get) => ({
   toggleMiniCart: () => set((s) => ({ miniCartOpen: !s.miniCartOpen })),
 
   replaceLines: (lines) => {
-    writeLocalCartToStorage(lines);
-    set({ lines });
+    const normalized = lines
+      .map((l) => ({ ...l, quantity: Math.max(0, Math.floor(Number(l.quantity) || 0)) }))
+      .filter((l) => l.quantity > 0);
+    writeLocalCartToStorage(normalized);
+    set({ lines: normalized });
   },
 
   addLine: (line) => {

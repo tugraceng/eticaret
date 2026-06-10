@@ -82,6 +82,8 @@ export function ShopPageClient({
   onSaleOnly,
   featuredOnly,
   newOnly,
+  brand,
+  brands,
   page,
   view,
   hasActiveCatalogFilters,
@@ -102,6 +104,8 @@ export function ShopPageClient({
   onSaleOnly: boolean;
   featuredOnly: boolean;
   newOnly: boolean;
+  brand?: string;
+  brands: string[];
   page: number;
   view: "grid" | "list";
   hasActiveCatalogFilters: boolean;
@@ -158,6 +162,7 @@ export function ShopPageClient({
     onSaleOnly ? "1" : "0",
     featuredOnly ? "1" : "0",
     newOnly ? "1" : "0",
+    brand ?? "",
     view,
   ].join("|");
 
@@ -309,6 +314,21 @@ export function ShopPageClient({
                 ))}
               </select>
             </label>
+            {brands.length > 0 ? (
+              <select
+                name="brand"
+                defaultValue={brand ?? ""}
+                className="input-soft min-h-11 w-full !rounded-ds-lg"
+                aria-label="Marka filtresi"
+              >
+                <option value="">Tüm markalar</option>
+                {brands.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+            ) : null}
             <select
               name="minAvgRating"
               defaultValue={minAvgRating ?? ""}

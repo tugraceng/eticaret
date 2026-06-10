@@ -70,8 +70,13 @@ class TestProviderDto {
 }
 
 class StartIyzicoDto {
+  @IsOptional()
   @IsString()
-  orderId!: string;
+  orderId?: string;
+
+  @IsOptional()
+  @IsString()
+  draftId?: string;
 
   @IsOptional()
   @IsString()
@@ -153,6 +158,7 @@ export class PaymentsController {
       undefined;
     const result = await this.payments.startIyzicoCheckout({
       orderId: dto.orderId,
+      draftId: dto.draftId,
       origin,
       apiOrigin,
       buyer: {

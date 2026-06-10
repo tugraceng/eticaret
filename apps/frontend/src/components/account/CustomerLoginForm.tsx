@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AuthSplitShell, type AuthPagePanel } from "@/components/account/AuthSplitShell";
 import { GoogleAuthButton } from "@/components/account/GoogleAuthButton";
 import { mergeGuestCartIntoServerCart } from "@/lib/cart-sync";
+import { useCartStore } from "@/stores/cart-store";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import {
   clearCustomerSession,
@@ -93,7 +94,9 @@ export function CustomerLoginForm({
         if (!res.ok) throw new Error("Oturum doğrulanamadı");
         const me = (await res.json()) as { email: string };
         setCustomerSession(token, me.email);
-        await mergeGuestCartIntoServerCart();
+        const merged = await mergeGuestCartIntoServerCart();
+        if (merged) useCartStore.getState().replaceLines(merged);
+        else useCartStore.getState().hydrate();
         resetSiteOverlaysOnNavigation();
         router.replace(safeReturn);
       } catch (e) {
@@ -123,7 +126,9 @@ export function CustomerLoginForm({
       if (!res.ok) throw new Error(formatApiErrorPayload(text, res.status) || res.statusText);
       const data = JSON.parse(text) as { accessToken: string; user: { email: string } };
       setCustomerSession(data.accessToken, data.user.email);
-      await mergeGuestCartIntoServerCart();
+      const merged = await mergeGuestCartIntoServerCart();
+      if (merged) useCartStore.getState().replaceLines(merged);
+      else useCartStore.getState().hydrate();
       resetSiteOverlaysOnNavigation();
       router.replace(safeReturn);
     } catch (e) {

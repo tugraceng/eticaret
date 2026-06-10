@@ -169,6 +169,13 @@ export class SettingsService {
       contactNavLabel: string | null;
       contactNavHref: string | null;
       headerNav: unknown;
+      bankTransferEnabled: boolean;
+      bankTransferInstructions: string | null;
+      returnWindowDays: number;
+      homeCraftKicker: string;
+      homeCraftTitle: string;
+      homeCraftBody: string | null;
+      homeCraftImageUrl: string | null;
     }>,
   ) {
     const current = await this.getSettings();
@@ -308,5 +315,91 @@ export class SettingsService {
       return input as Record<string, unknown>;
     }
     return {};
+  }
+
+  listBankAccountsPublic() {
+    return this.prisma.bankAccount.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: {
+        id: true,
+        bankName: true,
+        accountHolder: true,
+        iban: true,
+        branch: true,
+        notes: true,
+      },
+    });
+  }
+
+  listBankAccountsAdmin() {
+    return this.prisma.bankAccount.findMany({
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+  }
+
+  createBankAccount(data: {
+    bankName: string;
+    accountHolder: string;
+    iban: string;
+    branch?: string | null;
+    notes?: string | null;
+    isActive?: boolean;
+    sortOrder?: number;
+  }) {
+    return this.prisma.bankAccount.create({
+      data: {
+        bankName: data.bankName.trim(),
+        accountHolder: data.accountHolder.trim(),
+        iban: data.iban.replace(/\s/g, "").toUpperCase(),
+        branch: data.branch?.trim() || null,
+        notes: data.notes?.trim() || null,
+        isActive: data.isActive ?? true,
+        sortOrder: data.sortOrder ?? 0,
+      },
+    });
+  }
+
+  async updateBankAccount(
+    id: string,
+    data: Partial<{
+      bankName: string;
+      accountHolder: string;
+      iban: string;
+      branch: string | null;
+      notes: string | null;
+      isActive: boolean;
+      sortOrder: number;
+    }>,
+  ) {
+    await this.prisma.bankAccount.findUniqueOrThrow({ where: { id } });
+    return this.prisma.bankAccount.update({
+      where: { id },
+      data: {
+        ...(data.bankName !== undefined ? { bankName: data.bankName.trim() } : {}),
+        ...(data.accountHolder !== undefined ? { accountHolder: data.accountHolder.trim() } : {}),
+        ...(data.iban !== undefined
+          ? { iban: data.iban.replace(/\s/g, "").toUpperCase() }
+          : {}),
+        ...(data.branch !== undefined ? { branch: data.branch?.trim() || null } : {}),
+        ...(data.notes !== undefined ? { notes: data.notes?.trim() || null } : {}),
+        ...(data.isActive !== undefined ? { isActive: data.isActive } : {}),
+        ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
+      },
+    });
+  }
+
+  async deleteBankAccount(id: string) {
+    await this.prisma.bankAccount.findUniqueOrThrow({ where: { id } });
+    return this.prisma.bankAccount.delete({ where: { id } });
+  }
+
+  async reorderBankAccounts(ids: string[]) {
+    await this.prisma.$transaction(
+      ids.map((id, idx) =>
+        this.prisma.bankAccount.update({ where: { id }, data: { sortOrder: idx } }),
+      ),
+    );
+    return this.listBankAccountsAdmin();
   }
 }

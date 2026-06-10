@@ -243,11 +243,26 @@ export class PaymentsService {
         sandbox: r?.sandbox ?? true,
       };
     };
-    return [
+    const settings = await this.prisma.siteSettings.findFirst();
+    const bankEnabled = settings?.bankTransferEnabled === true;
+    const activeBanks = bankEnabled
+      ? await this.prisma.bankAccount.count({ where: { isActive: true } })
+      : 0;
+    const providers: PublicProvider[] = [
       read("IYZICO", "iyzico", true),
       read("PAYTR", "PayTR", true),
       read("STRIPE", "Stripe", true),
     ];
+    if (bankEnabled && activeBanks > 0) {
+      providers.push({
+        id: "BANK_TRANSFER",
+        name: "Havale / EFT",
+        ready: true,
+        enabled: true,
+        sandbox: false,
+      });
+    }
+    return providers;
   }
 
   // ---------- iyzico ----------
@@ -391,7 +406,8 @@ export class PaymentsService {
    * Returns the hosted paymentPageUrl to redirect the customer to.
    */
   async startIyzicoCheckout(input: {
-    orderId: string;
+    orderId?: string;
+    draftId?: string;
     buyer?: {
       name?: string;
       surname?: string;
@@ -406,15 +422,77 @@ export class PaymentsService {
     origin?: string; // frontend origin (for return url fallback)
     apiOrigin?: string; // backend origin (for callback url fallback)
   }): Promise<{ paymentPageUrl: string; token: string; paymentId: string }> {
-    const order = await this.prisma.order.findUnique({
-      where: { id: input.orderId },
-      include: {
-        items: { include: { product: { include: { category: true } } } },
-      },
-    });
-    if (!order) throw new NotFoundException("Sipariş bulunamadı");
-    if (order.status !== "PENDING") throw new BadRequestException("Sipariş ödenmiş durumda");
-    if (!order.items.length) throw new BadRequestException("Sipariş kalemi yok");
+    if (!input.orderId && !input.draftId) {
+      throw new BadRequestException("orderId veya draftId gerekli");
+    }
+
+    let conversationId: string;
+    let basketId: string;
+    let totalCents: number;
+    let subtotalCents: number;
+    let currency = "TRY";
+    let buyerUserId: string | null = null;
+    let guestEmail: string | null = null;
+    let basketItems: Array<{
+      id: string;
+      name: string;
+      category1: string;
+      itemType: string;
+      price: string;
+    }>;
+    let checkoutDraftId: string | null = null;
+    let orderId: string | null = input.orderId ?? null;
+
+    if (input.draftId) {
+      const draft = await this.prisma.checkoutDraft.findUnique({ where: { id: input.draftId } });
+      if (!draft || draft.status !== "pending") {
+        throw new BadRequestException("Ödeme oturumu geçersiz");
+      }
+      if (draft.expiresAt < new Date()) {
+        throw new BadRequestException("Ödeme süresi doldu");
+      }
+      const preview = await this.orders.previewOrder(draft.payload as never);
+      conversationId = draft.id;
+      basketId = draft.id;
+      totalCents = preview.totalCents;
+      subtotalCents = preview.subtotalCents;
+      currency = preview.currency;
+      checkoutDraftId = draft.id;
+      const payload = draft.payload as { buyerUserId?: string; guestEmail?: string };
+      buyerUserId = payload.buyerUserId ?? null;
+      guestEmail = payload.guestEmail ?? null;
+      basketItems = preview.lines.map((it, idx) => ({
+        id: `draft-${idx}`,
+        name: it.titleSnapshot.slice(0, 120),
+        category1: it.categoryName || "Genel",
+        itemType: "PHYSICAL",
+        price: ((it.unitPriceCents * it.quantity) / 100).toFixed(2),
+      }));
+    } else {
+      const order = await this.prisma.order.findUnique({
+        where: { id: input.orderId! },
+        include: {
+          items: { include: { product: { include: { category: true } } } },
+        },
+      });
+      if (!order) throw new NotFoundException("Sipariş bulunamadı");
+      if (order.status !== "PENDING") throw new BadRequestException("Sipariş ödenmiş durumda");
+      if (!order.items.length) throw new BadRequestException("Sipariş kalemi yok");
+      conversationId = order.id;
+      basketId = order.id;
+      totalCents = order.totalCents;
+      subtotalCents = order.subtotalCents;
+      currency = order.currency || "TRY";
+      buyerUserId = order.buyerUserId;
+      guestEmail = order.guestEmail;
+      basketItems = order.items.map((it, idx) => ({
+        id: it.id || `item-${idx}`,
+        name: it.titleSnapshot.slice(0, 120),
+        category1: it.product?.category?.name || "Genel",
+        itemType: "PHYSICAL",
+        price: ((it.unitPriceCents * it.quantity) / 100).toFixed(2),
+      }));
+    }
 
     const { client, extra, sandbox } = await this.iyzicoClient();
 
@@ -422,26 +500,26 @@ export class PaymentsService {
       extra.callbackUrl?.trim() ||
       `${(input.apiOrigin ?? "http://localhost:4000").replace(/\/$/, "")}/api/payments/iyzico/callback`;
 
-    const email = input.buyer?.email || order.guestEmail || "customer@example.com";
+    const email = input.buyer?.email || guestEmail || "customer@example.com";
     const fullName = (input.buyer?.name || "").trim() || "Misafir Müşteri";
     const [firstName, ...rest] = fullName.split(/\s+/);
     const surname = (input.buyer?.surname || rest.join(" ") || "Müşteri").trim();
 
-    const price = (order.subtotalCents / 100).toFixed(2);
-    const paidPrice = (order.totalCents / 100).toFixed(2);
+    const price = (subtotalCents / 100).toFixed(2);
+    const paidPrice = (totalCents / 100).toFixed(2);
 
     const request: Record<string, unknown> = {
       locale: extra.locale ?? "tr",
-      conversationId: order.id,
+      conversationId,
       price,
       paidPrice,
-      currency: order.currency || "TRY",
-      basketId: order.id,
+      currency,
+      basketId,
       paymentGroup: "PRODUCT",
       callbackUrl,
       enabledInstallments: [1, 2, 3, 6, 9],
       buyer: {
-        id: order.buyerUserId || order.id,
+        id: buyerUserId || conversationId,
         name: firstName || "Müşteri",
         surname,
         gsmNumber: input.buyer?.phone || "+905555555555",
@@ -464,13 +542,7 @@ export class PaymentsService {
         country: input.buyer?.country || "Turkey",
         address: input.buyer?.address || "N/A",
       },
-      basketItems: order.items.map((it, idx) => ({
-        id: it.id || `item-${idx}`,
-        name: it.titleSnapshot.slice(0, 120),
-        category1: it.product?.category?.name || "Genel",
-        itemType: "PHYSICAL",
-        price: ((it.unitPriceCents * it.quantity) / 100).toFixed(2),
-      })),
+      basketItems,
     };
 
     const res = await promisify<any>(
@@ -491,11 +563,12 @@ export class PaymentsService {
 
     const payment = await this.prisma.payment.create({
       data: {
-        orderId: order.id,
+        orderId,
+        checkoutDraftId,
         provider: "IYZICO",
         externalId: token,
-        amountCents: order.totalCents,
-        currency: order.currency,
+        amountCents: totalCents,
+        currency,
         status: "initiated",
         rawResponse: res as Prisma.InputJsonValue,
       },
@@ -525,7 +598,7 @@ export class PaymentsService {
       where: { provider: "IYZICO", externalId: input.token },
       orderBy: { createdAt: "desc" },
     });
-    if (!existing || !existing.orderId) {
+    if (!existing || (!existing.orderId && !existing.checkoutDraftId)) {
       return {
         ok: false,
         orderId: null,
@@ -533,12 +606,14 @@ export class PaymentsService {
       };
     }
 
+    const conversationId = existing.orderId ?? existing.checkoutDraftId!;
+
     const { client, extra } = await this.iyzicoClient();
     let res: any;
     try {
       res = await promisify<any>(client.checkoutForm, client.checkoutForm.retrieve, {
         locale: extra.locale ?? "tr",
-        conversationId: existing.orderId,
+        conversationId,
         token: input.token,
       });
     } catch (e: any) {
@@ -558,39 +633,83 @@ export class PaymentsService {
     }
 
     const success = res?.status === "success" && res?.paymentStatus === "SUCCESS";
-    await this.prisma.$transaction(async (tx) => {
-      await tx.payment.update({
-        where: { id: existing.id },
-        data: {
-          status: success ? "succeeded" : (res?.paymentStatus?.toLowerCase() || "failed"),
-          rawResponse: res as Prisma.InputJsonValue,
-        },
-      });
-      if (success) {
-        await tx.order.update({
-          where: { id: existing.orderId! },
-          data: { status: "PAID" },
+    let resolvedOrderId = existing.orderId;
+
+    if (success && existing.checkoutDraftId && !existing.orderId) {
+      try {
+        const order = await this.orders.createFromDraft(existing.checkoutDraftId, { markPaid: true });
+        resolvedOrderId = order.id;
+        await this.prisma.payment.update({
+          where: { id: existing.id },
+          data: { orderId: order.id, status: "succeeded", rawResponse: res as Prisma.InputJsonValue },
         });
-        const order = await tx.order.findUnique({
-          where: { id: existing.orderId! },
-          select: { buyerUserId: true },
+        if (order.buyerUserId) {
+          const cart = await this.prisma.cart.findUnique({ where: { userId: order.buyerUserId } });
+          if (cart) await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+        }
+      } catch (e) {
+        this.logger.error(`createFromDraft failed: ${e instanceof Error ? e.message : e}`);
+        await this.prisma.payment.update({
+          where: { id: existing.id },
+          data: {
+            status: "error",
+            rawResponse: res as Prisma.InputJsonValue,
+          },
         });
-        if (order?.buyerUserId) {
-          const cart = await tx.cart.findUnique({ where: { userId: order.buyerUserId } });
-          if (cart) {
-            await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+        return {
+          ok: false,
+          orderId: null,
+          redirectUrl: this.buildReturnUrl(input.origin, null, "order_create_failed"),
+        };
+      }
+    } else {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+          where: { id: existing.id },
+          data: {
+            status: success ? "succeeded" : (res?.paymentStatus?.toLowerCase() || "failed"),
+            rawResponse: res as Prisma.InputJsonValue,
+          },
+        });
+        if (success && existing.orderId) {
+          await tx.order.update({
+            where: { id: existing.orderId },
+            data: { status: "PAID" },
+          });
+          const order = await tx.order.findUnique({
+            where: { id: existing.orderId },
+            select: { buyerUserId: true },
+          });
+          if (order?.buyerUserId) {
+            const cart = await tx.cart.findUnique({ where: { userId: order.buyerUserId } });
+            if (cart) {
+              await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+            }
+          }
+        } else if (!success) {
+          if (existing.checkoutDraftId) {
+            await tx.checkoutDraft.update({
+              where: { id: existing.checkoutDraftId },
+              data: { status: "failed" },
+            });
+          }
+          if (existing.orderId) {
+            await tx.order.update({
+              where: { id: existing.orderId },
+              data: { status: "CANCELLED" },
+            });
           }
         }
-      }
-    });
+      });
 
-    if (success && existing.orderId) {
-      try {
-        await this.orders.fulfillPaidOrder(existing.orderId);
-      } catch (e) {
-        this.logger.error(
-          `fulfillPaidOrder failed for ${existing.orderId}: ${e instanceof Error ? e.message : e}`,
-        );
+      if (success && existing.orderId) {
+        try {
+          await this.orders.fulfillPaidOrder(existing.orderId);
+        } catch (e) {
+          this.logger.error(
+            `fulfillPaidOrder failed for ${existing.orderId}: ${e instanceof Error ? e.message : e}`,
+          );
+        }
       }
     }
 
@@ -599,9 +718,13 @@ export class PaymentsService {
       "",
     );
     const url = success
-      ? `${frontend}/checkout/iyzico-return?orderId=${encodeURIComponent(existing.orderId!)}&status=success`
-      : `${frontend}/checkout/iyzico-return?orderId=${encodeURIComponent(existing.orderId!)}&status=failed&reason=${encodeURIComponent(res?.errorMessage || res?.paymentStatus || "failed")}`;
-    return { ok: success, orderId: existing.orderId, redirectUrl: url };
+      ? `${frontend}/checkout/iyzico-return?orderId=${encodeURIComponent(resolvedOrderId!)}&status=success`
+      : `${frontend}/checkout/iyzico-return?${new URLSearchParams({
+          status: "failed",
+          reason: res?.errorMessage || res?.paymentStatus || "failed",
+          ...(resolvedOrderId ? { orderId: resolvedOrderId } : {}),
+        }).toString()}`;
+    return { ok: success, orderId: resolvedOrderId, redirectUrl: url };
   }
 
   private buildReturnUrl(

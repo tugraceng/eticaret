@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import type { ShippingCarrier } from "@prisma/client";
 import { AppCacheService } from "../common/cache/app-cache.service";
 import { JobQueueService } from "../common/jobs/job-queue.service";
 import { DiscountsService } from "../discounts/discounts.service";
@@ -36,6 +37,26 @@ type CreateOrderInput = {
   saveAddress?: boolean;
   addressLabel?: string;
   discountCode?: string;
+  paymentMethod?: "CARD" | "BANK_TRANSFER";
+  initialStatus?: "PENDING" | "PAID";
+};
+
+export type OrderDraftPreview = {
+  subtotalCents: number;
+  shippingCents: number;
+  taxCents: number;
+  discountCents: number;
+  totalCents: number;
+  currency: string;
+  lines: {
+    productId: string;
+    productVariantId: string | null;
+    variantLabelSnapshot: string | null;
+    quantity: number;
+    unitPriceCents: number;
+    titleSnapshot: string;
+    categoryName: string | null;
+  }[];
 };
 
 @Injectable()
@@ -249,7 +270,8 @@ export class OrdersService {
           customerId,
           guestEmail: input.guestEmail,
           buyerUserId: input.buyerUserId,
-          status: "PENDING",
+          status: input.initialStatus ?? "PENDING",
+          paymentMethod: input.paymentMethod ?? "CARD",
           subtotalCents: subtotal,
           shippingCents,
           taxCents,
@@ -301,6 +323,167 @@ export class OrdersService {
       return order;
     });
     return order;
+  }
+
+  /** Kart ödemesi öncesi geçici taslak — sipariş henüz oluşturulmaz. */
+  async createCheckoutDraft(input: CreateOrderInput) {
+    await this.previewOrder(input);
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    return this.prisma.checkoutDraft.create({
+      data: {
+        payload: input as object,
+        expiresAt,
+      },
+      select: { id: true, expiresAt: true },
+    });
+  }
+
+  /** Taslaktan sipariş oluşturur (iyzico başarılı ödeme sonrası). */
+  async createFromDraft(draftId: string, opts?: { markPaid?: boolean }) {
+    const draft = await this.prisma.checkoutDraft.findUnique({ where: { id: draftId } });
+    if (!draft) throw new NotFoundException("Ödeme oturumu bulunamadı");
+    if (draft.status !== "pending") {
+      throw new BadRequestException("Bu ödeme oturumu artık geçerli değil");
+    }
+    if (draft.expiresAt < new Date()) {
+      await this.prisma.checkoutDraft.update({
+        where: { id: draftId },
+        data: { status: "expired" },
+      });
+      throw new BadRequestException("Ödeme süresi doldu. Lütfen tekrar deneyin.");
+    }
+    if (draft.orderId) {
+      const existing = await this.prisma.order.findUnique({ where: { id: draft.orderId } });
+      if (existing) return existing;
+    }
+    const input = draft.payload as CreateOrderInput;
+    const order = await this.create({
+      ...input,
+      paymentMethod: "CARD",
+      initialStatus: opts?.markPaid ? "PAID" : "PENDING",
+      saveAddress: input.saveAddress,
+    });
+    await this.prisma.checkoutDraft.update({
+      where: { id: draftId },
+      data: { status: "completed", orderId: order.id },
+    });
+    if (opts?.markPaid) {
+      await this.fulfillPaidOrder(order.id);
+    }
+    return order;
+  }
+
+  /** Havale/EFT ödeme onayı — stok bu aşamada düşer. */
+  async confirmBankPayment(orderId: string) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException();
+    if (order.paymentMethod !== "BANK_TRANSFER") {
+      throw new BadRequestException("Bu sipariş havale/EFT ile oluşturulmamış");
+    }
+    if (order.status !== "PENDING") {
+      throw new BadRequestException("Yalnızca ödeme bekleyen havale siparişleri onaylanabilir");
+    }
+    const updated = await this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: "PAID",
+        bankPaymentConfirmedAt: new Date(),
+      },
+    });
+    await this.fulfillPaidOrder(orderId);
+    return updated;
+  }
+
+  /** Taslak / sipariş öncesi sepet doğrulama ve tutar hesabı. */
+  async previewOrder(input: CreateOrderInput): Promise<OrderDraftPreview> {
+    if (!input.items?.length) throw new BadRequestException("Sepet boş");
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: input.items.map((i) => i.productId) }, isPublished: true },
+      include: { variants: { where: { isActive: true } }, category: true },
+    });
+    if (products.length !== input.items.length) {
+      throw new BadRequestException("Bazı ürünler artık mevcut değil");
+    }
+    let subtotal = 0;
+    const lines: OrderDraftPreview["lines"] = [];
+    for (const line of input.items) {
+      const p = products.find((x) => x.id === line.productId)!;
+      const hasVariants = p.variants.length > 0;
+      const variant = line.productVariantId
+        ? p.variants.find((v) => v.id === line.productVariantId)
+        : undefined;
+      if (line.productVariantId && !variant) {
+        throw new BadRequestException(`"${p.name}" için seçenek geçersiz veya kullanılamıyor`);
+      }
+      if (hasVariants && !variant) {
+        throw new BadRequestException(`"${p.name}" için bir seçenek seçmelisiniz`);
+      }
+      const unitPrice = variant ? (variant.priceCents ?? p.priceCents) : p.priceCents;
+      if (variant) {
+        if (variant.trackStock && variant.stock < line.quantity) {
+          throw new BadRequestException(`"${p.name}" (${variant.label}) için yeterli stok yok`);
+        }
+      } else if (p.trackStock && p.stock < line.quantity) {
+        throw new BadRequestException(`"${p.name}" için yeterli stok yok`);
+      }
+      subtotal += unitPrice * line.quantity;
+      lines.push({
+        productId: p.id,
+        productVariantId: variant?.id ?? null,
+        variantLabelSnapshot: variant?.label ?? null,
+        quantity: line.quantity,
+        unitPriceCents: unitPrice,
+        titleSnapshot: variant ? `${p.name} — ${variant.label}` : p.name,
+        categoryName: p.category?.name ?? null,
+      });
+    }
+    const settings = await this.prisma.siteSettings.findFirst();
+    const country = (input.shippingCountry ?? "TR").toUpperCase();
+    const cityNorm = input.shippingCity?.trim() || null;
+    const rate =
+      (cityNorm
+        ? await this.prisma.shippingRate.findFirst({
+            where: {
+              isActive: true,
+              country,
+              city: { equals: cityNorm, mode: "insensitive" },
+            },
+            orderBy: { sortOrder: "asc" },
+          })
+        : null) ??
+      (await this.prisma.shippingRate.findFirst({
+        where: { isActive: true, country, city: null },
+        orderBy: { sortOrder: "asc" },
+      }));
+    const rateFee = rate?.feeCents ?? settings?.shippingFeeCents ?? 0;
+    const rateFree = rate?.freeThresholdCents ?? settings?.freeShippingThresholdCents ?? 0;
+    const shippingCents =
+      rateFee > 0 && (rateFree === 0 || subtotal < rateFree) ? rateFee : 0;
+    let discountCents = 0;
+    if (input.discountCode?.trim()) {
+      const d = await this.discounts.validate(input.discountCode.trim(), subtotal);
+      discountCents = d.discountCents;
+    }
+    const taxBp = settings?.taxRateBp ?? 0;
+    const taxIncluded = settings?.taxIncluded ?? true;
+    const taxBase = Math.max(0, subtotal - discountCents);
+    const taxCents =
+      taxBp > 0
+        ? taxIncluded
+          ? Math.round((taxBase * taxBp) / (10000 + taxBp))
+          : Math.round((taxBase * taxBp) / 10000)
+        : 0;
+    const totalCents =
+      Math.max(0, subtotal - discountCents) + shippingCents + (taxIncluded ? 0 : taxCents);
+    return {
+      subtotalCents: subtotal,
+      shippingCents,
+      taxCents,
+      discountCents,
+      totalCents,
+      currency: "TRY",
+      lines,
+    };
   }
 
   /** Ödeme başarılı olduktan sonra stok düşür, kupon kullanımını artır, bildirimleri gönder. */
@@ -453,7 +636,13 @@ export class OrdersService {
 
   listMine(buyerUserId: string) {
     return this.prisma.order.findMany({
-      where: { buyerUserId, status: { not: "PENDING" } },
+      where: {
+        buyerUserId,
+        OR: [
+          { status: { not: "PENDING" } },
+          { paymentMethod: "BANK_TRANSFER", status: "PENDING" },
+        ],
+      },
       orderBy: { createdAt: "desc" },
       take: 50,
       select: {
@@ -585,9 +774,15 @@ export class OrdersService {
 
   listAdmin() {
     return this.prisma.order.findMany({
+      where: {
+        OR: [
+          { status: { not: "PENDING" } },
+          { paymentMethod: "BANK_TRANSFER" },
+        ],
+      },
       orderBy: { createdAt: "desc" },
-      include: { items: true },
-      take: 100,
+      include: { items: true, returns: { select: { id: true, status: true, createdAt: true } } },
+      take: 200,
     });
   }
 
@@ -678,8 +873,14 @@ export class OrdersService {
     if (!current) throw new NotFoundException();
     const updated = await this.prisma.order.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        ...(status === "DELIVERED" && !current.deliveredAt ? { deliveredAt: new Date() } : {}),
+      },
     });
+    if (status === "PAID" && current.status !== "PAID") {
+      await this.fulfillPaidOrder(id);
+    }
     if (status === "SHIPPED" && current.status !== "SHIPPED") {
       await this.sendShippedNotification(updated);
     }
@@ -709,12 +910,16 @@ export class OrdersService {
       shippingCity: string;
       shippingPostalCode: string | null;
       trackingNumber: string | null;
+      carrier: ShippingCarrier | null;
       notes: string | null;
     }>,
   ) {
     const before = await this.prisma.order.findUnique({ where: { id } });
     if (!before) throw new NotFoundException();
-    const after = await this.prisma.order.update({ where: { id }, data });
+    const after = await this.prisma.order.update({
+      where: { id },
+      data: data as Parameters<typeof this.prisma.order.update>[0]["data"],
+    });
     // Takip numarası güncellendiyse ve sipariş SHIPPED durumundaysa tekrar bildirim gönder.
     const trackingChanged =
       typeof data.trackingNumber === "string" &&
@@ -730,6 +935,7 @@ export class OrdersService {
     contactPhone: string | null;
     contactName: string | null;
     trackingNumber: string | null;
+    carrier?: string | null;
   }) {
     if (!order.contactPhone || !order.trackingNumber) return;
     const payload = {
@@ -737,6 +943,7 @@ export class OrdersService {
       customerPhone: order.contactPhone,
       customerName: order.contactName,
       trackingNumber: order.trackingNumber,
+      carrier: order.carrier ?? undefined,
     };
     // WhatsApp Cloud API — admin response'unu bekletmeden kuyruğa at.
     this.jobs.enqueue(TOPIC_ORDER_WHATSAPP, payload, {

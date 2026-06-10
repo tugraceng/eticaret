@@ -20,7 +20,9 @@ import {
   Min,
   MinLength,
   ValidateIf,
+  ValidateNested,
 } from "class-validator";
+import { Type } from "class-transformer";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { ProductsService } from "./products.service";
@@ -134,6 +136,25 @@ class ReorderProductImagesDto {
   @IsArray()
   @IsString({ each: true })
   ids!: string[];
+}
+
+class StockLimitLineDto {
+  @IsString()
+  lineKey!: string;
+
+  @IsString()
+  productId!: string;
+
+  @IsOptional()
+  @IsString()
+  productVariantId?: string;
+}
+
+class StockLimitsDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => StockLimitLineDto)
+  lines!: StockLimitLineDto[];
 }
 
 class CreateProductVariantDto {
@@ -346,6 +367,7 @@ export class ProductsController {
     @Query("onSale") onSale?: string,
     @Query("featured") featured?: string,
     @Query("newProduct") newProduct?: string,
+    @Query("brand") brand?: string,
   ) {
     const min = minPriceCents ? Number(minPriceCents) : undefined;
     const max = maxPriceCents ? Number(maxPriceCents) : undefined;
@@ -369,7 +391,18 @@ export class ProductsController {
       onSaleOnly: onSaleOnly || undefined,
       featuredOnly: featuredOnly || undefined,
       newOnly: newOnly || undefined,
+      brand: brand?.trim() || undefined,
     });
+  }
+
+  @Get("brands")
+  listBrands() {
+    return this.products.listBrands();
+  }
+
+  @Post("stock-limits")
+  stockLimits(@Body() dto: StockLimitsDto) {
+    return this.products.stockLimitsForLines(dto.lines ?? []);
   }
 
   @Get("bestsellers")
@@ -388,6 +421,12 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   listAdmin() {
     return this.products.listAdmin();
+  }
+
+  @Patch("admin/reorder")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  reorderProducts(@Body() dto: { items: Array<{ id: string; sortOrder?: number; featuredSortOrder?: number }> }) {
+    return this.products.reorderProducts(dto.items ?? []);
   }
 
   @Get("admin/stock-movements")

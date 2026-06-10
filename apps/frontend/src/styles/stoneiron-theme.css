@@ -953,6 +953,15 @@
   color: #7dd3fc;
 }
 
+.site-theme-stoneiron .si-checkout-summary {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+.site-theme-stoneiron .si-checkout-totals dd {
+  color: #e2e8f0;
+}
+
 .site-theme-stoneiron .si-account-page {
   background: var(--si-bg-deep);
   color: var(--si-text);

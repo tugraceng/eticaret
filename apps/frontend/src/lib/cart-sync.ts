@@ -151,7 +151,10 @@ export function readLocalCartFromStorage(): LocalCartLine[] {
 
 export function writeLocalCartToStorage(lines: LocalCartLine[]) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(lines));
+  const normalized = lines
+    .map((l) => normalizeStoredLine(l as unknown as Record<string, unknown>))
+    .filter((x): x is LocalCartLine => x != null);
+  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(normalized));
   window.dispatchEvent(new StorageEvent("storage", { key: CART_STORAGE_KEY }));
   notifyCartUpdated();
 }

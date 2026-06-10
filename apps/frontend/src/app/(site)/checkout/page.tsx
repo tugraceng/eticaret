@@ -27,11 +27,19 @@ const NEW_ADDRESS = "__new__";
 
 type Line = LocalCartLine;
 type Provider = {
-  id: "MOCK" | "IYZICO" | "PAYTR" | "STRIPE";
+  id: "MOCK" | "IYZICO" | "PAYTR" | "STRIPE" | "BANK_TRANSFER";
   name: string;
   enabled: boolean;
   ready: boolean;
   sandbox: boolean;
+};
+type BankAccount = {
+  id: string;
+  bankName: string;
+  accountHolder: string;
+  iban: string;
+  branch?: string | null;
+  notes?: string | null;
 };
 type MeAddress = {
   id: string;
@@ -129,6 +137,8 @@ function CheckoutInner() {
   // payment
   const [providers, setProviders] = useState<Provider[]>([]);
   const [paymentProvider, setPaymentProvider] = useState<Provider["id"]>("IYZICO");
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [bankInstructions, setBankInstructions] = useState<string | null>(null);
 
   // shipping & discount
   const [shippingSettings, setShippingSettings] = useState<ShippingSettings | null>(null);
@@ -257,16 +267,31 @@ function CheckoutInner() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(apiUrl("/payments/providers"));
-        if (!res.ok) return;
-        const list = ((await res.json()) as Provider[]).filter((p) => p.id !== "MOCK");
+        const [provRes, settingsRes, banksRes] = await Promise.all([
+          fetch(apiUrl("/payments/providers")),
+          fetch(apiUrl("/settings")),
+          fetch(apiUrl("/bank-accounts")),
+        ]);
         if (cancelled) return;
-        setProviders(list);
-        const firstReady =
-          list.find((p) => p.id === "IYZICO" && p.enabled && p.ready) ??
-          list.find((p) => p.enabled && p.ready) ??
-          list[0];
-        if (firstReady) setPaymentProvider(firstReady.id);
+        if (provRes.ok) {
+          const list = ((await provRes.json()) as Provider[]).filter((p) => p.id !== "MOCK");
+          setProviders(list);
+          const firstReady =
+            list.find((p) => p.id === "IYZICO" && p.enabled && p.ready) ??
+            list.find((p) => p.enabled && p.ready) ??
+            list[0];
+          if (firstReady) setPaymentProvider(firstReady.id);
+        }
+        if (settingsRes.ok) {
+          const s = (await settingsRes.json()) as {
+            bankTransferInstructions?: string | null;
+          };
+          setBankInstructions(s.bankTransferInstructions?.trim() || null);
+        }
+        if (banksRes.ok) {
+          const banks = (await banksRes.json()) as BankAccount[];
+          setBankAccounts(Array.isArray(banks) ? banks : []);
+        }
       } catch {
         // ignore
       }
@@ -484,34 +509,71 @@ function CheckoutInner() {
     const token = getCustomerToken();
     try {
       const contactName = `${name.trim()} ${surname.trim()}`.trim();
+      const orderBody = {
+        items: lines.map((l) => ({
+          productId: l.productId,
+          quantity: l.quantity,
+          ...(l.productVariantId ? { productVariantId: l.productVariantId } : {}),
+        })),
+        guestEmail: email.trim(),
+        contactName,
+        contactPhone: phone.trim(),
+        identityNumber: identityNumber.trim() || undefined,
+        shippingLine1: line1.trim(),
+        shippingLine2: line2.trim() || undefined,
+        shippingDistrict: district.trim(),
+        shippingCity: city.trim(),
+        shippingPostalCode: postalCode.trim() || undefined,
+        notes: notes.trim() || undefined,
+        kvkkAccepted: kvkk,
+        distanceSalesAccepted: mss,
+        saveAddress: saveAddress && loggedIn && isNewAddress,
+        addressLabel: isNewAddress ? addressLabel.trim() || undefined : undefined,
+        discountCode: applied?.code,
+        ...(paymentProvider === "BANK_TRANSFER" ? { paymentMethod: "BANK_TRANSFER" as const } : {}),
+      };
+
+      if (paymentProvider === "IYZICO") {
+        const draftRes = await fetch(apiUrl("/orders/checkout-draft"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(orderBody),
+        });
+        if (!draftRes.ok) throw new Error(await draftRes.text());
+        const { id: draftId } = (await draftRes.json()) as { id: string };
+        const payRes = await fetch(apiUrl("/payments/iyzico/start"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            draftId,
+            name,
+            surname,
+            email,
+            phone,
+            identityNumber: identityNumber.trim() || undefined,
+            address: `${line1} ${line2}`.trim(),
+            city,
+          }),
+        });
+        if (!payRes.ok) throw new Error(await payRes.text());
+        const { paymentPageUrl } = (await payRes.json()) as { paymentPageUrl: string };
+        window.location.href = paymentPageUrl;
+        return;
+      }
+
       const res = await fetch(apiUrl("/orders"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          items: lines.map((l) => ({
-            productId: l.productId,
-            quantity: l.quantity,
-            ...(l.productVariantId ? { productVariantId: l.productVariantId } : {}),
-          })),
-          guestEmail: email.trim(),
-          contactName,
-          contactPhone: phone.trim(),
-          identityNumber: identityNumber.trim() || undefined,
-          shippingLine1: line1.trim(),
-          shippingLine2: line2.trim() || undefined,
-          shippingDistrict: district.trim(),
-          shippingCity: city.trim(),
-          shippingPostalCode: postalCode.trim() || undefined,
-          notes: notes.trim() || undefined,
-          kvkkAccepted: kvkk,
-          distanceSalesAccepted: mss,
-          saveAddress: saveAddress && loggedIn && isNewAddress,
-          addressLabel: isNewAddress ? addressLabel.trim() || undefined : undefined,
-          discountCode: applied?.code,
-        }),
+        body: JSON.stringify(orderBody),
       });
       if (!res.ok) throw new Error(await res.text());
       const order = (await res.json()) as { id: string };
@@ -532,33 +594,9 @@ function CheckoutInner() {
         })),
       });
 
-      if (paymentProvider === "IYZICO") {
-        const payRes = await fetch(apiUrl("/payments/iyzico/start"), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            orderId: order.id,
-            name,
-            surname,
-            email,
-            phone,
-            identityNumber: identityNumber.trim() || undefined,
-            address: `${line1} ${line2}`.trim(),
-            city,
-          }),
-        });
-        if (!payRes.ok) throw new Error(await payRes.text());
-        const { paymentPageUrl } = (await payRes.json()) as { paymentPageUrl: string };
-        window.location.href = paymentPageUrl;
-        return;
-      }
-
       await clearCartCompletely();
       useCartStore.getState().replaceLines([]);
-      router.push(`/orders/${order.id}`);
+      router.push(`/orders/${order.id}?bank=1`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sipariş oluşturulamadı");
     } finally {
@@ -582,8 +620,8 @@ function CheckoutInner() {
   }
 
   return (
-    <div className="si-checkout-page grid gap-8 lg:grid-cols-[1fr_390px]">
-      <div className="space-y-6">
+    <div className="si-checkout-page grid w-full min-w-0 max-w-full gap-8 max-lg:grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,390px)]">
+      <div className="order-1 min-w-0 space-y-6">
         <div className="section-shell px-5 py-4">
           <CheckoutJumpNav />
         </div>
@@ -1117,7 +1155,9 @@ function CheckoutInner() {
                         <p className={`mt-1 text-xs ${selected ? "text-white/80" : "text-slate-500"}`}>
                           {p.id === "IYZICO"
                             ? "Kredi kartı / banka kartı ile güvenli ödeme (İyzico)"
-                            : p.name}
+                            : p.id === "BANK_TRANSFER"
+                              ? "Banka havalesi / EFT ile ödeme — onay sonrası sipariş işleme alınır"
+                              : p.name}
                         </p>
                       </div>
                     </label>
@@ -1125,13 +1165,35 @@ function CheckoutInner() {
                 })}
             </div>
 
+            {paymentProvider === "BANK_TRANSFER" && bankAccounts.length > 0 ? (
+              <div className="mt-5 space-y-3 rounded-2xl border border-sky-200/40 bg-sky-950/20 p-4 text-sm">
+                <p className="font-semibold text-slate-100">Banka hesapları</p>
+                {bankInstructions ? (
+                  <p className="text-xs leading-relaxed text-slate-400">{bankInstructions}</p>
+                ) : null}
+                {bankAccounts.map((b) => (
+                  <div key={b.id} className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs">
+                    <p className="font-semibold text-slate-100">{b.bankName}</p>
+                    <p className="mt-1 text-slate-300">{b.accountHolder}</p>
+                    <p className="mt-1 font-mono text-sky-300/90">{b.iban}</p>
+                    {b.branch ? <p className="mt-1 text-slate-500">Şube: {b.branch}</p> : null}
+                  </div>
+                ))}
+                <p className="text-[11px] text-slate-500">
+                  Açıklama kısmına sipariş numaranızı yazın. Ödeme onaylandıktan sonra siparişiniz hazırlanır.
+                </p>
+              </div>
+            ) : null}
+
             <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-xs text-slate-600">
               <p className="font-semibold text-slate-900">Siparişi onayla</p>
               <p className="mt-1">
-                Butona tıkladığınızda siparişiniz oluşturulur ve{" "}
+                Butona tıkladığınızda{" "}
                 {paymentProvider === "IYZICO"
-                  ? "İyzico güvenli ödeme sayfasına yönlendirilirsiniz; kart formu yalnızca o sayfada doldurulur."
-                  : "Sipariş özeti sayfasına yönlendirilirsiniz."}
+                  ? "ödeme sayfasına yönlendirilirsiniz; sipariş yalnızca ödeme başarılı olduğunda oluşturulur."
+                  : paymentProvider === "BANK_TRANSFER"
+                    ? "siparişiniz «Ödeme bekleniyor» durumunda oluşturulur ve banka bilgileri gösterilir."
+                    : "sipariş özeti sayfasına yönlendirilirsiniz."}
               </p>
               <p className="mt-2 text-[11px] text-slate-500">
                 Şüpheli bir yönlendirme görürseniz işlemi durdurup müşteri hizmetleriyle doğrulayın.
@@ -1170,7 +1232,9 @@ function CheckoutInner() {
                 ? "Gönderiliyor…"
                 : paymentProvider === "IYZICO"
                   ? "Güvenli ödemeye geç →"
-                  : "Siparişi tamamla →"}
+                  : paymentProvider === "BANK_TRANSFER"
+                    ? "Havale siparişi oluştur →"
+                    : "Siparişi tamamla →"}
             </button>
           </div>
           <p className="text-center text-[10px] leading-relaxed text-slate-500 sm:text-left">
@@ -1180,8 +1244,8 @@ function CheckoutInner() {
         </div>
       </div>
 
-      <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-        <div className="surface-soft p-6">
+      <aside className="order-2 min-w-0 w-full max-w-full space-y-6 lg:sticky lg:top-24 lg:self-start">
+        <div className="surface-soft si-checkout-summary w-full min-w-0 max-w-full overflow-hidden p-4 sm:p-6">
           <section className="si-checkout-about" aria-labelledby="checkout-about-heading">
             <h3 id="checkout-about-heading" className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
               Hakkımda
@@ -1220,10 +1284,10 @@ function CheckoutInner() {
               Sepeti düzenle
             </Link>
           </div>
-          <ul className="mt-4 max-h-[min(22rem,50vh)] space-y-3 overflow-auto pr-1">
+          <ul className="mt-4 max-h-[min(22rem,50vh)] space-y-3 overflow-y-auto overflow-x-hidden">
             {lines.map((l, idx) => (
-              <li key={l.lineKey} className="flex gap-2 text-xs">
-                <div className="flex shrink-0 flex-col gap-0.5 pt-0.5">
+              <li key={l.lineKey} className="flex min-w-0 gap-2 text-xs">
+                <div className="hidden shrink-0 flex-col gap-0.5 pt-0.5 sm:flex">
                   <button
                     type="button"
                     onClick={() => moveLine(idx, -1)}
@@ -1243,7 +1307,7 @@ function CheckoutInner() {
                     ↓
                   </button>
                 </div>
-                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:h-12 sm:w-12">
                   {l.imageUrl ? (
                     <ThumbImage src={l.imageUrl} alt="" size={48} />
                   ) : (
@@ -1253,56 +1317,60 @@ function CheckoutInner() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 font-medium leading-snug text-slate-800">{l.title}</p>
-                  <p className="mt-0.5 text-[11px] text-slate-500">
-                    <span className="rounded bg-slate-100 px-1 py-0.5 font-semibold text-slate-600">{l.quantity}×</span>{" "}
-                    {typeof l.priceCents === "number" ? priceFmt(l.priceCents) : "—"} birim
-                  </p>
+                  <p className="line-clamp-2 break-words font-medium leading-snug text-slate-800">{l.title}</p>
+                  <div className="mt-1 flex min-w-0 items-start justify-between gap-2">
+                    <p className="min-w-0 text-[11px] leading-snug text-slate-500">
+                      <span className="rounded bg-slate-100 px-1 py-0.5 font-semibold text-slate-600">{l.quantity}×</span>{" "}
+                      {typeof l.priceCents === "number" ? priceFmt(l.priceCents) : "—"} birim
+                    </p>
+                    <p className="shrink-0 whitespace-nowrap text-right font-medium tabular-nums text-slate-700">
+                      {priceFmt((l.priceCents ?? 0) * l.quantity)}
+                    </p>
+                  </div>
                 </div>
-                <p className="shrink-0 self-start font-medium text-slate-700">{priceFmt((l.priceCents ?? 0) * l.quantity)}</p>
               </li>
             ))}
           </ul>
-          <dl className="mt-4 space-y-1.5 border-t border-slate-100 pt-4 text-sm">
-            <div className="flex justify-between text-slate-600">
-              <dt>Ara toplam</dt>
-              <dd>{priceFmt(subtotal)}</dd>
+          <dl className="si-checkout-totals mt-4 space-y-1.5 border-t border-slate-100 pt-4 text-sm">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-slate-600">
+              <dt className="min-w-0">Ara toplam</dt>
+              <dd className="shrink-0 whitespace-nowrap text-right tabular-nums">{priceFmt(subtotal)}</dd>
             </div>
             {applied && (
-              <div className="flex justify-between text-emerald-700">
-                <dt>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-emerald-700">
+                <dt className="min-w-0 break-words">
                   İndirim{" "}
-                  <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase">
+                  <span className="ml-1 inline-block rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase">
                     {applied.code}
                   </span>
                 </dt>
-                <dd>− {priceFmt(applied.discountCents)}</dd>
+                <dd className="shrink-0 whitespace-nowrap text-right tabular-nums">− {priceFmt(applied.discountCents)}</dd>
               </div>
             )}
             {taxCents > 0 && (
-              <div className="flex justify-between text-slate-600">
-                <dt>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-slate-600">
+                <dt className="min-w-0">
                   KDV{taxBp > 0 ? ` (%${(taxBp / 100).toFixed(0)})` : ""}
                   {taxIncluded ? (
                     <span className="ml-1 text-[10px] text-slate-400">· dahil</span>
                   ) : null}
                 </dt>
-                <dd>{priceFmt(taxCents)}</dd>
+                <dd className="shrink-0 whitespace-nowrap text-right tabular-nums">{priceFmt(taxCents)}</dd>
               </div>
             )}
             {shippingSettings &&
               shippingSettings.freeShippingThresholdCents > 0 &&
               shippingCents > 0 && (
-                <p className="text-[11px] text-slate-500">
+                <p className="col-span-2 break-words text-[11px] leading-relaxed text-slate-500">
                   {priceFmt(
                     shippingSettings.freeShippingThresholdCents - (subtotal - (applied?.discountCents ?? 0)),
                   )}{" "}
                   daha eklerseniz kargo ücretsiz.
                 </p>
               )}
-            <div className="flex justify-between text-slate-600">
-              <dt>Kargo</dt>
-              <dd>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-slate-600">
+              <dt className="min-w-0">Kargo</dt>
+              <dd className="shrink-0 whitespace-nowrap text-right tabular-nums">
                 {shippingCents === 0 ? (
                   <span className="font-semibold text-emerald-700">Ücretsiz</span>
                 ) : (
@@ -1310,9 +1378,9 @@ function CheckoutInner() {
                 )}
               </dd>
             </div>
-            <div className="mt-2 flex justify-between border-t border-slate-100 pt-3 text-base font-semibold text-slate-900">
-              <dt>Toplam</dt>
-              <dd>{priceFmt(total)}</dd>
+            <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 border-t border-slate-100 pt-3 text-base font-semibold text-slate-900">
+              <dt className="min-w-0">Toplam</dt>
+              <dd className="shrink-0 whitespace-nowrap text-right tabular-nums">{priceFmt(total)}</dd>
             </div>
           </dl>
           {loggedIn ? (
@@ -1343,7 +1411,7 @@ export default function CheckoutPage() {
           description="Teslimat, sepet özeti ve ödeme tek sayfada. Kart bilgileri yalnızca ödeme kuruluşunun güvenli sayfasında işlenir."
         />
       </div>
-      <div className="mt-8">
+      <div className="mt-8 min-w-0 max-w-full overflow-x-hidden">
         <Suspense fallback={<p className="text-sm text-slate-600">Yükleniyor…</p>}>
           <CheckoutInner />
         </Suspense>

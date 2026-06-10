@@ -36,10 +36,23 @@ export class ReturnsService {
     if (input.userId && order.buyerUserId && order.buyerUserId !== input.userId) {
       throw new ForbiddenException();
     }
-    // Sadece tamamlanmış veya kargoya verilmiş siparişler iade edilebilir
-    if (!["PAID", "PROCESSING", "SHIPPED", "DELIVERED"].includes(order.status)) {
+    if (order.status !== "DELIVERED") {
       throw new BadRequestException(
-        "Bu durumdaki sipariş iade edilemez. Yalnızca ödenmiş/kargolanmış siparişler iade talebine açıktır.",
+        "İade talebi yalnızca teslim edilmiş siparişler için oluşturulabilir.",
+      );
+    }
+    if (!order.deliveredAt) {
+      throw new BadRequestException(
+        "Teslim tarihi kaydı bulunamadı. Lütfen müşteri hizmetleri ile iletişime geçin.",
+      );
+    }
+    const settings = await this.prisma.siteSettings.findFirst();
+    const windowDays = settings?.returnWindowDays ?? 14;
+    const deadline = new Date(order.deliveredAt);
+    deadline.setDate(deadline.getDate() + windowDays);
+    if (new Date() > deadline) {
+      throw new BadRequestException(
+        `İade süresi (${windowDays} gün) dolmuştur. Teslim: ${order.deliveredAt.toLocaleDateString("tr-TR")}`,
       );
     }
 

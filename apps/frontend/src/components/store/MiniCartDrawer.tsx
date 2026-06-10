@@ -6,6 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useCartStockLimits } from "@/hooks/useCartStockLimits";
+import { canIncreaseCartQty, capCartQuantity } from "@/lib/cart-stock";
 import { SITE_OVERLAY_RESET_EVENT } from "@/lib/reset-site-overlays";
 import { apiUrl } from "@/lib/api";
 import type { ProductCardData } from "@/components/site/ProductCard";
@@ -26,6 +28,7 @@ export function MiniCartDrawer() {
   const addLine = useCartStore((s) => s.addLine);
   const clearCart = useCartStore((s) => s.clearCart);
   const [confirmClear, setConfirmClear] = useState(false);
+  const stockLimits = useCartStockLimits(lines, open);
 
   const { data: settings } = useSiteSettingsQuery({ enabled: open });
   const threshold = settings?.freeShippingThresholdCents ?? 0;
@@ -55,6 +58,14 @@ export function MiniCartDrawer() {
     window.addEventListener(SITE_OVERLAY_RESET_EVENT, onReset);
     return () => window.removeEventListener(SITE_OVERLAY_RESET_EVENT, onReset);
   }, [close]);
+
+  useEffect(() => {
+    if (!open || stockLimits.size === 0) return;
+    for (const l of lines) {
+      const capped = capCartQuantity(l.lineKey, l.quantity, stockLimits);
+      if (capped !== l.quantity) setQty(l.lineKey, capped);
+    }
+  }, [open, lines, stockLimits, setQty]);
 
   useEffect(() => {
     if (!open) return;
@@ -176,7 +187,7 @@ export function MiniCartDrawer() {
                           <p className="line-clamp-2 text-small font-semibold">{l.title}</p>
                         )}
                         <p className="mt-1 text-micro text-[var(--ds-text-muted)]">{fmt(l.priceCents)}</p>
-                        <div className="mt-2 flex items-center gap-2">
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
                           <div className="inline-flex items-center rounded-full border border-[var(--ds-border)]">
                             <button
                               type="button"
@@ -189,13 +200,28 @@ export function MiniCartDrawer() {
                             <span className="w-8 text-center text-small font-semibold">{l.quantity}</span>
                             <button
                               type="button"
-                              className="grid h-9 w-9 place-items-center text-[var(--ds-text)] hover:bg-[var(--ds-surface-muted)]"
+                              disabled={!canIncreaseCartQty(l.lineKey, l.quantity, stockLimits)}
+                              className="grid h-9 w-9 place-items-center text-[var(--ds-text)] hover:bg-[var(--ds-surface-muted)] disabled:cursor-not-allowed disabled:opacity-40"
                               aria-label="Adet artır"
-                              onClick={() => setQty(l.lineKey, l.quantity + 1)}
+                              onClick={() =>
+                                setQty(
+                                  l.lineKey,
+                                  capCartQuantity(l.lineKey, l.quantity + 1, stockLimits),
+                                )
+                              }
                             >
                               +
                             </button>
                           </div>
+                          {(() => {
+                            const info = stockLimits.get(l.lineKey);
+                            if (info?.trackStock && info.maxQty != null && info.maxQty <= l.quantity) {
+                              return (
+                                <span className="text-micro text-amber-700">Stokta en fazla {info.maxQty} adet</span>
+                              );
+                            }
+                            return null;
+                          })()}
                           <button
                             type="button"
                             className="text-micro font-semibold text-[var(--ds-color-error)] hover:underline"
@@ -212,7 +238,7 @@ export function MiniCartDrawer() {
 
               {filteredRecs.length > 0 ? (
                 <section className="mt-8 border-t border-[var(--ds-border)] pt-6" aria-label="Önerilen ürünler">
-                  <p className="text-micro uppercase text-[var(--ds-text-muted)]">Bunları da beğendiniz</p>
+                  <p className="text-micro uppercase text-[var(--ds-text-muted)]">Bunları da Beğenebilirsiniz</p>
                   <ul className="mt-3 space-y-3">
                     {filteredRecs.map((p) => {
                       const img = p.images?.[0]?.url;

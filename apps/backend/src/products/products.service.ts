@@ -183,6 +183,7 @@ export class ProductsService {
     onSaleOnly?: boolean;
     featuredOnly?: boolean;
     newOnly?: boolean;
+    brand?: string;
   }) {
     const qTrimmed = input?.q?.trim();
     const categoryTrimmed = input?.categoryId?.trim();
@@ -267,6 +268,9 @@ export class ProductsService {
         : {}),
       ...(input?.featuredOnly ? { isFeatured: true } : {}),
       ...(input?.newOnly ? { isNew: true } : {}),
+      ...(input?.brand?.trim()
+        ? { brand: { equals: input.brand.trim(), mode: "insensitive" as const } }
+        : {}),
     };
 
     const sort = input?.sort ?? "newest";
@@ -337,12 +341,14 @@ export class ProductsService {
 
     const orderBy =
       sort === "price_asc"
-        ? ({ priceCents: "asc" } as const)
+        ? [{ sortOrder: "asc" as const }, { priceCents: "asc" as const }]
         : sort === "price_desc"
-          ? ({ priceCents: "desc" } as const)
+          ? [{ sortOrder: "asc" as const }, { priceCents: "desc" as const }]
           : sort === "popular"
-            ? ({ reviews: { _count: "desc" } } as const)
-            : ({ updatedAt: "desc" } as const);
+            ? [{ sortOrder: "asc" as const }, { reviews: { _count: "desc" as const } }]
+            : input?.featuredOnly
+              ? [{ featuredSortOrder: "asc" as const }, { updatedAt: "desc" as const }]
+              : [{ sortOrder: "asc" as const }, { updatedAt: "desc" as const }];
 
     const [total, products] = await this.prisma.$transaction([
       this.prisma.product.count({ where }),
@@ -429,9 +435,39 @@ export class ProductsService {
     });
   }
 
+  async listBrands() {
+    const rows = await this.prisma.product.findMany({
+      where: { isPublished: true, brand: { not: null } },
+      distinct: ["brand"],
+      select: { brand: true },
+      orderBy: { brand: "asc" },
+    });
+    return rows.map((r) => r.brand).filter((b): b is string => Boolean(b?.trim()));
+  }
+
+  async reorderProducts(
+    items: Array<{ id: string; sortOrder?: number; featuredSortOrder?: number }>,
+  ) {
+    await this.prisma.$transaction(
+      items.map((item) =>
+        this.prisma.product.update({
+          where: { id: item.id },
+          data: {
+            ...(typeof item.sortOrder === "number" ? { sortOrder: item.sortOrder } : {}),
+            ...(typeof item.featuredSortOrder === "number"
+              ? { featuredSortOrder: item.featuredSortOrder }
+              : {}),
+          },
+        }),
+      ),
+    );
+    this.cache.delPrefix("products:");
+    return this.listAdmin();
+  }
+
   async listAdmin() {
     return this.prisma.product.findMany({
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
       include: {
         images: { orderBy: { sortOrder: "asc" } },
         category: true,
@@ -605,6 +641,62 @@ export class ProductsService {
     });
     this.invalidate();
     return result;
+  }
+
+  /** Sepet satırları için stok üst sınırı (lineKey → maxQty). */
+  async stockLimitsForLines(
+    lines: Array<{ lineKey: string; productId: string; productVariantId?: string | null }>,
+  ) {
+    if (!lines.length) return [];
+    const productIds = [...new Set(lines.map((l) => l.productId))];
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds }, isPublished: true },
+      include: { variants: { where: { isActive: true } } },
+    });
+    const byId = new Map(products.map((p) => [p.id, p]));
+    return lines.map((line) => {
+      const p = byId.get(line.productId);
+      if (!p) {
+        return {
+          lineKey: line.lineKey,
+          trackStock: true,
+          maxQty: 0,
+          hasVariants: false,
+          requiresVariant: false,
+        };
+      }
+      const hasVariants = p.variants.length > 0;
+      const variant = line.productVariantId
+        ? p.variants.find((v) => v.id === line.productVariantId)
+        : undefined;
+      if (hasVariants && !variant) {
+        return {
+          lineKey: line.lineKey,
+          trackStock: true,
+          maxQty: 0,
+          hasVariants: true,
+          requiresVariant: true,
+        };
+      }
+      if (variant) {
+        const track = variant.trackStock;
+        return {
+          lineKey: line.lineKey,
+          trackStock: track,
+          maxQty: track ? Math.max(0, variant.stock) : null,
+          hasVariants: true,
+          requiresVariant: false,
+        };
+      }
+      const track = p.trackStock;
+      return {
+        lineKey: line.lineKey,
+        trackStock: track,
+        maxQty: track ? Math.max(0, p.stock) : null,
+        hasVariants: false,
+        requiresVariant: false,
+      };
+    });
   }
 
   async listByIds(ids: string[]) {

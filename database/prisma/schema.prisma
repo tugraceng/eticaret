@@ -30,6 +30,22 @@ enum PaymentProvider {
   IYZICO
   PAYTR
   STRIPE
+  BANK_TRANSFER
+}
+
+enum OrderPaymentMethod {
+  CARD
+  BANK_TRANSFER
+}
+
+enum ShippingCarrier {
+  YURTICI
+  ARAS
+  MNG
+  SURAT
+  PTT
+  HEPSIJET
+  OTHER
 }
 
 enum DiscountKind {
@@ -247,7 +263,45 @@ model SiteSettings {
   contactNavHref  String?
   /// JSON: { "beforeCategories": [{ "label", "href", "muted?" }], "afterCategories": [...] }. Boşsa varsayılan üst menü kullanılır; iletişim satırı her zaman sonda (contactNav*).
   headerNav       Json?
+  /// Havale/EFT ödeme yöntemi
+  bankTransferEnabled      Boolean @default(false)
+  bankTransferInstructions String? @db.Text
+  /// İade süresi (teslimden sonra gün)
+  returnWindowDays         Int     @default(14)
+  /// Ana sayfa «Dijital zanaat» / hizmetler bloğu
+  homeCraftKicker          String  @default("Üretim kalitesi")
+  homeCraftTitle           String  @default("Dijital zanaat")
+  homeCraftBody            String? @db.Text
+  homeCraftImageUrl        String?
   updatedAt        DateTime @updatedAt
+}
+
+model BankAccount {
+  id            String   @id @default(cuid())
+  bankName      String
+  accountHolder String
+  iban          String
+  branch        String?
+  sortOrder     Int      @default(0)
+  isActive      Boolean  @default(true)
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+/// Kart ödemesi öncesi geçici checkout verisi — sipariş yalnızca ödeme başarılı olunca oluşur.
+model CheckoutDraft {
+  id        String    @id @default(cuid())
+  payload   Json
+  status    String    @default("pending")
+  orderId   String?   @unique
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  payments  Payment[]
+
+  @@index([status, expiresAt])
 }
 
 model ShippingRate {
@@ -326,6 +380,12 @@ model Product {
   showPublicStockCount Boolean  @default(true)
   isFeatured     Boolean        @default(false)
   isNew          Boolean        @default(false)
+  /// Marka filtresi
+  brand          String?
+  /// Mağaza listesi manuel sıra
+  sortOrder      Int            @default(0)
+  /// Öne çıkan ürünler vitrin sırası
+  featuredSortOrder Int         @default(0)
   /// Mağaza / vitrin ürün linkine tıklama (admin)
   linkClickCount Int            @default(0)
   createdAt      DateTime       @default(now())
@@ -347,6 +407,9 @@ model Product {
   @@index([isPublished, priceCents])
   @@index([categoryId, isPublished, updatedAt])
   @@index([linkClickCount])
+  @@index([brand])
+  @@index([isPublished, sortOrder])
+  @@index([isFeatured, featuredSortOrder])
 }
 
 /// Ürün seçenekleri (renk/beden vb.). priceCents null ise ürün fiyatı kullanılır.
@@ -454,12 +517,16 @@ model Order {
   guestEmail     String?
   buyerUserId    String?
   status         OrderStatus @default(PENDING)
+  paymentMethod  OrderPaymentMethod @default(CARD)
   subtotalCents  Int
   taxCents       Int         @default(0)
   shippingCents  Int         @default(0)
   totalCents     Int
   currency       String      @default("TRY")
   trackingNumber String?
+  carrier        ShippingCarrier?
+  deliveredAt    DateTime?
+  bankPaymentConfirmedAt DateTime?
 
   // Teslimat / iletişim (checkout sırasında alınır)
   contactName       String?
@@ -650,18 +717,21 @@ model AnalyticsEvent {
 }
 
 model Payment {
-  id          String          @id @default(cuid())
-  orderId     String?
-  provider    PaymentProvider @default(MOCK)
-  externalId  String?
-  amountCents Int
-  currency    String          @default("TRY")
-  status      String
-  rawResponse Json?
-  createdAt   DateTime        @default(now())
-  order       Order?          @relation(fields: [orderId], references: [id])
+  id              String          @id @default(cuid())
+  orderId         String?
+  checkoutDraftId String?
+  provider        PaymentProvider @default(MOCK)
+  externalId      String?
+  amountCents     Int
+  currency        String          @default("TRY")
+  status          String
+  rawResponse     Json?
+  createdAt       DateTime        @default(now())
+  order           Order?          @relation(fields: [orderId], references: [id])
+  checkoutDraft   CheckoutDraft?  @relation(fields: [checkoutDraftId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
+  @@index([checkoutDraftId])
 }
 
 model DiscountCode {

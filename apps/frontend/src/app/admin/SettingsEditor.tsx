@@ -116,6 +116,13 @@ type Settings = {
   contactNavLabel?: string | null;
   contactNavHref?: string | null;
   headerNav?: unknown;
+  bankTransferEnabled?: boolean;
+  bankTransferInstructions?: string | null;
+  returnWindowDays?: number;
+  homeCraftKicker?: string;
+  homeCraftTitle?: string;
+  homeCraftBody?: string | null;
+  homeCraftImageUrl?: string | null;
 };
 
 type SmsOutboundLogRow = {
@@ -369,6 +376,13 @@ export function SettingsEditor({ token }: { token: string }) {
   const [authPanelGradientFrom, setAuthPanelGradientFrom] = useState("#334155");
   const [authPanelGradientTo, setAuthPanelGradientTo] = useState("#020617");
   const [authPanelTextColor, setAuthPanelTextColor] = useState("#ffffff");
+  const [bankTransferEnabled, setBankTransferEnabled] = useState(false);
+  const [bankTransferInstructions, setBankTransferInstructions] = useState("");
+  const [returnWindowDays, setReturnWindowDays] = useState(14);
+  const [homeCraftKicker, setHomeCraftKicker] = useState("Üretim kalitesi");
+  const [homeCraftTitle, setHomeCraftTitle] = useState("Dijital zanaat");
+  const [homeCraftBody, setHomeCraftBody] = useState("");
+  const [homeCraftImageUrl, setHomeCraftImageUrl] = useState("");
   const [shopRailLeftEnabled, setShopRailLeftEnabled] = useState(false);
   const [shopRailLeftTitle, setShopRailLeftTitle] = useState("");
   const [shopRailLeftBody, setShopRailLeftBody] = useState("");
@@ -556,6 +570,15 @@ export function SettingsEditor({ token }: { token: string }) {
       setAuthPanelGradientFrom(s.authPanelGradientFrom ?? "#334155");
       setAuthPanelGradientTo(s.authPanelGradientTo ?? "#020617");
       setAuthPanelTextColor(s.authPanelTextColor ?? "#ffffff");
+      setBankTransferEnabled(Boolean(s.bankTransferEnabled));
+      setBankTransferInstructions(s.bankTransferInstructions ?? "");
+      setReturnWindowDays(
+        typeof s.returnWindowDays === "number" && s.returnWindowDays > 0 ? s.returnWindowDays : 14,
+      );
+      setHomeCraftKicker(s.homeCraftKicker ?? "Üretim kalitesi");
+      setHomeCraftTitle(s.homeCraftTitle ?? "Dijital zanaat");
+      setHomeCraftBody(s.homeCraftBody ?? "");
+      setHomeCraftImageUrl(s.homeCraftImageUrl ?? "");
     } catch (e) {
       const msg = formatAdminCaughtError(e, "İşlem başarısız");
       if (msg) setError(msg);
@@ -695,6 +718,13 @@ export function SettingsEditor({ token }: { token: string }) {
         authPanelGradientFrom: authPanelGradientFrom.trim() || "#334155",
         authPanelGradientTo: authPanelGradientTo.trim() || "#020617",
         authPanelTextColor: authPanelTextColor.trim() || "#ffffff",
+        bankTransferEnabled,
+        bankTransferInstructions: bankTransferInstructions.trim() || null,
+        returnWindowDays: Math.min(90, Math.max(1, Math.floor(Number(returnWindowDays) || 14))),
+        homeCraftKicker: homeCraftKicker.trim() || "Üretim kalitesi",
+        homeCraftTitle: homeCraftTitle.trim() || "Dijital zanaat",
+        homeCraftBody: homeCraftBody.trim() || null,
+        homeCraftImageUrl: homeCraftImageUrl.trim() || null,
         headerNav: {
           beforeCategories: headerNavBefore.filter((r) => r.label.trim() && r.href.trim()),
           afterCategories: headerNavAfter.filter((r) => r.label.trim() && r.href.trim()),
@@ -799,6 +829,13 @@ export function SettingsEditor({ token }: { token: string }) {
     authPanelGradientFrom,
     authPanelGradientTo,
     authPanelTextColor,
+    bankTransferEnabled,
+    bankTransferInstructions,
+    returnWindowDays,
+    homeCraftKicker,
+    homeCraftTitle,
+    homeCraftBody,
+    homeCraftImageUrl,
     headerNavBefore,
     headerNavAfter,
     token,
@@ -1027,6 +1064,30 @@ export function SettingsEditor({ token }: { token: string }) {
       </AdminCard>
 
       <AdminCard
+        title="Havale / EFT"
+        description="Checkout’ta havale ödeme seçeneği ve müşteriye gösterilecek talimat metni. Banka hesapları Ödemeler sekmesinden yönetilir."
+      >
+        <label className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={bankTransferEnabled}
+            onChange={(e) => setBankTransferEnabled(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300"
+          />
+          <span className="font-semibold text-slate-900">Havale / EFT ödemesi etkin</span>
+        </label>
+        <Field label="Talimat metni (checkout)" className="mt-4">
+          <textarea
+            rows={4}
+            className="input-soft resize-y"
+            value={bankTransferInstructions}
+            onChange={(e) => setBankTransferInstructions(e.target.value)}
+            placeholder="Ödeme açıklamasına sipariş numaranızı yazın. Onay sonrası siparişiniz işleme alınır."
+          />
+        </Field>
+      </AdminCard>
+
+      <AdminCard
         title="KDV ve Stok"
         description="KDV oranı, KDV dahil/hariç davranışı ve stok uyarı eşiği."
       >
@@ -1063,6 +1124,17 @@ export function SettingsEditor({ token }: { token: string }) {
               className="input-soft"
               value={lowStockThreshold}
               onChange={(e) => setLowStockThreshold(Number(e.target.value))}
+            />
+          </Field>
+          <Field label="İade süresi (gün)" hint="Teslimden sonra iade talebi açılabilecek gün sayısı (1–90).">
+            <input
+              type="number"
+              min={1}
+              max={90}
+              step="1"
+              className="input-soft"
+              value={returnWindowDays}
+              onChange={(e) => setReturnWindowDays(Number(e.target.value))}
             />
           </Field>
         </div>
@@ -1568,6 +1640,45 @@ export function SettingsEditor({ token }: { token: string }) {
             </div>
           </div>
         </div>
+      </AdminCard>
+
+      <AdminCard
+        title="Ana sayfa — hizmetler / üretim bloğu"
+        description="Ana sayfadaki «Üretim kalitesi» bölümünün başlık, metin ve görseli."
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="Etiket (kicker)">
+            <input
+              className="input-soft"
+              value={homeCraftKicker}
+              onChange={(e) => setHomeCraftKicker(e.target.value)}
+              placeholder="Üretim kalitesi"
+            />
+          </Field>
+          <Field label="Başlık">
+            <input
+              className="input-soft"
+              value={homeCraftTitle}
+              onChange={(e) => setHomeCraftTitle(e.target.value)}
+              placeholder="Dijital zanaat"
+            />
+          </Field>
+        </div>
+        <Field label="Açıklama metni" className="mt-3">
+          <textarea
+            rows={4}
+            className="input-soft resize-y"
+            value={homeCraftBody}
+            onChange={(e) => setHomeCraftBody(e.target.value)}
+            placeholder="FDM ve SLA süreçlerinde katman katman kontrol…"
+          />
+        </Field>
+        <AdminImageUpload
+          token={token}
+          label="Görsel (isteğe bağlı)"
+          value={homeCraftImageUrl}
+          onChange={setHomeCraftImageUrl}
+        />
       </AdminCard>
 
       <AdminCard

@@ -1,9 +1,10 @@
 "use client";
 
-type PaymentProviderId = "MOCK" | "IYZICO" | "PAYTR" | "STRIPE";
+type PaymentProviderId = "MOCK" | "IYZICO" | "PAYTR" | "STRIPE" | "BANK_TRANSFER";
 
 export function CheckoutPaymentTrustPanel({ paymentProvider }: { paymentProvider: PaymentProviderId }) {
   const isIyzico = paymentProvider === "IYZICO";
+  const isBank = paymentProvider === "BANK_TRANSFER";
   return (
     <div className="mb-6 space-y-4">
       <div className="flex flex-col gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/90 px-4 py-4 sm:flex-row sm:items-start sm:gap-5">
@@ -33,6 +34,11 @@ export function CheckoutPaymentTrustPanel({ paymentProvider }: { paymentProvider
             <p className="mt-2 text-xs font-medium text-emerald-900/90">
               İyzico üzerinden ödeme: bankanız 3D Secure veya ek doğrulama isteyebilir — bu, hesabınızı
               koruyan normal bir adımdır.
+            </p>
+          ) : null}
+          {isBank ? (
+            <p className="mt-2 text-xs font-medium text-emerald-900/90">
+              Havale/EFT ile ödeme: sipariş onaylandıktan sonra stok düşülür ve hazırlık başlar.
             </p>
           ) : null}
         </div>

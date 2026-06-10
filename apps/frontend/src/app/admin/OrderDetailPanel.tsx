@@ -13,6 +13,8 @@ type OrderDetail = {
   totalCents: number;
   currency: string;
   trackingNumber: string | null;
+  carrier?: string | null;
+  paymentMethod?: string;
   createdAt: string;
   contactName: string;
   contactPhone: string;
@@ -63,6 +65,7 @@ export function OrderDetailPanel({
   const [city, setCity] = useState("");
   const [postal, setPostal] = useState("");
   const [tracking, setTracking] = useState("");
+  const [carrier, setCarrier] = useState("");
   const [notes, setNotes] = useState("");
 
   const load = useCallback(async () => {
@@ -78,6 +81,7 @@ export function OrderDetailPanel({
       setCity(d.shippingCity ?? "");
       setPostal(d.shippingPostalCode ?? "");
       setTracking(d.trackingNumber ?? "");
+      setCarrier(d.carrier ?? "");
       setNotes(d.notes ?? "");
     } catch (e) {
       const msg = formatAdminCaughtError(e, "Yüklenemedi");
@@ -105,6 +109,7 @@ export function OrderDetailPanel({
           shippingCity: city,
           shippingPostalCode: postal,
           trackingNumber: tracking,
+          carrier: carrier || null,
           notes,
         }),
       });
@@ -156,6 +161,10 @@ export function OrderDetailPanel({
           ) : (
             <div className="space-y-6">
               <section className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-sm sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Sipariş ID</p>
+                  <p className="mt-1 break-all font-mono text-xs text-slate-800">{data.id}</p>
+                </div>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Alıcı</p>
                   <p className="mt-1 font-semibold text-slate-900">
@@ -175,6 +184,29 @@ export function OrderDetailPanel({
                     Kargo: {priceFmt(data.shippingCents, data.currency)} · İndirim:{" "}
                     {priceFmt(data.discountCents, data.currency)}
                   </p>
+                  {data.paymentMethod === "BANK_TRANSFER" && data.status === "PENDING" ? (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void (async () => {
+                        setBusy(true);
+                        try {
+                          await adminFetch(`/orders/admin/${orderId}/confirm-bank-payment`, token, {
+                            method: "POST",
+                          });
+                          await load();
+                          onUpdated?.();
+                        } catch (e) {
+                          setError(formatAdminCaughtError(e, "Havale onayı başarısız") ?? "Havale onayı başarısız");
+                        } finally {
+                          setBusy(false);
+                        }
+                      })()}
+                      className="mt-2 rounded-full bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
+                    >
+                      Havale ödemesini onayla
+                    </button>
+                  ) : null}
                 </div>
               </section>
 
@@ -268,6 +300,23 @@ export function OrderDetailPanel({
 
               <section className="space-y-3">
                 <h4 className="text-sm font-semibold text-slate-900">Kargo</h4>
+                <label className="block text-xs">
+                  <span className="font-semibold text-slate-600">Kargo firması</span>
+                  <select
+                    className="input-soft mt-1"
+                    value={carrier}
+                    onChange={(e) => setCarrier(e.target.value)}
+                  >
+                    <option value="">Seçin</option>
+                    <option value="YURTICI">Yurtiçi Kargo</option>
+                    <option value="ARAS">Aras Kargo</option>
+                    <option value="MNG">MNG Kargo</option>
+                    <option value="SURAT">Sürat Kargo</option>
+                    <option value="PTT">PTT Kargo</option>
+                    <option value="HEPSIJET">Hepsijet</option>
+                    <option value="OTHER">Diğer</option>
+                  </select>
+                </label>
                 <label className="block text-xs">
                   <span className="font-semibold text-slate-600">Kargo takip numarası</span>
                   <input

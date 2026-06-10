@@ -21,6 +21,8 @@ export type ProductRow = {
   isPublished: boolean;
   isFeatured?: boolean;
   isNew?: boolean;
+  sortOrder?: number;
+  featuredSortOrder?: number;
   linkClickCount?: number;
   categoryId?: string | null;
   category?: { id: string; name: string; slug: string } | null;

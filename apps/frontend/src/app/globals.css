@@ -119,6 +119,17 @@
     @apply rounded-3xl border border-slate-200/80 bg-white/85 shadow-[0_10px_35px_-22px_rgba(15,23,42,0.22)] backdrop-blur;
   }
 
+  .si-checkout-summary {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .si-checkout-totals dd {
+    text-align: right;
+  }
+
   .section-shell {
     @apply relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-[0_20px_45px_-30px_rgba(15,23,42,0.25)] sm:p-6;
   }
@@ -143,7 +154,7 @@
 
   /* Auth — giriş / kayıt */
   .auth-page-root {
-    @apply -mx-4 min-h-0 bg-slate-50/80 py-4 sm:-mx-6 sm:py-6 lg:-mx-8 lg:min-h-[calc(100dvh-4rem)] lg:py-8;
+    @apply mx-auto w-full max-w-6xl min-h-0 px-4 py-4 sm:px-6 sm:py-6 lg:min-h-[calc(100dvh-4rem)] lg:px-8 lg:py-8;
   }
   .auth-shell {
     @apply mx-auto flex w-full max-w-[1120px] flex-col overflow-visible rounded-2xl border border-slate-200/80 bg-white shadow-[0_24px_80px_-32px_rgba(15,23,42,0.28)] sm:rounded-3xl lg:min-h-[min(720px,calc(100dvh-7.5rem))] lg:flex-row lg:items-stretch lg:overflow-hidden;

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { PageContainer } from "@/components/site/PageContainer";
 import { ThumbImage } from "@/components/site/ThumbImage";
 import { useEffect, useMemo, useState } from "react";
+import { useCartStockLimits } from "@/hooks/useCartStockLimits";
+import { canIncreaseCartQty, capCartQuantity } from "@/lib/cart-stock";
 import { ConfirmDialog } from "@/components/site/ConfirmDialog";
 import { apiUrl } from "@/lib/api";
 import { readLocalCartFromStorage, syncCartFromStorage } from "@/lib/cart-sync";
@@ -42,6 +44,7 @@ export default function CartPage() {
   const [mounted, setMounted] = useState(false);
   const [removeLineKey, setRemoveLineKey] = useState<string | null>(null);
   const [clearAllOpen, setClearAllOpen] = useState(false);
+  const stockLimits = useCartStockLimits(lines, mounted);
 
   useEffect(() => {
     hydrate();
@@ -91,8 +94,16 @@ export default function CartPage() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (!mounted || stockLimits.size === 0) return;
+    for (const l of lines) {
+      const capped = capCartQuantity(l.lineKey, l.quantity, stockLimits);
+      if (capped !== l.quantity) setLineQuantity(l.lineKey, capped);
+    }
+  }, [mounted, lines, stockLimits, setLineQuantity]);
+
   const setQty = (lineKey: string, qty: number) => {
-    setLineQuantity(lineKey, qty);
+    setLineQuantity(lineKey, capCartQuantity(lineKey, qty, stockLimits));
   };
 
   const removeProductLine = (lineKey: string) => {
@@ -225,26 +236,40 @@ export default function CartPage() {
                   </div>
 
                   <div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-4 sm:border-0 sm:pt-0">
-                    <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50/80 p-0.5 shadow-inner">
-                      <button
-                        type="button"
-                        onClick={() => setQty(l.lineKey, l.quantity - 1)}
-                        className="grid h-10 w-10 place-items-center rounded-full text-lg text-slate-700 transition hover:bg-white hover:shadow-sm"
-                        aria-label="Azalt"
-                      >
-                        −
-                      </button>
-                      <span className="min-w-[2.25rem] text-center text-sm font-bold tabular-nums text-slate-900">
-                        {l.quantity}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setQty(l.lineKey, l.quantity + 1)}
-                        className="grid h-10 w-10 place-items-center rounded-full text-lg text-slate-700 transition hover:bg-white hover:shadow-sm"
-                        aria-label="Arttır"
-                      >
-                        +
-                      </button>
+                    <div>
+                      <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50/80 p-0.5 shadow-inner">
+                        <button
+                          type="button"
+                          onClick={() => setQty(l.lineKey, l.quantity - 1)}
+                          className="grid h-10 w-10 place-items-center rounded-full text-lg text-slate-700 transition hover:bg-white hover:shadow-sm"
+                          aria-label="Azalt"
+                        >
+                          −
+                        </button>
+                        <span className="min-w-[2.25rem] text-center text-sm font-bold tabular-nums text-slate-900">
+                          {l.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={!canIncreaseCartQty(l.lineKey, l.quantity, stockLimits)}
+                          onClick={() => setQty(l.lineKey, l.quantity + 1)}
+                          className="grid h-10 w-10 place-items-center rounded-full text-lg text-slate-700 transition hover:bg-white hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                          aria-label="Arttır"
+                        >
+                          +
+                        </button>
+                      </div>
+                      {(() => {
+                        const info = stockLimits.get(l.lineKey);
+                        if (info?.trackStock && info.maxQty != null && info.maxQty <= l.quantity) {
+                          return (
+                            <p className="mt-2 text-xs font-medium text-amber-700">
+                              Stokta en fazla {info.maxQty} adet mevcut
+                            </p>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                     <p className="text-right text-lg font-semibold tabular-nums text-slate-900 sm:text-base">
                       {priceFmt((l.priceCents ?? 0) * l.quantity)}

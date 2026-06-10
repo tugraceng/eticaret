@@ -165,7 +165,15 @@ export default async function HomePage({
       {!filtering ? (
         <>
           <HomeBrandStats />
-          <HomeCraftsmanship />
+          <HomeCraftsmanship
+            kicker={settings.homeCraftKicker}
+            title={settings.homeCraftTitle}
+            body={
+              settings.homeCraftBody?.trim() ||
+              "FDM ve SLA süreçlerinde katman katman kontrol. Her parça gönderim öncesi atölyemizde ölçülür, yüzey işlenir ve koleksiyon standartlarına göre paketlenir."
+            }
+            imageUrl={settings.homeCraftImageUrl}
+          />
         </>
       ) : null}
 

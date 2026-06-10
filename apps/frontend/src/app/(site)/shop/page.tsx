@@ -97,11 +97,13 @@ function appendShopFilterParams(
     onSale?: string;
     featured?: string;
     newProduct?: string;
+    brand?: string;
     view?: string;
   },
   p: URLSearchParams,
 ) {
   if (sp.sort) p.set("sort", sp.sort);
+  if (sp.brand) p.set("brand", sp.brand);
   if (sp.minPriceCents) p.set("minPriceCents", sp.minPriceCents);
   if (sp.maxPriceCents) p.set("maxPriceCents", sp.maxPriceCents);
   if (sp.minAvgRating) p.set("minAvgRating", sp.minAvgRating);
@@ -124,6 +126,7 @@ function buildCatalogQueryString(args: {
   onSaleOnly: boolean;
   featuredOnly: boolean;
   newOnly: boolean;
+  brand?: string;
 }) {
   const p = new URLSearchParams();
   p.set("limit", "12");
@@ -137,6 +140,7 @@ function buildCatalogQueryString(args: {
   if (args.onSaleOnly) p.set("onSale", "1");
   if (args.featuredOnly) p.set("featured", "1");
   if (args.newOnly) p.set("newProduct", "1");
+  if (args.brand?.trim()) p.set("brand", args.brand.trim());
   return p.toString();
 }
 
@@ -156,6 +160,7 @@ export default async function ShopPage({
     onSale?: string;
     featured?: string;
     newProduct?: string;
+    brand?: string;
     view?: string;
   }>;
 }) {
@@ -186,6 +191,7 @@ export default async function ShopPage({
   const onSaleOnly = sp.onSale === "1";
   const featuredOnly = sp.featured === "1";
   const newOnly = sp.newProduct === "1";
+  const brand = sp.brand?.trim();
   const view: "grid" | "list" = sp.view === "list" ? "list" : "grid";
 
   const catalogQs = buildCatalogQueryString({
@@ -199,9 +205,13 @@ export default async function ShopPage({
     onSaleOnly,
     featuredOnly,
     newOnly,
+    brand,
   });
 
-  const catalog = await apiJson<CatalogPayload>(`/products/catalog?${catalogQs}&page=${page}`);
+  const [catalog, brands] = await Promise.all([
+    apiJson<CatalogPayload>(`/products/catalog?${catalogQs}&page=${page}`),
+    apiJson<string[]>("/products/brands").catch(() => [] as string[]),
+  ]);
   const categories = categoriesEarly;
 
   const titleBits = [
@@ -220,6 +230,7 @@ export default async function ShopPage({
       onSaleOnly ||
       featuredOnly ||
       newOnly ||
+      brand ||
       sort !== "newest",
   );
 
@@ -236,6 +247,7 @@ export default async function ShopPage({
     ...(onSaleOnly ? { onSale: "1" as const } : {}),
     ...(featuredOnly ? { featured: "1" as const } : {}),
     ...(newOnly ? { newProduct: "1" as const } : {}),
+    ...(brand ? { brand } : {}),
     ...(view === "list" ? { view: "list" as const } : {}),
   };
 
@@ -256,6 +268,8 @@ export default async function ShopPage({
       onSaleOnly={onSaleOnly}
       featuredOnly={featuredOnly}
       newOnly={newOnly}
+      brand={brand}
+      brands={brands}
       page={page}
       view={view}
       hasActiveCatalogFilters={hasActiveCatalogFilters}

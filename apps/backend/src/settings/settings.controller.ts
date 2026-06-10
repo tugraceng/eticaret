@@ -428,6 +428,36 @@ class UpdateSettingsDto {
   @IsOptional()
   @Allow()
   headerNav?: unknown;
+
+  @IsOptional()
+  @IsBoolean()
+  bankTransferEnabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  bankTransferInstructions?: string | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(90)
+  returnWindowDays?: number;
+
+  @IsOptional()
+  @IsString()
+  homeCraftKicker?: string;
+
+  @IsOptional()
+  @IsString()
+  homeCraftTitle?: string;
+
+  @IsOptional()
+  @IsString()
+  homeCraftBody?: string | null;
+
+  @IsOptional()
+  @IsString()
+  homeCraftImageUrl?: string | null;
 }
 
 class CreateHomeSectionDto {
@@ -576,5 +606,63 @@ export class SettingsController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   removeHomeSection(@Param("id") id: string) {
     return this.settings.removeHomeSection(id);
+  }
+
+  @Get("bank-accounts")
+  listBankAccountsPublic() {
+    return this.settings.listBankAccountsPublic();
+  }
+
+  @Get("bank-accounts/admin")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  listBankAccountsAdmin() {
+    return this.settings.listBankAccountsAdmin();
+  }
+
+  @Post("bank-accounts/admin")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  createBankAccount(
+    @Body()
+    dto: {
+      bankName: string;
+      accountHolder: string;
+      iban: string;
+      branch?: string;
+      notes?: string;
+      isActive?: boolean;
+      sortOrder?: number;
+    },
+  ) {
+    return this.settings.createBankAccount(dto);
+  }
+
+  @Patch("bank-accounts/admin/:id")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  updateBankAccount(
+    @Param("id") id: string,
+    @Body()
+    dto: Partial<{
+      bankName: string;
+      accountHolder: string;
+      iban: string;
+      branch: string | null;
+      notes: string | null;
+      isActive: boolean;
+      sortOrder: number;
+    }>,
+  ) {
+    return this.settings.updateBankAccount(id, dto);
+  }
+
+  @Delete("bank-accounts/admin/:id")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  deleteBankAccount(@Param("id") id: string) {
+    return this.settings.deleteBankAccount(id);
+  }
+
+  @Patch("bank-accounts/admin/reorder")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  reorderBankAccounts(@Body() dto: { ids: string[] }) {
+    return this.settings.reorderBankAccounts(dto.ids ?? []);
   }
 }

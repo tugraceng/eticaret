@@ -88,6 +88,13 @@ export type SiteSettings = {
   contactNavHref?: string | null;
   /** Üst menü: kategorilerden önce / sonra ek bağlantılar (parseHeaderNav ile okunur) */
   headerNav?: unknown;
+  bankTransferEnabled?: boolean;
+  bankTransferInstructions?: string | null;
+  returnWindowDays?: number;
+  homeCraftKicker?: string;
+  homeCraftTitle?: string;
+  homeCraftBody?: string | null;
+  homeCraftImageUrl?: string | null;
 };
 
 export type HomeSectionKind =

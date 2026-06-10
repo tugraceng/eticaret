@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { Type } from "class-transformer";
 import {
   IsArray,
@@ -120,6 +131,10 @@ class CreateOrderDto {
   @IsString()
   @MaxLength(60)
   discountCode?: string;
+
+  @IsOptional()
+  @IsEnum(["CARD", "BANK_TRANSFER"] as const)
+  paymentMethod?: "CARD" | "BANK_TRANSFER";
 }
 
 class UpdateStatusDto {
@@ -136,6 +151,9 @@ class UpdateAdminOrderDto {
   @IsOptional() @IsString() @MaxLength(80) shippingCity?: string;
   @IsOptional() @IsString() @MaxLength(20) shippingPostalCode?: string;
   @IsOptional() @IsString() @MaxLength(120) trackingNumber?: string;
+  @IsOptional()
+  @IsEnum(["YURTICI", "ARAS", "MNG", "SURAT", "PTT", "HEPSIJET", "OTHER"] as const)
+  carrier?: "YURTICI" | "ARAS" | "MNG" | "SURAT" | "PTT" | "HEPSIJET" | "OTHER";
   @IsOptional() @IsString() @MaxLength(1000) notes?: string;
 }
 
@@ -143,10 +161,43 @@ class UpdateAdminOrderDto {
 export class OrdersController {
   constructor(private readonly orders: OrdersService) {}
 
+  @Post("checkout-draft")
+  @UseGuards(OptionalJwtAuthGuard)
+  createCheckoutDraft(@Body() dto: CreateOrderDto, @Req() req: ReqUser) {
+    const buyerUserId = req.user?.role === "CUSTOMER" ? req.user.sub : undefined;
+    return this.orders.createCheckoutDraft({
+      items: dto.items,
+      guestEmail: dto.guestEmail,
+      buyerUserId,
+      contactName: dto.contactName,
+      contactPhone: dto.contactPhone,
+      identityNumber: dto.identityNumber,
+      shippingLine1: dto.shippingLine1,
+      shippingLine2: dto.shippingLine2,
+      shippingDistrict: dto.shippingDistrict,
+      shippingCity: dto.shippingCity,
+      shippingPostalCode: dto.shippingPostalCode,
+      shippingCountry: dto.shippingCountry,
+      notes: dto.notes,
+      kvkkAccepted: dto.kvkkAccepted,
+      distanceSalesAccepted: dto.distanceSalesAccepted,
+      saveAddress: dto.saveAddress,
+      addressLabel: dto.addressLabel,
+      discountCode: dto.discountCode,
+      paymentMethod: "CARD",
+    });
+  }
+
   @Post()
   @UseGuards(OptionalJwtAuthGuard)
   create(@Body() dto: CreateOrderDto, @Req() req: ReqUser) {
     const buyerUserId = req.user?.role === "CUSTOMER" ? req.user.sub : undefined;
+    const paymentMethod = dto.paymentMethod ?? "CARD";
+    if (paymentMethod === "CARD") {
+      throw new BadRequestException(
+        "Kart ödemeleri için önce checkout-draft oluşturulmalıdır.",
+      );
+    }
     return this.orders.create({
       items: dto.items,
       guestEmail: dto.guestEmail,
@@ -166,6 +217,7 @@ export class OrdersController {
       saveAddress: dto.saveAddress,
       addressLabel: dto.addressLabel,
       discountCode: dto.discountCode,
+      paymentMethod,
     });
   }
 
@@ -194,6 +246,12 @@ export class OrdersController {
     return this.orders.listMine(req.user.sub);
   }
 
+  @Post("admin/:id/confirm-bank-payment")
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  confirmBankPayment(@Param("id") id: string) {
+    return this.orders.confirmBankPayment(id);
+  }
+
   @Patch("admin/:id/status")
   @UseGuards(JwtAuthGuard, AdminGuard)
   updateStatus(@Param("id") id: string, @Body() dto: UpdateStatusDto) {
@@ -218,6 +276,7 @@ export class OrdersController {
     if (dto.shippingCity !== undefined) data.shippingCity = dto.shippingCity;
     if (dto.shippingPostalCode !== undefined) data.shippingPostalCode = dto.shippingPostalCode || null;
     if (dto.trackingNumber !== undefined) data.trackingNumber = dto.trackingNumber || null;
+    if (dto.carrier !== undefined) data.carrier = dto.carrier || null;
     if (dto.notes !== undefined) data.notes = dto.notes || null;
     return this.orders.updateAdmin(id, data);
   }

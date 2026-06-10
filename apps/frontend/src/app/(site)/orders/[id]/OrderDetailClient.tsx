@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, formatApiErrorPayload } from "@/lib/api";
 import { orderStatusHeadlineTr, orderStatusLabelTr } from "@/lib/order-status-tr";
+import { carrierTrackingUrl, CARRIER_LABELS, type ShippingCarrier } from "@/lib/shipping-tracking";
 import { getCustomerToken } from "@/lib/platform-session";
 import { CancelButton } from "./CancelButton";
 import { ReturnRequestForm } from "./ReturnRequestForm";
@@ -19,6 +20,8 @@ type Order = {
   discountCode?: string | null;
   currency: string;
   trackingNumber: string | null;
+  carrier?: ShippingCarrier | null;
+  paymentMethod?: "CARD" | "BANK_TRANSFER";
   createdAt: string;
   contactName?: string | null;
   contactPhone?: string | null;
@@ -231,7 +234,20 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
         {order.trackingNumber && (
           <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm">
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Kargo takip</p>
+            {order.carrier ? (
+              <p className="mt-1 text-slate-300">{CARRIER_LABELS[order.carrier] ?? order.carrier}</p>
+            ) : null}
             <p className="mt-1 break-all font-mono text-slate-100">{order.trackingNumber}</p>
+            {carrierTrackingUrl(order.carrier, order.trackingNumber) ? (
+              <a
+                href={carrierTrackingUrl(order.carrier, order.trackingNumber)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary mt-3 inline-flex min-h-10 text-sm"
+              >
+                {(order.carrier ? CARRIER_LABELS[order.carrier] : "Kargo")} — Kargoyu Takip Et
+              </a>
+            ) : null}
           </div>
         )}
       </section>

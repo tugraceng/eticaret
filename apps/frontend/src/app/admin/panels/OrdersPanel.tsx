@@ -101,7 +101,9 @@ export function OrdersPanel({
                   return (
                     <Fragment key={o.id}>
                       <tr className="hover:bg-slate-50/50">
-                        <td className="px-2 py-3 font-mono text-xs text-slate-500">{o.id.slice(0, 10)}…</td>
+                        <td className="max-w-[10rem] px-2 py-3 font-mono text-xs text-slate-500" title={o.id}>
+                          <span className="block truncate">{o.id}</span>
+                        </td>
                         <td className="max-w-[160px] truncate px-2 py-3 text-xs text-slate-600">
                           {o.guestEmail ?? "—"}
                         </td>
