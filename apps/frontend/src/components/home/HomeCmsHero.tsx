@@ -1,23 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
-import { HomeHeroArrows } from "@/components/home/HomeHeroArrows";
-import { HomeHeroBackdrop } from "@/components/home/HomeHeroBackdrop";
+import { useMemo } from "react";
+import { HomeHeroCarouselView } from "@/components/home/HomeHeroCarouselView";
 import { apiAssetUrl } from "@/lib/api";
 import type { HomeSection, SiteSettings } from "@/lib/settings";
-import { defaultHeroSlides, parseHeroSlides, type HomeHeroSlide } from "@/components/home/homeHeroDefaults";
+import { defaultHeroSlides, parseHeroSlides } from "@/components/home/homeHeroDefaults";
 import { DEFAULT_HERO_IMAGE_DISPLAY } from "@/components/home/homeHeroImage";
-import { HomeHeroTitle } from "@/components/home/HomeHeroTitle";
-import {
-  heroContentLayoutClass,
-  heroContentPaddingClass,
-  heroContentShellClass,
-  heroGridClass,
-  heroSectionMinHeightClass,
-  heroVisualPanelClass,
-} from "@/components/home/homeHeroLayout";
 
 type Props = {
   section: HomeSection;
@@ -25,7 +13,7 @@ type Props = {
 };
 
 export function HomeCmsHero({ section, settings }: Props) {
-  const slides = useMemo((): HomeHeroSlide[] => {
+  const slides = useMemo(() => {
     const fromConfig = parseHeroSlides(section.config?.slides);
     if (fromConfig) {
       return fromConfig.map((slide) => ({
@@ -57,87 +45,5 @@ export function HomeCmsHero({ section, settings }: Props) {
     }));
   }, [section, settings]);
 
-  const [index, setIndex] = useState(0);
-  const reduceMotion = useReducedMotion();
-
-  useEffect(() => {
-    if (!slides.length) return;
-    setIndex((i) => Math.min(i, slides.length - 1));
-  }, [slides.length]);
-
-  useEffect(() => {
-    if (slides.length <= 1) return;
-    const id = window.setInterval(() => {
-      setIndex((i) => (i + 1) % slides.length);
-    }, 5200);
-    return () => window.clearInterval(id);
-  }, [slides.length]);
-
-  const active = slides[index] ?? slides[0]!;
-  const goPrev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
-  const goNext = () => setIndex((i) => (i + 1) % slides.length);
-  const eyebrow = active.eyebrow?.trim();
-  const tagline = active.body?.trim();
-
-  return (
-    <section
-      className={`si-hero relative isolate flex w-full flex-col overflow-hidden bg-[#0c0e12] ${heroSectionMinHeightClass}`}
-      aria-label="Ana vitrin"
-    >
-      <div className={heroVisualPanelClass}>
-        <HomeHeroBackdrop slides={slides} index={index} />
-      </div>
-
-      <HomeHeroArrows visible={slides.length > 1} onPrev={goPrev} onNext={goNext} />
-
-      <div className={`${heroContentShellClass} ${heroContentPaddingClass}`}>
-        <div className={heroGridClass}>
-          <motion.div
-            key={index}
-            className={heroContentLayoutClass}
-            initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {eyebrow ? <p className="si-kicker mb-3">{eyebrow}</p> : null}
-
-            <h1 className="si-display max-w-[14ch] text-balance lg:max-w-[12ch]">
-              <HomeHeroTitle title={active.title} />
-            </h1>
-
-            {tagline ? (
-              <p className="si-hero-tagline mt-4 max-w-md">{tagline}</p>
-            ) : null}
-
-            <div className="si-hero-cta mt-6 flex w-full max-w-sm flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-              <Link href={active.cta} className="si-btn-primary w-full sm:w-auto">
-                {active.ctaLabel}
-              </Link>
-              <Link href={active.secondaryHref} className="si-btn-ghost w-full sm:w-auto">
-                {active.secondaryLabel}
-              </Link>
-            </div>
-
-            {slides.length > 1 ? (
-              <div className="mt-6 flex items-center gap-2" role="tablist" aria-label="Hero slaytları">
-                {slides.map((s, i) => (
-                  <button
-                    key={`${s.title}-${i}`}
-                    type="button"
-                    role="tab"
-                    onClick={() => setIndex(i)}
-                    aria-label={`Slayt ${i + 1}`}
-                    aria-selected={i === index}
-                    className={`h-0.5 rounded-full transition-all duration-500 ${
-                      i === index ? "w-8 bg-white/80" : "w-5 bg-white/25 hover:bg-white/40"
-                    }`}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
+  return <HomeHeroCarouselView slides={slides} />;
 }

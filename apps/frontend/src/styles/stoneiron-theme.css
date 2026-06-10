@@ -64,6 +64,15 @@
   }
 }
 
+.site-theme-stoneiron .si-hero-carousel {
+  background: var(--si-bg-deep, #0c0e12);
+}
+
+.site-theme-stoneiron .si-hero-carousel-frame {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: #0a0c10;
+}
+
 .site-theme-stoneiron .si-hero-visual {
   top: var(--si-site-header-h, 9.5rem);
 }
